@@ -1,10 +1,11 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileText, LogOut, User } from "lucide-react";
+import { FileText, LogOut, User, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 
 interface DocumentLayoutProps {
   children: ReactNode;
@@ -14,6 +15,7 @@ interface DocumentLayoutProps {
 
 const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) => {
   const navigate = useNavigate();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const { data: session } = useQuery({
     queryKey: ["session"],
@@ -76,29 +78,58 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
 
       {/* Main Content */}
       <div className="flex-1 container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] xl:grid-cols-[280px_1fr_320px] gap-6">
-          {/* Left Sidebar - Document Structure */}
-          {sidebar && (
-            <aside className="hidden md:block">
-              <div className="sticky top-24 space-y-4">
-                {sidebar}
-              </div>
-            </aside>
-          )}
+        <div className="relative">
+          <div className="flex gap-6">
+            {/* Left Sidebar - Document Structure */}
+            {sidebar && (
+              <>
+                <aside 
+                  className={cn(
+                    "hidden md:block transition-all duration-300 ease-in-out shrink-0",
+                    isSidebarCollapsed ? "w-0 -ml-[280px]" : "w-[250px] xl:w-[280px]"
+                  )}
+                >
+                  <div className={cn(
+                    "sticky top-24 space-y-4 transition-opacity duration-200 w-[250px] xl:w-[280px]",
+                    isSidebarCollapsed ? "opacity-0" : "opacity-100"
+                  )}>
+                    {sidebar}
+                  </div>
+                </aside>
+                
+                {/* Toggle Button */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className={cn(
+                    "hidden md:flex fixed top-24 z-50 transition-all duration-300 bg-card shadow-md hover:shadow-lg",
+                    isSidebarCollapsed ? "left-4" : "left-[270px] xl:left-[300px]"
+                  )}
+                  onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                >
+                  {isSidebarCollapsed ? (
+                    <ChevronRight className="h-4 w-4" />
+                  ) : (
+                    <ChevronLeft className="h-4 w-4" />
+                  )}
+                </Button>
+              </>
+            )}
 
-          {/* Main Content */}
-          <main className="min-w-0">
-            {children}
-          </main>
+            {/* Main Content */}
+            <main className="flex-1 min-w-0">
+              {children}
+            </main>
 
-          {/* Right Sidebar - Comments */}
-          {comments && (
-            <aside className="hidden xl:block">
-              <div className="sticky top-24">
-                {comments}
-              </div>
-            </aside>
-          )}
+            {/* Right Sidebar - Comments */}
+            {comments && (
+              <aside className="hidden xl:block w-[320px] shrink-0">
+                <div className="sticky top-24">
+                  {comments}
+                </div>
+              </aside>
+            )}
+          </div>
         </div>
       </div>
     </div>
