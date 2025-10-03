@@ -90,7 +90,7 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
                   )}
                 >
                   <div className={cn(
-                    "sticky top-24 space-y-4 transition-opacity duration-200 w-[250px] xl:w-[280px]",
+                    "sticky top-20 space-y-4 transition-opacity duration-200 w-[250px] xl:w-[280px]",
                     isSidebarCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
                   )}>
                     {sidebar}
@@ -102,7 +102,7 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
                   variant="outline"
                   size="icon"
                   className={cn(
-                    "hidden md:flex fixed top-24 z-50 transition-all duration-300 bg-card shadow-md hover:shadow-lg",
+                    "hidden md:flex fixed top-20 z-50 transition-all duration-300 bg-card shadow-md hover:shadow-lg",
                     isSidebarCollapsed ? "left-4" : "left-[270px] xl:left-[300px]"
                   )}
                   onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
