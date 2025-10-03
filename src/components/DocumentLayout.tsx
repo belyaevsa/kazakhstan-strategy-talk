@@ -77,7 +77,7 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 container mx-auto px-4 py-8">
+      <div className="flex-1 container mx-auto px-4 py-8 overflow-x-hidden">
         <div className="relative">
           <div className="flex gap-6">
             {/* Left Sidebar - Document Structure */}
@@ -85,13 +85,13 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
               <>
                 <aside 
                   className={cn(
-                    "hidden md:block transition-all duration-300 ease-in-out shrink-0",
-                    isSidebarCollapsed ? "w-0 -ml-[280px]" : "w-[250px] xl:w-[280px]"
+                    "hidden md:block transition-all duration-300 ease-in-out shrink-0 overflow-hidden",
+                    isSidebarCollapsed ? "w-0" : "w-[250px] xl:w-[280px]"
                   )}
                 >
                   <div className={cn(
                     "sticky top-24 space-y-4 transition-opacity duration-200 w-[250px] xl:w-[280px]",
-                    isSidebarCollapsed ? "opacity-0" : "opacity-100"
+                    isSidebarCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
                   )}>
                     {sidebar}
                   </div>
