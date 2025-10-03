@@ -18,7 +18,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick }: ParagraphWithCo
   return (
     <div
       className={cn(
-        "relative group py-4 px-6 rounded-lg transition-all cursor-pointer mr-16",
+        "relative group py-4 px-6 pr-20 rounded-lg transition-all cursor-pointer",
         isActive && "bg-accent/50 shadow-sm",
         isHovered && !isActive && "bg-muted/50"
       )}
@@ -32,7 +32,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick }: ParagraphWithCo
       
       {/* Comment indicator */}
       {paragraph.comment_count > 0 && (
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-medium shadow-md">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-medium shadow-md">
           <MessageSquare className="h-3 w-3" />
           {paragraph.comment_count}
         </div>
@@ -40,7 +40,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick }: ParagraphWithCo
 
       {/* Hover indicator */}
       {(isHovered || isActive) && paragraph.comment_count === 0 && (
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-muted-foreground/20 text-foreground px-2 py-1 rounded-full text-xs">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-muted-foreground/20 text-foreground px-2 py-1 rounded-full text-xs">
           <MessageSquare className="h-3 w-3" />
           Comment
         </div>
