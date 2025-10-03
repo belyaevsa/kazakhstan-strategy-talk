@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { authService } from "@/services/authService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,11 +18,9 @@ const Auth = () => {
 
   useEffect(() => {
     // Check if already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate("/");
-      }
-    });
+    if (authService.isAuthenticated()) {
+      navigate("/");
+    }
   }, [navigate]);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -31,27 +29,17 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
+        await authService.login({ email, password });
         toast.success("Successfully logged in!");
         navigate("/");
       } else {
-        const { error } = await supabase.auth.signUp({
+        await authService.register({
           email,
           password,
-          options: {
-            data: {
-              username: username || email.split("@")[0],
-            },
-            emailRedirectTo: `${window.location.origin}/`,
-          },
+          username: username || email.split("@")[0],
         });
-        if (error) throw error;
-        toast.success("Account created! You can now log in.");
-        setIsLogin(true);
+        toast.success("Account created! Logging you in...");
+        navigate("/");
       }
     } catch (error: any) {
       toast.error(error.message || "An error occurred");

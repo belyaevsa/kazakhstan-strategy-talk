@@ -1,38 +1,27 @@
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { chapterService } from "@/services/chapterService";
+import { authService } from "@/services/authService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, MessageSquare, Users, ArrowRight } from "lucide-react";
+import { FileText, MessageSquare, Users, ArrowRight, BookOpen } from "lucide-react";
 import DocumentLayout from "@/components/DocumentLayout";
 
 const Index = () => {
   const navigate = useNavigate();
+  const isAuthenticated = authService.isAuthenticated();
+  const isEditor = authService.isEditor();
 
-  const { data: pages } = useQuery({
-    queryKey: ["pages"],
+  const { data: chapters } = useQuery({
+    queryKey: ["chapters", isEditor],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("pages")
-        .select("*")
-        .order("order_index")
-        .limit(1);
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: session } = useQuery({
-    queryKey: ["session"],
-    queryFn: async () => {
-      const { data } = await supabase.auth.getSession();
-      return data.session;
+      return chapterService.getAll(isEditor);
     },
   });
 
   const handleGetStarted = () => {
-    if (pages && pages.length > 0) {
-      navigate(`/document/${pages[0].slug}`);
+    if (chapters && chapters.length > 0 && chapters[0].pages.length > 0) {
+      navigate(`/document/${chapters[0].pages[0].slug}`);
     }
   };
 
@@ -55,7 +44,7 @@ const Index = () => {
               Start Reading
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            {!session && (
+            {!isAuthenticated && (
               <Button size="lg" variant="outline" onClick={() => navigate("/auth")}>
                 Sign In to Comment
               </Button>
@@ -63,61 +52,61 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Features */}
-        <section className="grid md:grid-cols-3 gap-6 mb-12">
-          <Card>
-            <CardHeader>
-              <FileText className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>In-Depth Analysis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Comprehensive strategic insights on IT development, broken down into digestible sections
-              </CardDescription>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <MessageSquare className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Paragraph Comments</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Engage with specific sections through targeted comments and discussions
-              </CardDescription>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <Users className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Community Feedback</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Vote on comments and participate in meaningful dialogue about the strategy
-              </CardDescription>
-            </CardContent>
-          </Card>
-        </section>
+        {/* Chapters Section */}
+        {chapters && chapters.length > 0 && (
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-center">Document Chapters</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              {chapters.map((chapter) => (
+                <Card key={chapter.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => {
+                  if (chapter.pages.length > 0) {
+                    navigate(`/document/${chapter.pages[0].slug}`);
+                  }
+                }}>
+                  <CardHeader>
+                    <BookOpen className="h-8 w-8 text-primary mb-2" />
+                    <CardTitle className="flex items-center justify-between">
+                      <span>{chapter.title}</span>
+                      {chapter.isDraft && (
+                        <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded font-normal">
+                          Draft
+                        </span>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="mb-3">
+                      {chapter.description || "Explore this chapter of the strategy document"}
+                    </CardDescription>
+                    {chapter.pages.length > 0 && (
+                      <div className="text-sm text-muted-foreground">
+                        <FileText className="h-4 w-4 inline mr-1" />
+                        {chapter.pages.length} {chapter.pages.length === 1 ? 'page' : 'pages'}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* About Section */}
         <section className="bg-card rounded-lg shadow-sm border p-8">
           <h2 className="text-2xl font-bold mb-4">About This Document</h2>
           <div className="document-content space-y-4">
             <p>
-              This open letter presents a detailed analysis of IT development strategy in Kazakhstan. 
-              The document is designed to foster discussion and collaboration among stakeholders, 
+              This open letter presents a detailed analysis of IT development strategy in Kazakhstan.
+              The document is designed to foster discussion and collaboration among stakeholders,
               experts, and interested parties.
             </p>
             <p>
-              Each paragraph is open for commentary, allowing readers to provide targeted feedback, 
-              share expertise, and engage in constructive dialogue. Your participation helps refine 
+              Each paragraph is open for commentary, allowing readers to provide targeted feedback,
+              share expertise, and engage in constructive dialogue. Your participation helps refine
               and strengthen the strategic vision outlined in this document.
             </p>
             <p className="font-semibold text-primary">
-              {session ? "You're signed in and ready to participate!" : "Sign in to join the discussion and share your insights."}
+              {isAuthenticated ? "You're signed in and ready to participate!" : "Sign in to join the discussion and share your insights."}
             </p>
           </div>
         </section>

@@ -2,9 +2,8 @@ import { ReactNode, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FileText, LogOut, User, ChevronLeft, ChevronRight } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { authService } from "@/services/authService";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 interface DocumentLayoutProps {
@@ -17,30 +16,11 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
   const navigate = useNavigate();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  const { data: session } = useQuery({
-    queryKey: ["session"],
-    queryFn: async () => {
-      const { data } = await supabase.auth.getSession();
-      return data.session;
-    },
-  });
+  const user = authService.getUser();
+  const isAuthenticated = authService.isAuthenticated();
 
-  const { data: profile } = useQuery({
-    queryKey: ["profile", session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) return null;
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .single();
-      return data;
-    },
-    enabled: !!session?.user?.id,
-  });
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    authService.logout();
     toast.success("Logged out successfully");
     navigate("/");
   };
@@ -56,11 +36,11 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
           </Link>
           
           <div className="flex items-center gap-3">
-            {session ? (
+            {isAuthenticated ? (
               <>
                 <div className="flex items-center gap-2 text-sm">
                   <User className="h-4 w-4" />
-                  <span className="hidden sm:inline">{profile?.username}</span>
+                  <span className="hidden sm:inline">{user?.username}</span>
                 </div>
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
                   <LogOut className="h-4 w-4 mr-2" />
@@ -82,10 +62,10 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
           <div className="flex gap-6">
             {/* Left Sidebar - Document Structure */}
             {sidebar && (
-              <>
-                <aside 
+              <div className="hidden md:block relative">
+                <aside
                   className={cn(
-                    "hidden md:block transition-all duration-300 ease-in-out shrink-0 overflow-hidden",
+                    "transition-all duration-300 ease-in-out shrink-0 overflow-hidden",
                     isSidebarCollapsed ? "w-0" : "w-[250px] xl:w-[280px]"
                   )}
                 >
@@ -96,24 +76,25 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
                     {sidebar}
                   </div>
                 </aside>
-                
+
                 {/* Toggle Button */}
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className={cn(
-                    "hidden md:flex fixed top-20 z-50 transition-all duration-300 bg-card shadow-md hover:shadow-lg",
-                    isSidebarCollapsed ? "left-4" : "left-[270px] xl:left-[300px]"
-                  )}
-                  onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                >
-                  {isSidebarCollapsed ? (
-                    <ChevronRight className="h-4 w-4" />
-                  ) : (
-                    <ChevronLeft className="h-4 w-4" />
-                  )}
-                </Button>
-              </>
+                <div className="absolute top-0 -right-3 z-10">
+                  <div className="sticky top-20">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="bg-card shadow-md hover:shadow-lg"
+                      onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                    >
+                      {isSidebarCollapsed ? (
+                        <ChevronRight className="h-4 w-4" />
+                      ) : (
+                        <ChevronLeft className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Main Content */}
@@ -124,7 +105,7 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
             {/* Right Sidebar - Comments */}
             {comments && (
               <aside className="hidden xl:block w-[320px] shrink-0">
-                <div className="sticky top-24">
+                <div className="sticky top-4">
                   {comments}
                 </div>
               </aside>
