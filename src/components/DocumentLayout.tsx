@@ -76,10 +76,10 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
 
       {/* Main Content */}
       <div className="flex-1 container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr] xl:grid-cols-[280px_1fr_320px] gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] xl:grid-cols-[280px_1fr_320px] gap-6">
           {/* Left Sidebar - Document Structure */}
           {sidebar && (
-            <aside className="hidden lg:block">
+            <aside className="hidden md:block">
               <div className="sticky top-24 space-y-4">
                 {sidebar}
               </div>
