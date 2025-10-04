@@ -270,7 +270,7 @@ const DocumentPage = () => {
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
   const [editedIsDraft, setEditedIsDraft] = useState(false);
-  const [editedParagraphs, setEditedParagraphs] = useState<Array<{ id: string; content: string; orderIndex: number; type?: string; caption?: string }>>([]);
+  const [editedParagraphs, setEditedParagraphs] = useState<Array<{ id: string; content: string; orderIndex: number; type?: string; caption?: string; linkedPageId?: string }>>([]);
   const [chapterDialogOpen, setChapterDialogOpen] = useState(false);
   const [pageDialogOpen, setPageDialogOpen] = useState(false);
   const [editingChapter, setEditingChapter] = useState<Chapter | undefined>();
@@ -481,7 +481,8 @@ const DocumentPage = () => {
           content: newParagraph.content,
           orderIndex: newParagraph.orderIndex,
           type: newParagraph.type,
-          caption: newParagraph.caption
+          caption: newParagraph.caption,
+          linkedPageId: newParagraph.linkedPageId
         }]);
       }
       queryClient.invalidateQueries({ queryKey: ["paragraphs", currentPage?.id] });
@@ -604,7 +605,7 @@ const DocumentPage = () => {
         setEditedTitle(currentPage.title);
         setEditedDescription(currentPage.description || "");
         setEditedIsDraft(currentPage.isDraft);
-        setEditedParagraphs(paragraphs?.map(p => ({ id: p.id, content: p.content, orderIndex: p.orderIndex, type: p.type, caption: p.caption })) || []);
+        setEditedParagraphs(paragraphs?.map(p => ({ id: p.id, content: p.content, orderIndex: p.orderIndex, type: p.type, caption: p.caption, linkedPageId: p.linkedPageId })) || []);
       }
     }
     setIsEditMode(!isEditMode);
@@ -629,6 +630,25 @@ const DocumentPage = () => {
     } catch (err) {
       toast.error("Failed to copy link");
     }
+  };
+
+  const handleNavigation = (path: string): boolean => {
+    if (!isEditMode) {
+      return true;
+    }
+
+    const confirmed = window.confirm(
+      "You have unsaved changes. If you leave this page, your changes will be lost. Do you want to continue?"
+    );
+
+    if (confirmed && currentPage) {
+      // Clean up localStorage on navigation away
+      const storageKey = `edit_${currentPage.id}`;
+      localStorage.removeItem(storageKey);
+      setIsEditMode(false);
+    }
+
+    return confirmed;
   };
 
   const handleAddChapter = () => {
@@ -737,7 +757,7 @@ const DocumentPage = () => {
   return (
     <>
       <DocumentLayout
-        sidebar={chapters && <DocumentStructure chapters={chapters} onAddChapter={handleAddChapter} />}
+        sidebar={chapters && <DocumentStructure chapters={chapters} onAddChapter={handleAddChapter} onNavigate={handleNavigation} />}
         comments={
           !isEditMode && (
             <div className="space-y-4">
@@ -821,13 +841,6 @@ const DocumentPage = () => {
                   placeholder="Page description (optional)"
                   rows={2}
                 />
-                <Button
-                  onClick={() => setEditedIsDraft(!editedIsDraft)}
-                  variant={editedIsDraft ? "default" : "outline"}
-                  size="sm"
-                >
-                  {editedIsDraft ? "Draft - Click to Publish" : "Published - Click to Hide"}
-                </Button>
               </div>
             ) : (
               <>
@@ -865,13 +878,20 @@ const DocumentPage = () => {
             </Button>
             {isEditMode ? (
               <>
+                <Button
+                  onClick={() => setEditedIsDraft(!editedIsDraft)}
+                  variant={editedIsDraft ? "default" : "outline"}
+                  size="sm"
+                >
+                  {editedIsDraft ? t("editor.draftClickToPublish") : t("editor.publishedClickToHide")}
+                </Button>
                 <Button onClick={() => savePageMutation.mutate()} size="sm" disabled={savePageMutation.isPending}>
                   <Save className="h-4 w-4 mr-1" />
-                  Save
+                  {t("comments.save")}
                 </Button>
                 <Button onClick={handleCancel} variant="outline" size="sm">
                   <X className="h-4 w-4 mr-1" />
-                  Cancel
+                  {t("comments.cancel")}
                 </Button>
               </>
             ) : isEditor ? (

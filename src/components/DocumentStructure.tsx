@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useParams, useNavigate } from "react-router-dom";
 import { FileText, ChevronRight, ChevronDown, BookOpen, Settings, Plus } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,16 +12,28 @@ import type { Chapter } from "@/lib/api/types";
 interface DocumentStructureProps {
   chapters: Chapter[];
   onAddChapter?: () => void;
+  onNavigate?: (path: string) => boolean | Promise<boolean>;
 }
 
-const DocumentStructure = ({ chapters, onAddChapter }: DocumentStructureProps) => {
+const DocumentStructure = ({ chapters, onAddChapter, onNavigate }: DocumentStructureProps) => {
   const location = useLocation();
   const { lang } = useParams();
+  const navigate = useNavigate();
   const [openChapters, setOpenChapters] = useState<Record<string, boolean>>({});
   const isEditor = authService.isEditor();
 
   // Get current language from URL or fallback to stored language
   const currentLang = lang || getCurrentLanguage();
+
+  const handleLinkClick = async (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+    if (onNavigate) {
+      e.preventDefault();
+      const canNavigate = await onNavigate(path);
+      if (canNavigate) {
+        navigate(path);
+      }
+    }
+  };
 
   const toggleChapter = (chapterId: string) => {
     setOpenChapters(prev => ({
@@ -104,7 +116,10 @@ const DocumentStructure = ({ chapters, onAddChapter }: DocumentStructureProps) =
                   </div>
                 </CollapsibleTrigger>
                 {isEditor && (
-                  <Link to={`/${currentLang}/chapter/${chapter.id}`}>
+                  <Link
+                    to={`/${currentLang}/chapter/${chapter.id}`}
+                    onClick={(e) => handleLinkClick(e, `/${currentLang}/chapter/${chapter.id}`)}
+                  >
                     <Button
                       size="sm"
                       variant="ghost"
@@ -120,10 +135,12 @@ const DocumentStructure = ({ chapters, onAddChapter }: DocumentStructureProps) =
                 <div className="ml-4 mt-1 space-y-0.5">
                   {visiblePages.map((page) => {
                     const isActive = location.pathname === `/${currentLang}/${page.slug}` || location.pathname === `/document/${page.slug}`;
+                    const pagePath = `/${currentLang}/${page.slug}`;
                     return (
                       <Link
                         key={page.id}
-                        to={`/${currentLang}/${page.slug}`}
+                        to={pagePath}
+                        onClick={(e) => handleLinkClick(e, pagePath)}
                         className={cn(
                           "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors",
                           isActive

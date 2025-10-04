@@ -88,8 +88,8 @@
     "pageDescription": "Page description (optional)",
     "draft": "Draft",
     "published": "Published",
-    "draftClickToPublish": "Draft - Click to Publish",
-    "publishedClickToHide": "Published - Click to Hide",
+    "draftClickToPublish": "Draft",
+    "publishedClickToHide": "Published",
     "signInToEdit": "Sign in to Edit"
   },
   "paragraph": {

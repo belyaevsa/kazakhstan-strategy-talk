@@ -88,8 +88,8 @@
     "pageDescription": "Описание страницы (опционально)",
     "draft": "Черновик",
     "published": "Опубликовано",
-    "draftClickToPublish": "Черновик - Нажмите для публикации",
-    "publishedClickToHide": "Опубликовано - Нажмите для скрытия",
+    "draftClickToPublish": "Черновик",
+    "publishedClickToHide": "Опубликовано",
     "signInToEdit": "Войти для редактирования"
   },
   "paragraph": {

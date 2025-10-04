@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MessageSquare, Link2, ExternalLink, Upload, Maximize2 } from "lucide-react";
+import { MessageSquare, Link2, ExternalLink, Upload, Maximize2, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { authService } from "@/services/authService";
@@ -211,7 +211,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
               }}
             >
               <div className="flex items-center gap-2 text-primary hover:underline">
-                <Link2 className="h-4 w-4" />
+                <FileText className="h-4 w-4" />
                 <span className="font-medium">{linkedPage.title}</span>
               </div>
               {paragraph.caption && (
@@ -340,7 +340,6 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
       {(isHovered || isActive) && paragraph.commentCount === 0 && (
         <div className="absolute right-4 top-4 flex items-center gap-1 bg-muted-foreground/20 text-foreground px-2 py-1 rounded-full text-xs">
           <MessageSquare className="h-3 w-3" />
-          Comment
         </div>
       )}
     </div>
