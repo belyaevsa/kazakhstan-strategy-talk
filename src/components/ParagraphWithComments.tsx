@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { authService } from "@/services/authService";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Footnote } from "@/components/Footnote";
 
 interface ParagraphWithCommentsProps {
   paragraph: {
@@ -90,34 +91,72 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
     }, 2000);
   };
 
-  // Parse Markdown-style links [text](url)
+  // Parse Markdown-style links [text](url) and footnotes [[term|definition]] or [[term|definition|url]] or [[term|definition|url|label]]
   const parseMarkdownLinks = (text: string) => {
     const parts: (string | JSX.Element)[] = [];
+
+    // Combined regex for both links and footnotes
     const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-    let lastIndex = 0;
+    const footnoteRegex = /\[\[([^\|]+)\|([^\]]+?)(?:\|([^\]]+?))?(?:\|([^\]]+?))?\]\]/g;
+
+    // Combine all matches
+    const allMatches: Array<{ index: number; length: number; element: JSX.Element }> = [];
     let match;
 
+    // Find all footnotes
+    while ((match = footnoteRegex.exec(text)) !== null) {
+      const term = match[1].trim();
+      const definition = match[2].trim();
+      const url = match[3]?.trim();
+      const label = match[4]?.trim();
+
+      allMatches.push({
+        index: match.index,
+        length: match[0].length,
+        element: (
+          <Footnote
+            key={match.index}
+            term={term}
+            definition={definition}
+            link={url ? { url, label } : undefined}
+          />
+        )
+      });
+    }
+
+    // Find all regular links
     while ((match = linkRegex.exec(text)) !== null) {
-      // Add text before the link
+      allMatches.push({
+        index: match.index,
+        length: match[0].length,
+        element: (
+          <a
+            key={match.index}
+            href={match[2]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {match[1]}
+          </a>
+        )
+      });
+    }
+
+    // Sort by index
+    allMatches.sort((a, b) => a.index - b.index);
+
+    // Build the parts array
+    let lastIndex = 0;
+    for (const match of allMatches) {
+      // Add text before the match
       if (match.index > lastIndex) {
         parts.push(text.substring(lastIndex, match.index));
       }
-
-      // Add the link
-      parts.push(
-        <a
-          key={match.index}
-          href={match[2]}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary hover:underline"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {match[1]}
-        </a>
-      );
-
-      lastIndex = linkRegex.lastIndex;
+      // Add the element
+      parts.push(match.element);
+      lastIndex = match.index + match.length;
     }
 
     // Add remaining text

@@ -62,7 +62,7 @@ const Index = () => {
         <section className="text-center py-12 mb-12">
             <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-6">
             <img
-              src="/main-icon.png"
+              src="/main-icon.webp"
               alt="Kazakhstan IT Strategy logo featuring a stylized digital motif, centered in a circular background, conveying a modern and optimistic atmosphere"
               className="h-12 w-12"
             />

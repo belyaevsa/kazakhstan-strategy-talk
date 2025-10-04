@@ -27,7 +27,18 @@ const App = () => (
           {/* Language-based routes */}
           <Route path="/:lang" element={<Index />} />
           <Route path="/:lang/chapter/:chapterId" element={<ChapterPage />} />
-          <Route path="/:lang/:slug" element={<DocumentPage />} />
+          {/* Exclude static assets - only match slugs without file extensions */}
+          <Route
+            path="/:lang/:slug"
+            element={<DocumentPage />}
+            loader={({ params }) => {
+              // Don't match if slug has a file extension
+              if (params.slug?.includes('.')) {
+                throw new Response('Not Found', { status: 404 });
+              }
+              return null;
+            }}
+          />
           {/* Legacy routes for backwards compatibility */}
           <Route path="/chapter/:chapterId" element={<ChapterPage />} />
           <Route path="/document/:slug" element={<DocumentPage />} />
