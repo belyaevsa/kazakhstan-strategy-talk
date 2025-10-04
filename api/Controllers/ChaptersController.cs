@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using KazakhstanStrategyApi.Data;
 using KazakhstanStrategyApi.DTOs;
 using KazakhstanStrategyApi.Models;
+using KazakhstanStrategyApi.Services;
 
 namespace KazakhstanStrategyApi.Controllers;
 
@@ -12,15 +13,26 @@ namespace KazakhstanStrategyApi.Controllers;
 public class ChaptersController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly ICacheService _cache;
 
-    public ChaptersController(AppDbContext context)
+    public ChaptersController(AppDbContext context, ICacheService cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ChapterDTO>>> GetAllChapters([FromQuery] bool includeDrafts = false)
     {
+        // Use different cache key for drafts vs non-drafts
+        var cacheKey = includeDrafts ? $"{CacheKeys.AllChapters}:drafts" : CacheKeys.AllChapters;
+
+        var cachedChapters = _cache.Get<List<ChapterDTO>>(cacheKey);
+        if (cachedChapters != null)
+        {
+            return Ok(cachedChapters);
+        }
+
         var query = _context.Chapters
             .Include(c => c.Pages)
                 .ThenInclude(p => p.UpdatedByProfile)
@@ -63,6 +75,7 @@ public class ChaptersController : ControllerBase
                 }).ToList()
         }).ToList();
 
+        _cache.Set(cacheKey, chapterDTOs);
         return Ok(chapterDTOs);
     }
 
@@ -123,6 +136,9 @@ public class ChaptersController : ControllerBase
         _context.Chapters.Add(chapter);
         await _context.SaveChangesAsync();
 
+        // Invalidate chapters cache
+        _cache.RemoveByPattern(CacheKeys.AllChapters);
+
         var chapterDTO = new ChapterDTO
         {
             Id = chapter.Id,
@@ -160,6 +176,10 @@ public class ChaptersController : ControllerBase
 
         await _context.SaveChangesAsync();
 
+        // Invalidate cache
+        _cache.RemoveByPattern(CacheKeys.AllChapters);
+        _cache.Remove(CacheKeys.Chapter(id));
+
         return NoContent();
     }
 
@@ -194,6 +214,9 @@ public class ChaptersController : ControllerBase
 
         await _context.SaveChangesAsync();
 
+        // Invalidate cache
+        _cache.RemoveByPattern(CacheKeys.AllChapters);
+
         return NoContent();
     }
 
@@ -213,6 +236,17 @@ public class ChaptersController : ControllerBase
         // This will cascade delete all pages and their paragraphs
         _context.Chapters.Remove(chapter);
         await _context.SaveChangesAsync();
+
+        // Invalidate cache
+        _cache.RemoveByPattern(CacheKeys.AllChapters);
+        _cache.Remove(CacheKeys.Chapter(id));
+        // Invalidate all page caches for this chapter
+        foreach (var page in chapter.Pages)
+        {
+            _cache.Remove(CacheKeys.PageById(page.Id));
+            _cache.Remove(CacheKeys.PageBySlug(page.Slug));
+            _cache.Remove(CacheKeys.ParagraphsByPage(page.Id));
+        }
 
         return NoContent();
     }

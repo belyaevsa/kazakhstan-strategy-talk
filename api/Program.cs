@@ -17,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
+builder.Services.AddMemoryCache();
 
 // Database - Use environment variables if available, otherwise fallback to appsettings.json
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
@@ -36,6 +37,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Services
 builder.Services.AddScoped<TokenService>();
+builder.Services.AddSingleton<ICacheService, CacheService>();
 
 // Yandex Object Storage Configuration (S3-compatible)
 var awsAccessKey = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID");

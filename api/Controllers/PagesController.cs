@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using KazakhstanStrategyApi.Data;
 using KazakhstanStrategyApi.DTOs;
 using KazakhstanStrategyApi.Models;
+using KazakhstanStrategyApi.Services;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -14,10 +15,12 @@ namespace KazakhstanStrategyApi.Controllers;
 public class PagesController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly ICacheService _cache;
 
-    public PagesController(AppDbContext context)
+    public PagesController(AppDbContext context, ICacheService cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     private Guid GetCurrentUserId()
@@ -60,6 +63,13 @@ public class PagesController : ControllerBase
     [HttpGet("{slug}")]
     public async Task<ActionResult<PageDTO>> GetPageBySlug(string slug)
     {
+        var cacheKey = CacheKeys.PageBySlug(slug);
+        var cachedPage = _cache.Get<PageDTO>(cacheKey);
+        if (cachedPage != null)
+        {
+            return Ok(cachedPage);
+        }
+
         var page = await _context.Pages
             .Include(p => p.UpdatedByProfile)
             .Where(p => p.Slug == slug)
@@ -83,6 +93,7 @@ public class PagesController : ControllerBase
             return NotFound();
         }
 
+        _cache.Set(cacheKey, page);
         return Ok(page);
     }
 
@@ -101,6 +112,9 @@ public class PagesController : ControllerBase
 
         _context.Pages.Add(page);
         await _context.SaveChangesAsync();
+
+        // Invalidate cache
+        _cache.RemoveByPattern(CacheKeys.AllChapters);
 
         var pageDto = new PageDTO
         {
@@ -208,6 +222,12 @@ public class PagesController : ControllerBase
 
         await _context.SaveChangesAsync();
 
+        // Invalidate cache
+        _cache.RemoveByPattern(CacheKeys.AllChapters);
+        _cache.Remove(CacheKeys.PageById(id));
+        _cache.Remove(CacheKeys.PageBySlug(page.Slug));
+        _cache.Remove(CacheKeys.ParagraphsByPage(id));
+
         return NoContent();
     }
 
@@ -224,6 +244,12 @@ public class PagesController : ControllerBase
 
         _context.Pages.Remove(page);
         await _context.SaveChangesAsync();
+
+        // Invalidate cache
+        _cache.RemoveByPattern(CacheKeys.AllChapters);
+        _cache.Remove(CacheKeys.PageById(id));
+        _cache.Remove(CacheKeys.PageBySlug(page.Slug));
+        _cache.Remove(CacheKeys.ParagraphsByPage(id));
 
         return NoContent();
     }

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using KazakhstanStrategyApi.Data;
 using KazakhstanStrategyApi.DTOs;
 using KazakhstanStrategyApi.Models;
+using KazakhstanStrategyApi.Services;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -14,10 +15,12 @@ namespace KazakhstanStrategyApi.Controllers;
 public class ParagraphsController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly ICacheService _cache;
 
-    public ParagraphsController(AppDbContext context)
+    public ParagraphsController(AppDbContext context, ICacheService cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     private Guid GetCurrentUserId()
@@ -29,6 +32,13 @@ public class ParagraphsController : ControllerBase
     [HttpGet("page/{pageId}")]
     public async Task<ActionResult<IEnumerable<ParagraphDTO>>> GetParagraphsByPage(Guid pageId, [FromQuery] bool includeHidden = false)
     {
+        var cacheKey = includeHidden ? $"{CacheKeys.ParagraphsByPage(pageId)}:hidden" : CacheKeys.ParagraphsByPage(pageId);
+        var cachedParagraphs = _cache.Get<List<ParagraphDTO>>(cacheKey);
+        if (cachedParagraphs != null)
+        {
+            return Ok(cachedParagraphs);
+        }
+
         var query = _context.Paragraphs.Where(p => p.PageId == pageId);
 
         if (!includeHidden)
@@ -66,6 +76,7 @@ public class ParagraphsController : ControllerBase
             });
         }
 
+        _cache.Set(cacheKey, paragraphDTOs);
         return Ok(paragraphDTOs);
     }
 
@@ -123,6 +134,10 @@ public class ParagraphsController : ControllerBase
 
         _context.Paragraphs.Add(paragraph);
         await _context.SaveChangesAsync();
+
+        // Invalidate cache
+        _cache.RemoveByPattern(CacheKeys.ParagraphsByPage(request.PageId));
+        _cache.RemoveByPattern(CacheKeys.AllChapters);
 
         var paragraphDto = new ParagraphDTO
         {
@@ -193,6 +208,12 @@ public class ParagraphsController : ControllerBase
 
         await _context.SaveChangesAsync();
 
+        // Invalidate cache
+        _cache.RemoveByPattern(CacheKeys.ParagraphsByPage(paragraph.PageId));
+        _cache.RemoveByPattern(CacheKeys.AllChapters);
+        _cache.Remove(CacheKeys.PageById(paragraph.PageId));
+        _cache.Remove(CacheKeys.PageBySlug(paragraph.Page.Slug));
+
         return NoContent();
     }
 
@@ -228,6 +249,9 @@ public class ParagraphsController : ControllerBase
 
         await _context.SaveChangesAsync();
 
+        // Invalidate cache
+        _cache.RemoveByPattern(CacheKeys.ParagraphsByPage(paragraph.PageId));
+
         return NoContent();
     }
 
@@ -242,8 +266,14 @@ public class ParagraphsController : ControllerBase
             return NotFound();
         }
 
+        var pageId = paragraph.PageId;
+
         _context.Paragraphs.Remove(paragraph);
         await _context.SaveChangesAsync();
+
+        // Invalidate cache
+        _cache.RemoveByPattern(CacheKeys.ParagraphsByPage(pageId));
+        _cache.RemoveByPattern(CacheKeys.AllChapters);
 
         return NoContent();
     }
