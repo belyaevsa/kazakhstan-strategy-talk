@@ -51,6 +51,7 @@ public class PagesController : ControllerBase
                 OrderIndex = p.OrderIndex,
                 IsDraft = p.IsDraft,
                 ChapterId = p.ChapterId,
+                ViewCount = p.ViewCount,
                 CreatedAt = p.CreatedAt,
                 UpdatedAt = p.UpdatedAt,
                 UpdatedByUsername = p.UpdatedByProfile != null ? p.UpdatedByProfile.Username : null
@@ -67,6 +68,18 @@ public class PagesController : ControllerBase
         var cachedPage = _cache.Get<PageDTO>(cacheKey);
         if (cachedPage != null)
         {
+            // Increment view count asynchronously without blocking the response or invalidating cache
+            _ = Task.Run(async () =>
+            {
+                var pageEntity = await _context.Pages.FirstOrDefaultAsync(p => p.Slug == slug);
+                if (pageEntity != null)
+                {
+                    pageEntity.ViewCount++;
+                    await _context.SaveChangesAsync();
+                    // Note: Cache is NOT invalidated - view count will be slightly stale but cache remains effective
+                }
+            });
+
             return Ok(cachedPage);
         }
 
@@ -82,6 +95,7 @@ public class PagesController : ControllerBase
                 OrderIndex = p.OrderIndex,
                 IsDraft = p.IsDraft,
                 ChapterId = p.ChapterId,
+                ViewCount = p.ViewCount,
                 CreatedAt = p.CreatedAt,
                 UpdatedAt = p.UpdatedAt,
                 UpdatedByUsername = p.UpdatedByProfile != null ? p.UpdatedByProfile.Username : null
@@ -91,6 +105,15 @@ public class PagesController : ControllerBase
         if (page == null)
         {
             return NotFound();
+        }
+
+        // Increment view count
+        var pageToUpdate = await _context.Pages.FirstOrDefaultAsync(p => p.Slug == slug);
+        if (pageToUpdate != null)
+        {
+            pageToUpdate.ViewCount++;
+            await _context.SaveChangesAsync();
+            page.ViewCount = pageToUpdate.ViewCount;
         }
 
         _cache.Set(cacheKey, page);
@@ -125,6 +148,7 @@ public class PagesController : ControllerBase
             OrderIndex = page.OrderIndex,
             IsDraft = page.IsDraft,
             ChapterId = page.ChapterId,
+            ViewCount = page.ViewCount,
             CreatedAt = page.CreatedAt
         };
 

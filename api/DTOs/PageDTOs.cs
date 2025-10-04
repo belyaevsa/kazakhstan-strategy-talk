@@ -11,6 +11,7 @@ public class PageDTO
     public int OrderIndex { get; set; }
     public bool IsDraft { get; set; }
     public Guid ChapterId { get; set; }
+    public int ViewCount { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public string? UpdatedByUsername { get; set; }

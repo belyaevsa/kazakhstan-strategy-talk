@@ -39,7 +39,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Pencil, Save, X, Plus, Trash2, Type, Image, Quote, Code, Share2, GripVertical, List, Link2 } from "lucide-react";
+import { Pencil, Save, X, Plus, Trash2, Type, Image, Quote, Code, Share2, GripVertical, List, Link2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ru, enUS, kk } from "date-fns/locale";
@@ -273,6 +273,53 @@ const DocumentPage = () => {
     queryFn: () => pageService.getBySlug(slug!),
     enabled: !!slug,
   });
+
+  // Update document title and meta tags for SEO
+  useEffect(() => {
+    if (currentPage && chapters) {
+      const chapter = chapters.find(c => c.id === currentPage.chapterId);
+      const siteTitle = t("app.siteTitle");
+      const pageTitle = currentPage.title;
+      const chapterTitle = chapter?.title;
+
+      // Set document title
+      if (chapterTitle) {
+        document.title = `${siteTitle} | ${chapterTitle} | ${pageTitle}`;
+      } else {
+        document.title = `${siteTitle} | ${pageTitle}`;
+      }
+
+      // Update meta description
+      const metaDescription = document.querySelector('meta[name="description"]');
+      if (metaDescription && currentPage.description) {
+        metaDescription.setAttribute('content', currentPage.description);
+      }
+
+      // Update Open Graph meta tags
+      const ogTitle = document.querySelector('meta[property="og:title"]');
+      if (ogTitle) {
+        ogTitle.setAttribute('content', `${siteTitle} | ${chapterTitle || ''} | ${pageTitle}`);
+      }
+
+      const ogDescription = document.querySelector('meta[property="og:description"]');
+      if (ogDescription && currentPage.description) {
+        ogDescription.setAttribute('content', currentPage.description);
+      }
+
+      // Update Twitter Card meta tags
+      const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+      if (twitterTitle) {
+        twitterTitle.setAttribute('content', `${siteTitle} | ${pageTitle}`);
+      }
+
+      const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+      if (twitterDescription && currentPage.description) {
+        twitterDescription.setAttribute('content', currentPage.description);
+      }
+    } else {
+      document.title = t("app.siteTitle");
+    }
+  }, [currentPage, chapters]);
 
   const { data: paragraphs, isLoading: paragraphsLoading } = useQuery({
     queryKey: ["paragraphs", currentPage?.id, isEditor],
@@ -753,14 +800,22 @@ const DocumentPage = () => {
                 {currentPage.description && (
                   <p className="text-lg text-muted-foreground mb-2">{currentPage.description}</p>
                 )}
-                {currentPage.updatedAt && (
-                  <p className="text-sm text-muted-foreground">
-                    {t("misc.lastUpdated")} {format(new Date(currentPage.updatedAt), 'MMMM d, yyyy \'at\' hh:mm a', {
-                      locale: getCurrentLanguage() === 'ru' ? ru : getCurrentLanguage() === 'kk' ? kk : enUS
-                    })}
-                    {currentPage.updatedByUsername && ` ${t("misc.by")} ${currentPage.updatedByUsername}`}
-                  </p>
-                )}
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  {currentPage.viewCount > 0 && (
+                    <p className="flex items-center gap-1">
+                      <Eye className="h-4 w-4 text-gray-400" />
+                      {currentPage.viewCount.toLocaleString()}
+                    </p>
+                  )}
+                  {currentPage.updatedAt && (
+                    <p>
+                      {t("misc.lastUpdated")} {format(new Date(currentPage.updatedAt), 'MMMM d, yyyy \'at\' hh:mm a', {
+                        locale: getCurrentLanguage() === 'ru' ? ru : getCurrentLanguage() === 'kk' ? kk : enUS
+                      })}
+                      {currentPage.updatedByUsername && ` ${t("misc.by")} ${currentPage.updatedByUsername}`}
+                    </p>
+                  )}
+                </div>
               </>
             )}
           </div>

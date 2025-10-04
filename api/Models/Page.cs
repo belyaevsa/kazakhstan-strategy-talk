@@ -23,6 +23,8 @@ public class Page
 
     public bool IsDraft { get; set; } = false;
 
+    public int ViewCount { get; set; } = 0;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public Guid? UpdatedByProfileId { get; set; }

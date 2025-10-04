@@ -35,6 +35,7 @@ export interface Page {
   orderIndex: number;
   isDraft: boolean;
   chapterId: string;
+  viewCount: number;
   createdAt: string;
   updatedAt?: string;
   updatedByUsername?: string;
