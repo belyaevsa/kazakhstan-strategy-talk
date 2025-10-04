@@ -33,7 +33,7 @@ const ImageUploadZone = ({ onUploadComplete, className }: ImageUploadZoneProps) 
     formData.append("file", file);
 
     try {
-      const response = await fetch("https://localhost:7001/api/upload/image", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/upload/image`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${authService.getToken()}`,
