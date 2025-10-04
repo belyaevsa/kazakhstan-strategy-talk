@@ -57,10 +57,15 @@ jobs:
           ENV PATH="\$PATH:/root/.dotnet/tools"
           EOF
 
-          # Run migrations using SDK image
+          # Run migrations using SDK image with host network
           docker run --rm \
+            --network host \
             -v $PWD/api:/app \
-            -e ConnectionStrings__DefaultConnection="Host=$DB_HOST;Port=$DB_PORT;Database=$DB_NAME;Username=$DB_USER;Password=$DB_PASSWORD" \
+            -e DB_HOST="$DB_HOST" \
+            -e DB_PORT="$DB_PORT" \
+            -e DB_NAME="$DB_NAME" \
+            -e DB_USER="$DB_USER" \
+            -e DB_PASSWORD="$DB_PASSWORD" \
             -e ASPNETCORE_ENVIRONMENT=Production \
             -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
             -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
@@ -118,6 +123,10 @@ jobs:
             -e JWT_KEY="$JWT_KEY" \
             -e JWT_ISSUER="$JWT_ISSUER" \
             -e JWT_AUDIENCE="$JWT_AUDIENCE" \
+            -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+            -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+            -e AWS_REGION="$AWS_REGION" \
+            -e AWS_S3_BUCKET="$AWS_S3_BUCKET" \
             -e ASPNETCORE_ENVIRONMENT=Production \
             -e ASPNETCORE_URLS=http://+:8080 \
             ${{ env.IMAGE_TAG }}
