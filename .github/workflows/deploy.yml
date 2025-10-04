@@ -30,6 +30,35 @@ jobs:
 
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
+      - name: Run Database Migrations
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+        run: |
+          set -e
+
+          echo "Running database migrations..."
+
+          # Run migrations in a temporary container
+          docker run --rm \
+            -e ConnectionStrings__DefaultConnection="Host=$DB_HOST;Port=$DB_PORT;Database=$DB_NAME;Username=$DB_USER;Password=$DB_PASSWORD" \
+            -e ASPNETCORE_ENVIRONMENT=Production \
+            -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+            -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+            -e AWS_REGION="$AWS_REGION" \
+            -e AWS_S3_BUCKET="$AWS_S3_BUCKET" \
+            ${{ env.IMAGE_TAG }} \
+            dotnet ef database update --project /app
+
+          echo "✓ Migrations completed successfully!"
+
       - name: Blue-Green Deployment
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
@@ -40,6 +69,10 @@ jobs:
           JWT_KEY: ${{ secrets.JWT_KEY }}
           JWT_ISSUER: ${{ secrets.JWT_ISSUER }}
           JWT_AUDIENCE: ${{ secrets.JWT_AUDIENCE }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
         run: |
           set -e
 
@@ -70,6 +103,10 @@ jobs:
             -e JWT_KEY="$JWT_KEY" \
             -e JWT_ISSUER="$JWT_ISSUER" \
             -e JWT_AUDIENCE="$JWT_AUDIENCE" \
+            -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+            -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+            -e AWS_REGION="$AWS_REGION" \
+            -e AWS_S3_BUCKET="$AWS_S3_BUCKET" \
             -e ASPNETCORE_ENVIRONMENT=Production \
             -e ASPNETCORE_URLS=http://+:8080 \
             ${{ env.IMAGE_TAG }}
