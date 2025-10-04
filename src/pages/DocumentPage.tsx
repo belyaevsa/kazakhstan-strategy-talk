@@ -39,7 +39,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Pencil, Save, X, Plus, Trash2, Type, Image, Quote, Code, Share2, GripVertical, List, Link2, Eye, Table, Minus, Info } from "lucide-react";
+import { Pencil, Save, X, Plus, Trash2, Type, Image, Quote, Code, Share2, GripVertical, List, Link2, Eye, Table, Minus, Info, AlertTriangle, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ru, enUS, kk } from "date-fns/locale";
@@ -249,15 +249,41 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps
         ) : paragraph.type === "Divider" ? (
           <hr className="my-0 border-t-2 border-border" />
         ) : paragraph.type === "Callout" ? (
-          <div className="p-4 my-4 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/30 rounded-r">
-            <AutoResizeTextarea
-              ref={ref}
-              value={paragraph.content}
-              onChange={(e) => onContentChange(e.target.value)}
-              onEnterKey={onEnterKey}
-              placeholder="Enter callout content..."
-              className="w-full border-0 bg-transparent px-0 py-0 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
-            />
+          <div className="space-y-3">
+            <select
+              value={paragraph.caption || "info"}
+              onChange={(e) => onCaptionChange?.(e.target.value)}
+              className="w-full border border-border rounded-md px-3 py-2 bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+            >
+              <option value="info">Info (Blue)</option>
+              <option value="warning">Warning (Yellow)</option>
+              <option value="success">Success (Green)</option>
+              <option value="error">Error (Red)</option>
+            </select>
+            <div className={`p-4 border-l-4 rounded-r flex gap-3 ${
+              paragraph.caption === "warning" ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30" :
+              paragraph.caption === "success" ? "border-green-500 bg-green-50 dark:bg-green-950/30" :
+              paragraph.caption === "error" ? "border-red-500 bg-red-50 dark:bg-red-950/30" :
+              "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+            }`}>
+              {paragraph.caption === "warning" ? (
+                <AlertTriangle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+              ) : paragraph.caption === "success" ? (
+                <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+              ) : paragraph.caption === "error" ? (
+                <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+              ) : (
+                <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+              )}
+              <AutoResizeTextarea
+                ref={ref}
+                value={paragraph.content}
+                onChange={(e) => onContentChange(e.target.value)}
+                onEnterKey={onEnterKey}
+                placeholder="Enter callout content..."
+                className="w-full border-0 bg-transparent px-0 py-0 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 flex-1"
+              />
+            </div>
           </div>
         ) : (
           <AutoResizeTextarea

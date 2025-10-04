@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MessageSquare, Link2, ExternalLink, Upload, Maximize2, FileText } from "lucide-react";
+import { MessageSquare, Link2, ExternalLink, Upload, Maximize2, FileText, Info, AlertTriangle, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { authService } from "@/services/authService";
@@ -262,9 +262,20 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
       case 'Divider':
         return <hr className="my-0 border-t-2 border-border" />;
       case 'Callout':
+        const variant = paragraph.caption || "info";
+        const variantStyles = {
+          info: { border: "border-blue-500", bg: "bg-blue-50 dark:bg-blue-950/30", icon: Info, iconColor: "text-blue-500" },
+          warning: { border: "border-yellow-500", bg: "bg-yellow-50 dark:bg-yellow-950/30", icon: AlertTriangle, iconColor: "text-yellow-500" },
+          success: { border: "border-green-500", bg: "bg-green-50 dark:bg-green-950/30", icon: CheckCircle, iconColor: "text-green-500" },
+          error: { border: "border-red-500", bg: "bg-red-50 dark:bg-red-950/30", icon: AlertCircle, iconColor: "text-red-500" },
+        };
+        const style = variantStyles[variant as keyof typeof variantStyles] || variantStyles.info;
+        const IconComponent = style.icon;
+
         return (
-          <div className="p-4 my-4 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/30 rounded-r">
-            <p className="text-foreground leading-relaxed">{parseMarkdownLinks(paragraph.content)}</p>
+          <div className={`p-4 my-4 border-l-4 ${style.border} ${style.bg} rounded-r flex gap-3`}>
+            <IconComponent className={`h-5 w-5 ${style.iconColor} flex-shrink-0 mt-0.5`} />
+            <p className="text-foreground leading-relaxed flex-1">{parseMarkdownLinks(paragraph.content)}</p>
           </div>
         );
       default:
