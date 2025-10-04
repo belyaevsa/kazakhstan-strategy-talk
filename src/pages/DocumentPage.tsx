@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, forwardRef, createRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -52,7 +52,8 @@ interface SortableParagraphProps {
   onTypeChange: (type: string) => void;
 }
 
-const SortableParagraph = ({ paragraph, index, onContentChange, onDelete, onEnterKey, onTypeChange }: SortableParagraphProps) => {
+const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps>(
+  ({ paragraph, index, onContentChange, onDelete, onEnterKey, onTypeChange }, ref) => {
   const {
     attributes,
     listeners,
@@ -95,6 +96,7 @@ const SortableParagraph = ({ paragraph, index, onContentChange, onDelete, onEnte
           </DropdownMenu>
         </div>
         <AutoResizeTextarea
+          ref={ref}
           value={paragraph.content}
           onChange={(e) => onContentChange(e.target.value)}
           onEnterKey={onEnterKey}
@@ -112,7 +114,9 @@ const SortableParagraph = ({ paragraph, index, onContentChange, onDelete, onEnte
       </Button>
     </div>
   );
-};
+});
+
+SortableParagraph.displayName = "SortableParagraph";
 
 const DocumentPage = () => {
   const { slug } = useParams();
@@ -131,6 +135,7 @@ const DocumentPage = () => {
   const [editingChapter, setEditingChapter] = useState<Chapter | undefined>();
   const [editingPage, setEditingPage] = useState<Page | undefined>();
   const [newPageChapterId, setNewPageChapterId] = useState<string | undefined>();
+  const paragraphRefs = useRef<Map<string, React.RefObject<HTMLTextAreaElement>>>(new Map());
   const isEditor = authService.isEditor();
 
   const sensors = useSensors(
@@ -612,44 +617,59 @@ const DocumentPage = () => {
                   items={editedParagraphs.map(p => p.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {editedParagraphs.map((paragraph, index) => (
-                    <SortableParagraph
-                      key={paragraph.id}
-                      paragraph={paragraph}
-                      index={index}
-                      onContentChange={(content) => {
-                        const updated = [...editedParagraphs];
-                        updated[index].content = content;
-                        setEditedParagraphs(updated);
-                      }}
-                      onDelete={() => {
-                        deleteParagraphMutation.mutate(paragraph.id);
-                        setEditedParagraphs(editedParagraphs.filter(p => p.id !== paragraph.id));
-                      }}
-                      onEnterKey={() => {
-                        addParagraphMutation.mutate("Text", {
-                          onSuccess: (newPara: any) => {
-                            // Reorder: insert new paragraph after current one
-                            const updated = [...editedParagraphs];
-                            updated.splice(index + 1, 0, {
-                              id: newPara.id,
-                              content: "",
-                              orderIndex: paragraph.orderIndex + 1,
-                              type: "Text"
-                            });
-                            // Update order indices for subsequent paragraphs
-                            updated.forEach((p, i) => p.orderIndex = i);
-                            setEditedParagraphs(updated);
-                          }
-                        });
-                      }}
-                      onTypeChange={(type) => {
-                        const updated = [...editedParagraphs];
-                        updated[index].type = type;
-                        setEditedParagraphs(updated);
-                      }}
-                    />
-                  ))}
+                  {editedParagraphs.map((paragraph, index) => {
+                    // Create or get ref for this paragraph
+                    if (!paragraphRefs.current.has(paragraph.id)) {
+                      paragraphRefs.current.set(paragraph.id, createRef<HTMLTextAreaElement>());
+                    }
+                    const ref = paragraphRefs.current.get(paragraph.id)!;
+
+                    return (
+                      <SortableParagraph
+                        key={paragraph.id}
+                        ref={ref}
+                        paragraph={paragraph}
+                        index={index}
+                        onContentChange={(content) => {
+                          const updated = [...editedParagraphs];
+                          updated[index].content = content;
+                          setEditedParagraphs(updated);
+                        }}
+                        onDelete={() => {
+                          deleteParagraphMutation.mutate(paragraph.id);
+                          setEditedParagraphs(editedParagraphs.filter(p => p.id !== paragraph.id));
+                        }}
+                        onEnterKey={() => {
+                          addParagraphMutation.mutate("Text", {
+                            onSuccess: (newPara: any) => {
+                              // Reorder: insert new paragraph after current one
+                              const updated = [...editedParagraphs];
+                              updated.splice(index + 1, 0, {
+                                id: newPara.id,
+                                content: "",
+                                orderIndex: paragraph.orderIndex + 1,
+                                type: "Text"
+                              });
+                              // Update order indices for subsequent paragraphs
+                              updated.forEach((p, i) => p.orderIndex = i);
+                              setEditedParagraphs(updated);
+
+                              // Focus on the new paragraph
+                              setTimeout(() => {
+                                const newRef = paragraphRefs.current.get(newPara.id);
+                                newRef?.current?.focus();
+                              }, 100);
+                            }
+                          });
+                        }}
+                        onTypeChange={(type) => {
+                          const updated = [...editedParagraphs];
+                          updated[index].type = type;
+                          setEditedParagraphs(updated);
+                        }}
+                      />
+                    );
+                  })}
                 </SortableContext>
               </DndContext>
               <DropdownMenu>

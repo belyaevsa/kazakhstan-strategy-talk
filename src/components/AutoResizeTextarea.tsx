@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { cn } from "@/lib/utils";
 
 interface AutoResizeTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -6,8 +6,11 @@ interface AutoResizeTextareaProps extends React.TextareaHTMLAttributes<HTMLTextA
   onEnterKey?: () => void;
 }
 
-const AutoResizeTextarea = ({ value, className, onEnterKey, ...props }: AutoResizeTextareaProps) => {
+const AutoResizeTextarea = forwardRef<HTMLTextAreaElement, AutoResizeTextareaProps>(
+  ({ value, className, onEnterKey, ...props }, ref) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useImperativeHandle(ref, () => textareaRef.current!);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -36,6 +39,8 @@ const AutoResizeTextarea = ({ value, className, onEnterKey, ...props }: AutoResi
       onKeyDown={handleKeyDown}
     />
   );
-};
+});
+
+AutoResizeTextarea.displayName = "AutoResizeTextarea";
 
 export default AutoResizeTextarea;
