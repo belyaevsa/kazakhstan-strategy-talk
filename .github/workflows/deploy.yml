@@ -96,7 +96,7 @@ jobs:
 
           echo "✓ Migrations completed successfully!"
 
-      - name: Blue-Green Deployment
+      - name: Deploy New Container
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_PORT: ${{ secrets.DB_PORT }}
@@ -113,21 +113,30 @@ jobs:
         run: |
           set -e
 
-          # Determine container names for blue-green deployment
-          CURRENT_CONTAINER=$(docker ps --filter "name=${{ env.CONTAINER_NAME }}" --format "{{.Names}}" | head -n 1)
-
-          if [[ "$CURRENT_CONTAINER" == "${{ env.CONTAINER_NAME }}-blue" ]]; then
-            NEW_CONTAINER="${{ env.CONTAINER_NAME }}-green"
-            OLD_CONTAINER="${{ env.CONTAINER_NAME }}-blue"
-          else
-            NEW_CONTAINER="${{ env.CONTAINER_NAME }}-blue"
-            OLD_CONTAINER="${{ env.CONTAINER_NAME }}-green"
-          fi
-
-          echo "Current container: $CURRENT_CONTAINER"
+          # Create unique container name with git SHA
+          NEW_CONTAINER="${{ env.CONTAINER_NAME }}-${GITHUB_SHA::7}"
+          echo "NEW_CONTAINER=$NEW_CONTAINER" >> $GITHUB_ENV
           echo "New container: $NEW_CONTAINER"
 
+          # Find currently running container
+          CURRENT_CONTAINER=$(docker ps --filter "name=${{ env.CONTAINER_NAME }}" --format "{{.Names}}" | head -n 1)
+
+          if [ ! -z "$CURRENT_CONTAINER" ]; then
+            echo "Current running container: $CURRENT_CONTAINER"
+            OLD_IMAGE=$(docker inspect --format='{{.Image}}' $CURRENT_CONTAINER)
+            echo "OLD_IMAGE=$OLD_IMAGE" >> $GITHUB_ENV
+            echo "OLD_CONTAINER=$CURRENT_CONTAINER" >> $GITHUB_ENV
+            echo "Saved old container info for potential rollback"
+
+            # Stop old container to free up port 8080
+            echo "Stopping old container to free up port..."
+            docker stop $CURRENT_CONTAINER || true
+          else
+            echo "No currently running container found (first deployment)"
+          fi
+
           # Start new container
+          echo "Starting new container: $NEW_CONTAINER"
           docker run -d \
             --name $NEW_CONTAINER \
             --restart unless-stopped \
@@ -148,19 +157,11 @@ jobs:
             -e ASPNETCORE_URLS=http://+:8080 \
             ${{ env.IMAGE_TAG }}
 
-          echo "Started new container: $NEW_CONTAINER"
+          echo "✓ Started new container: $NEW_CONTAINER"
 
       - name: Health Check
         run: |
           set -e
-
-          # Determine new container name
-          CURRENT_CONTAINER=$(docker ps --filter "name=${{ env.CONTAINER_NAME }}" --format "{{.Names}}" | head -n 1)
-          if [[ "$CURRENT_CONTAINER" == "${{ env.CONTAINER_NAME }}-blue" ]]; then
-            NEW_CONTAINER="${{ env.CONTAINER_NAME }}-green"
-          else
-            NEW_CONTAINER="${{ env.CONTAINER_NAME }}-blue"
-          fi
 
           echo "Waiting for container to be healthy..."
           sleep 10
@@ -174,9 +175,8 @@ jobs:
 
             if [ $i -eq 30 ]; then
               echo "✗ Health check failed after 30 attempts"
-              docker logs $NEW_CONTAINER
-              docker stop $NEW_CONTAINER
-              docker rm $NEW_CONTAINER
+              echo "Container logs:"
+              docker logs ${{ env.NEW_CONTAINER }}
               exit 1
             fi
 
@@ -184,26 +184,64 @@ jobs:
             sleep 2
           done
 
-      - name: Switch Traffic and Cleanup
+      - name: Rollback on Failure
+        if: failure()
+        run: |
+          echo "Health check failed, rolling back..."
+
+          # Stop and remove failed new container
+          if [ ! -z "${{ env.NEW_CONTAINER }}" ]; then
+            echo "Removing failed container: ${{ env.NEW_CONTAINER }}"
+            docker stop ${{ env.NEW_CONTAINER }} || true
+            docker rm ${{ env.NEW_CONTAINER }} || true
+          fi
+
+          # Restart old container if it exists
+          if [ ! -z "${{ env.OLD_CONTAINER }}" ] && [ ! -z "${{ env.OLD_IMAGE }}" ]; then
+            echo "Restarting old container: ${{ env.OLD_CONTAINER }}"
+            docker start ${{ env.OLD_CONTAINER }} || {
+              echo "Failed to restart old container, recreating from image..."
+              docker run -d \
+                --name ${{ env.OLD_CONTAINER }} \
+                --restart unless-stopped \
+                -p ${{ env.PORT }}:8080 \
+                -e DB_HOST="${{ secrets.DB_HOST }}" \
+                -e DB_PORT="${{ secrets.DB_PORT }}" \
+                -e DB_NAME="${{ secrets.DB_NAME }}" \
+                -e DB_USER="${{ secrets.DB_USER }}" \
+                -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+                -e JWT_KEY="${{ secrets.JWT_KEY }}" \
+                -e JWT_ISSUER="${{ secrets.JWT_ISSUER }}" \
+                -e JWT_AUDIENCE="${{ secrets.JWT_AUDIENCE }}" \
+                -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+                -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+                -e AWS_REGION="${{ secrets.AWS_REGION }}" \
+                -e AWS_S3_BUCKET="${{ secrets.AWS_S3_BUCKET }}" \
+                -e ASPNETCORE_ENVIRONMENT=Production \
+                -e ASPNETCORE_URLS=http://+:8080 \
+                ${{ env.OLD_IMAGE }}
+            }
+            echo "✓ Rollback completed - old container is running"
+          else
+            echo "⚠ No old container to rollback to"
+          fi
+
+      - name: Cleanup Old Containers
         if: success()
         run: |
           set -e
 
-          # Determine container names
-          CURRENT_CONTAINER=$(docker ps --filter "name=${{ env.CONTAINER_NAME }}" --format "{{.Names}}" | head -n 1)
-
-          if [[ "$CURRENT_CONTAINER" == "${{ env.CONTAINER_NAME }}-blue" ]]; then
-            OLD_CONTAINER="${{ env.CONTAINER_NAME }}-green"
-          else
-            OLD_CONTAINER="${{ env.CONTAINER_NAME }}-blue"
+          # Remove old container if it exists
+          if [ ! -z "${{ env.OLD_CONTAINER }}" ]; then
+            echo "Removing old container: ${{ env.OLD_CONTAINER }}"
+            docker rm ${{ env.OLD_CONTAINER }} || true
           fi
 
-          # Stop and remove old container
-          if [ ! -z "$OLD_CONTAINER" ] && docker ps -a --filter "name=$OLD_CONTAINER" --format "{{.Names}}" | grep -q "$OLD_CONTAINER"; then
-            echo "Stopping old container: $OLD_CONTAINER"
-            docker stop $OLD_CONTAINER || true
-            docker rm $OLD_CONTAINER || true
-          fi
+          # Clean up any other old containers (keep only the current one)
+          echo "Cleaning up old containers..."
+          docker ps -a --filter "name=${{ env.CONTAINER_NAME }}" --format "{{.Names}}" | \
+            grep -v "${{ env.NEW_CONTAINER }}" | \
+            xargs -r docker rm -f || true
 
           # Clean up old images (keep last 3)
           echo "Cleaning up old images..."
@@ -216,7 +254,7 @@ jobs:
           docker image prune -f
 
           echo "✓ Deployment completed successfully!"
-          echo "Active containers:"
+          echo "Active container:"
           docker ps --filter "name=${{ env.CONTAINER_NAME }}"
 
       - name: Final Cleanup
