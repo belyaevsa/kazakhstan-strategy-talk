@@ -273,7 +273,7 @@ const ChapterPage = () => {
 
   const handleEditMode = () => {
     if (!isEditor) {
-      toast.error("Please sign in to edit content");
+      toast.error(t("editor.signInToEdit"));
       navigate("/auth");
       return;
     }
@@ -419,14 +419,10 @@ const ChapterPage = () => {
                     {t("comments.cancel")}
                   </Button>
                 </>
-              ) : isEditor ? (
+              ) : isEditor && (
                 <Button onClick={handleEditMode} variant="outline" size="sm">
                   <Pencil className="h-4 w-4 mr-1" />
                   {t("chapter.editChapter")}
-                </Button>
-              ) : (
-                <Button onClick={() => navigate("/auth")} variant="outline" size="sm">
-                  {t("editor.signInToEdit")}
                 </Button>
               )}
             </div>

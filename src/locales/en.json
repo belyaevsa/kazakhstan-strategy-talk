@@ -215,5 +215,12 @@
     "aboutPara2": "Each paragraph is open for commentary, allowing readers to provide targeted feedback, share expertise, and engage in constructive dialogue. Your participation helps refine and strengthen the strategic vision outlined in this document.",
     "readyToParticipate": "You're signed in and ready to participate!",
     "joinDiscussion": "Sign in to join the discussion and share your insights."
+  },
+  "cookieConsent": {
+    "title": "Cookie & Analytics Notice",
+    "description": "We use cookies and analytics to improve your experience",
+    "message": "This website uses cookies to enhance your browsing experience and collects analytics data to help us understand how visitors interact with our site. Your privacy is important to us.",
+    "accept": "Accept",
+    "decline": "Decline"
   }
 }

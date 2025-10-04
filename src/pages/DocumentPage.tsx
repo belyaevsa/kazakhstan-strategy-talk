@@ -576,7 +576,7 @@ const DocumentPage = () => {
 
   const handleEditMode = () => {
     if (!isEditor) {
-      toast.error("Please sign in to edit content");
+      toast.error(t("editor.signInToEdit"));
       navigate("/auth");
       return;
     }
@@ -894,14 +894,10 @@ const DocumentPage = () => {
                   {t("comments.cancel")}
                 </Button>
               </>
-            ) : isEditor ? (
+            ) : isEditor && (
               <Button onClick={handleEditMode} variant="outline" size="sm">
                 <Pencil className="h-4 w-4 mr-1" />
                 Edit
-              </Button>
-            ) : (
-              <Button onClick={() => navigate("/auth")} variant="outline" size="sm">
-                Sign in to Edit
               </Button>
             )}
           </div>
