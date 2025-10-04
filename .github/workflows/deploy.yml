@@ -218,3 +218,19 @@ jobs:
           echo "✓ Deployment completed successfully!"
           echo "Active containers:"
           docker ps --filter "name=${{ env.CONTAINER_NAME }}"
+
+      - name: Final Cleanup
+        if: always()
+        run: |
+          echo "Running final cleanup..."
+          # Clean up any root-owned files
+          docker run --rm \
+            -v $PWD:/workspace \
+            -w /workspace \
+            alpine:latest \
+            sh -c "rm -rf api/bin api/obj || true"
+
+          # Clean up migration runner image if it exists
+          docker rmi migration-runner:latest 2>/dev/null || true
+
+          echo "✓ Cleanup completed!"
