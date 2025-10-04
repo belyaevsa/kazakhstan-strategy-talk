@@ -46,17 +46,31 @@ jobs:
 
           echo "Running database migrations..."
 
-          # Run migrations in a temporary container
+          # Build temporary SDK image for migrations
+          docker build -f - -t migration-runner:latest . <<EOF
+          FROM mcr.microsoft.com/dotnet/sdk:9.0
+          WORKDIR /app
+          COPY api/*.csproj ./
+          RUN dotnet restore
+          COPY api/ ./
+          RUN dotnet tool install --global dotnet-ef
+          ENV PATH="\$PATH:/root/.dotnet/tools"
+          EOF
+
+          # Run migrations using SDK image
           docker run --rm \
-            --entrypoint dotnet \
+            -v $PWD/api:/app \
             -e ConnectionStrings__DefaultConnection="Host=$DB_HOST;Port=$DB_PORT;Database=$DB_NAME;Username=$DB_USER;Password=$DB_PASSWORD" \
             -e ASPNETCORE_ENVIRONMENT=Production \
             -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
             -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
             -e AWS_REGION="$AWS_REGION" \
             -e AWS_S3_BUCKET="$AWS_S3_BUCKET" \
-            ${{ env.IMAGE_TAG }} \
-            ef database update
+            migration-runner:latest \
+            dotnet ef database update
+
+          # Clean up migration image
+          docker rmi migration-runner:latest
 
           echo "✓ Migrations completed successfully!"
 
