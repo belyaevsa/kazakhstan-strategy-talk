@@ -1,0 +1,37 @@
+# Node
+node_modules
+npm-debug.log
+dist
+.vite
+
+# .NET
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+**/*.userosscache
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Misc
+*.md
+.DS_Store
