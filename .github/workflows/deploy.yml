@@ -19,6 +19,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Clean up previous build artifacts
+        run: |
+          echo "Cleaning up any root-owned files from previous runs..."
+          docker run --rm \
+            -v $PWD:/workspace \
+            -w /workspace \
+            alpine:latest \
+            sh -c "rm -rf api/bin api/obj || true"
+
       - name: Build Docker image
         env:
           DOCKER_BUILDKIT: 1
@@ -76,6 +85,14 @@ jobs:
 
           # Clean up migration image
           docker rmi migration-runner:latest
+
+          # Clean up root-owned files created by Docker
+          echo "Cleaning up build artifacts..."
+          docker run --rm \
+            -v $PWD:/workspace \
+            -w /workspace \
+            alpine:latest \
+            sh -c "rm -rf api/bin api/obj || true"
 
           echo "✓ Migrations completed successfully!"
 
