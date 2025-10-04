@@ -66,8 +66,8 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
       <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-semibold text-lg hover:text-primary transition-colors">
-            <FileText className="h-6 w-6" />
-            <span>{t('app.title')}</span>
+            <img src="/main-icon.webp" alt="IT Strategy" className="h-6 w-6" />
+          <span>{t('app.title')}</span>
           </Link>
 
           <div className="flex items-center gap-2">

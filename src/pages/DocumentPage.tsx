@@ -39,7 +39,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Pencil, Save, X, Plus, Trash2, Type, Image, Quote, Code, Share2, GripVertical, List, Link2, Eye, Table } from "lucide-react";
+import { Pencil, Save, X, Plus, Trash2, Type, Image, Quote, Code, Share2, GripVertical, List, Link2, Eye, Table, Minus, Info } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ru, enUS, kk } from "date-fns/locale";
@@ -101,28 +101,44 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem onClick={() => { onTypeChange("Text"); setDropdownOpen(false); }}>
-              {t("paragraph.text")}
+              <Type className="h-4 w-4 mr-2" />
+              Text Paragraph
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => { onTypeChange("Header"); setDropdownOpen(false); }}>
-              {t("paragraph.header")}
+              <Type className="h-4 w-4 mr-2" />
+              Header
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => { onTypeChange("Code"); setDropdownOpen(false); }}>
-              {t("paragraph.code")}
+              <Code className="h-4 w-4 mr-2" />
+              Code Block
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => { onTypeChange("Quote"); setDropdownOpen(false); }}>
-              {t("paragraph.quote")}
+              <Quote className="h-4 w-4 mr-2" />
+              Quote
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => { onTypeChange("Image"); setDropdownOpen(false); }}>
-              {t("paragraph.image")}
+              <Image className="h-4 w-4 mr-2" />
+              Image
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => { onTypeChange("List"); setDropdownOpen(false); }}>
-              {t("paragraph.list")}
+              <List className="h-4 w-4 mr-2" />
+              List
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => { onTypeChange("Table"); setDropdownOpen(false); }}>
-              {t("paragraph.table")}
+              <Table className="h-4 w-4 mr-2" />
+              Table
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => { onTypeChange("Link"); setDropdownOpen(false); }}>
-              {t("paragraph.link")}
+              <Link2 className="h-4 w-4 mr-2" />
+              Link
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { onTypeChange("Divider"); setDropdownOpen(false); }}>
+              <Minus className="h-4 w-4 mr-2" />
+              Horizontal Divider
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { onTypeChange("Callout"); setDropdownOpen(false); }}>
+              <Info className="h-4 w-4 mr-2" />
+              Callout Box
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -228,6 +244,19 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps
               onChange={(e) => onCaptionChange?.(e.target.value)}
               placeholder={t("paragraph.linkComment")}
               className="text-sm"
+            />
+          </div>
+        ) : paragraph.type === "Divider" ? (
+          <hr className="my-0 border-t-2 border-border" />
+        ) : paragraph.type === "Callout" ? (
+          <div className="p-4 my-4 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/30 rounded-r">
+            <AutoResizeTextarea
+              ref={ref}
+              value={paragraph.content}
+              onChange={(e) => onContentChange(e.target.value)}
+              onEnterKey={onEnterKey}
+              placeholder="Enter callout content..."
+              className="w-full border-0 bg-transparent px-0 py-0 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
             />
           </div>
         ) : (
@@ -1025,6 +1054,14 @@ const DocumentPage = () => {
                   <DropdownMenuItem onClick={() => addParagraphMutation.mutate("Link")}>
                     <Link2 className="h-4 w-4 mr-2" />
                     Link
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => addParagraphMutation.mutate("Divider")}>
+                    <Minus className="h-4 w-4 mr-2" />
+                    Horizontal Divider
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => addParagraphMutation.mutate("Callout")}>
+                    <Info className="h-4 w-4 mr-2" />
+                    Callout Box
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

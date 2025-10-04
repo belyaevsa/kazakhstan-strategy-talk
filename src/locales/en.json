@@ -101,6 +101,8 @@
     "list": "List",
     "table": "Table",
     "link": "Link",
+    "divider": "Divider",
+    "callout": "Callout",
     "imageCaption": "Image caption (optional)...",
     "linkComment": "Link comment (optional)...",
     "selectPage": "Select page...",

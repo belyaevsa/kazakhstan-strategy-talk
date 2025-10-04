@@ -259,6 +259,14 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
             </a>
           </div>
         );
+      case 'Divider':
+        return <hr className="my-0 border-t-2 border-border" />;
+      case 'Callout':
+        return (
+          <div className="p-4 my-4 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/30 rounded-r">
+            <p className="text-foreground leading-relaxed">{parseMarkdownLinks(paragraph.content)}</p>
+          </div>
+        );
       default:
         return <p className="document-content text-foreground leading-relaxed">{parseMarkdownLinks(paragraph.content)}</p>;
     }
@@ -338,12 +346,15 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
     );
   };
 
+  const isDivider = paragraph.type === 'Divider';
+
   return (
     <div
       id={`paragraph-${paragraph.id}`}
       ref={paragraphRef}
       className={cn(
-        "relative group py-4 px-6 pr-20 rounded-lg transition-all cursor-pointer",
+        "relative group transition-all cursor-pointer",
+        isDivider ? "py-2 px-6 pr-20" : "py-4 px-6 pr-20 rounded-lg",
         isActive && "bg-accent/50 shadow-sm",
         isHovered && !isActive && "bg-muted/50",
         isHighlighted && "bg-primary/20 shadow-lg ring-2 ring-primary/50"
@@ -355,7 +366,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
       {renderContent()}
 
       {/* Share link button - shows on hover, positioned outside left at top */}
-      {isHovered && (
+      {!isDivider && isHovered && (
         <button
           onClick={handleCopyLink}
           onMouseEnter={handleMouseEnter}
@@ -368,7 +379,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
       )}
 
       {/* Comment indicator */}
-      {paragraph.commentCount > 0 && (
+      {!isDivider && paragraph.commentCount > 0 && (
         <div className="absolute right-4 top-4 flex items-center gap-1 bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-medium shadow-md">
           <MessageSquare className="h-3 w-3" />
           {paragraph.commentCount}
@@ -376,7 +387,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
       )}
 
       {/* Hover indicator */}
-      {(isHovered || isActive) && paragraph.commentCount === 0 && (
+      {!isDivider && (isHovered || isActive) && paragraph.commentCount === 0 && (
         <div className="absolute right-4 top-4 flex items-center gap-1 bg-muted-foreground/20 text-foreground px-2 py-1 rounded-full text-xs">
           <MessageSquare className="h-3 w-3" />
         </div>
