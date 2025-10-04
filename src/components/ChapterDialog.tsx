@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { t } from "@/lib/i18n";
 import type { Chapter } from "@/lib/api/types";
 
 interface ChapterDialogProps {
@@ -47,57 +48,57 @@ const ChapterDialog = ({ open, onOpenChange, chapter, onSave, isSaving }: Chapte
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{chapter ? "Edit Chapter" : "New Chapter"}</DialogTitle>
+          <DialogTitle>{chapter ? t("chapter.edit") : t("chapter.new")}</DialogTitle>
           <DialogDescription>
-            {chapter ? "Update chapter information" : "Create a new chapter for organizing pages"}
+            {chapter ? t("chapter.updateInfo") : t("chapter.createNew")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="title">{t("chapter.title")}</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Chapter title"
+              placeholder={t("chapter.chapterTitle")}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">{t("chapter.description")}</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief description of the chapter (optional)"
+              placeholder={t("chapter.chapterDescPlaceholder")}
               rows={3}
             />
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="icon">Icon</Label>
+              <Label htmlFor="icon">{t("chapter.icon")}</Label>
               <a
                 href="https://lucide.dev/icons/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs text-primary hover:underline"
               >
-                Browse icons
+                {t("chapter.browseIcons")}
               </a>
             </div>
             <Input
               id="icon"
               value={icon}
               onChange={(e) => setIcon(e.target.value)}
-              placeholder="Icon name (e.g., BookOpen, FileText)"
+              placeholder={t("chapter.iconPlaceholder")}
             />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("comments.cancel")}
           </Button>
           <Button onClick={handleSave} disabled={!title.trim() || isSaving}>
-            {isSaving ? "Saving..." : "Save"}
+            {isSaving ? t("chapter.saving") : t("comments.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

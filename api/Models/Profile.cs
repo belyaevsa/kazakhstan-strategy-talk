@@ -27,6 +27,9 @@ public class Profile
 
     public DateTime? LastCommentAt { get; set; }
 
+    [MaxLength(10)]
+    public string Language { get; set; } = "ru"; // Default: Russian (ru), also supports: en (English), kk (Kazakh)
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties

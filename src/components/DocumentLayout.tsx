@@ -5,6 +5,8 @@ import { FileText, LogOut, User, ChevronLeft, ChevronRight, Shield } from "lucid
 import { authService } from "@/services/authService";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import LanguageSelector from "@/components/LanguageSelector";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface DocumentLayoutProps {
   children: ReactNode;
@@ -14,6 +16,7 @@ interface DocumentLayoutProps {
 
 const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [userState, setUserState] = useState(authService.getUser());
 
@@ -64,15 +67,15 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-semibold text-lg hover:text-primary transition-colors">
             <FileText className="h-6 w-6" />
-            <span>IT Development Strategy</span>
+            <span>{t('app.title')}</span>
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {isAuthenticated ? (
               <>
                 {isFrozen && !isEditorOrAdmin && user?.frozenUntil && (
                   <div className="flex items-center gap-2 px-3 py-1 bg-red-100 dark:bg-red-950/30 text-red-800 dark:text-red-200 rounded-md text-xs font-medium border border-red-200 dark:border-red-800">
-                    <span>🔒 Frozen until {new Date(user.frozenUntil).toLocaleString()}</span>
+                    <span>🔒 {t('comments.accountFrozen')} {new Date(user.frozenUntil).toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-sm">
@@ -82,18 +85,22 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
                 {isAdmin && (
                   <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
                     <Shield className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Admin</span>
+                    <span className="hidden sm:inline">{t('nav.admin')}</span>
                   </Button>
                 )}
+                <LanguageSelector />
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
                   <LogOut className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Logout</span>
+                  <span className="hidden sm:inline">{t('nav.logout')}</span>
                 </Button>
               </>
             ) : (
-              <Button variant="default" size="sm" onClick={() => navigate("/auth")}>
-                Sign In
-              </Button>
+              <>
+                <LanguageSelector />
+                <Button variant="default" size="sm" onClick={() => navigate("/auth")}>
+                  {t('nav.signIn')}
+                </Button>
+              </>
             )}
           </div>
         </div>

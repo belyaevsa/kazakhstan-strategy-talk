@@ -3,6 +3,7 @@ using System;
 using KazakhstanStrategyApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace KazakhstanStrategyApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251004130238_AddLanguageToProfile")]
+    partial class AddLanguageToProfile
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -55,42 +58,6 @@ namespace KazakhstanStrategyApi.Migrations
                     b.HasIndex("OrderIndex");
 
                     b.ToTable("Chapters");
-                });
-
-            modelBuilder.Entity("KazakhstanStrategyApi.Models.ChapterTranslation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ChapterId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Language")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChapterId", "Language")
-                        .IsUnique();
-
-                    b.ToTable("ChapterTranslations");
                 });
 
             modelBuilder.Entity("KazakhstanStrategyApi.Models.Comment", b =>
@@ -231,42 +198,6 @@ namespace KazakhstanStrategyApi.Migrations
                     b.ToTable("Pages");
                 });
 
-            modelBuilder.Entity("KazakhstanStrategyApi.Models.PageTranslation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Language")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<Guid>("PageId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PageId", "Language")
-                        .IsUnique();
-
-                    b.ToTable("PageTranslations");
-                });
-
             modelBuilder.Entity("KazakhstanStrategyApi.Models.PageVersion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -356,41 +287,6 @@ namespace KazakhstanStrategyApi.Migrations
                     b.HasIndex("PageId", "OrderIndex");
 
                     b.ToTable("Paragraphs");
-                });
-
-            modelBuilder.Entity("KazakhstanStrategyApi.Models.ParagraphTranslation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Caption")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Language")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<Guid>("ParagraphId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ParagraphId", "Language")
-                        .IsUnique();
-
-                    b.ToTable("ParagraphTranslations");
                 });
 
             modelBuilder.Entity("KazakhstanStrategyApi.Models.ParagraphVersion", b =>
@@ -503,17 +399,6 @@ namespace KazakhstanStrategyApi.Migrations
                     b.ToTable("ProfileRoles");
                 });
 
-            modelBuilder.Entity("KazakhstanStrategyApi.Models.ChapterTranslation", b =>
-                {
-                    b.HasOne("KazakhstanStrategyApi.Models.Chapter", "Chapter")
-                        .WithMany()
-                        .HasForeignKey("ChapterId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Chapter");
-                });
-
             modelBuilder.Entity("KazakhstanStrategyApi.Models.Comment", b =>
                 {
                     b.HasOne("KazakhstanStrategyApi.Models.Page", "Page")
@@ -582,17 +467,6 @@ namespace KazakhstanStrategyApi.Migrations
                     b.Navigation("UpdatedByProfile");
                 });
 
-            modelBuilder.Entity("KazakhstanStrategyApi.Models.PageTranslation", b =>
-                {
-                    b.HasOne("KazakhstanStrategyApi.Models.Page", "Page")
-                        .WithMany()
-                        .HasForeignKey("PageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Page");
-                });
-
             modelBuilder.Entity("KazakhstanStrategyApi.Models.PageVersion", b =>
                 {
                     b.HasOne("KazakhstanStrategyApi.Models.Page", "Page")
@@ -627,17 +501,6 @@ namespace KazakhstanStrategyApi.Migrations
                     b.Navigation("Page");
 
                     b.Navigation("UpdatedByProfile");
-                });
-
-            modelBuilder.Entity("KazakhstanStrategyApi.Models.ParagraphTranslation", b =>
-                {
-                    b.HasOne("KazakhstanStrategyApi.Models.Paragraph", "Paragraph")
-                        .WithMany()
-                        .HasForeignKey("ParagraphId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Paragraph");
                 });
 
             modelBuilder.Entity("KazakhstanStrategyApi.Models.ParagraphVersion", b =>

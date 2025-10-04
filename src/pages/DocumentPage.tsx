@@ -41,6 +41,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Pencil, Save, X, Plus, Trash2, Type, Image, Quote, Code, Share2, GripVertical, List, Link2 } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { ru, enUS, kk } from "date-fns/locale";
+import { t, getCurrentLanguage } from "@/lib/i18n";
 import type { Chapter, Page } from "@/lib/api/types";
 import ImageUploadZone from "@/components/ImageUploadZone";
 
@@ -91,27 +94,27 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps
         <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-6 px-2 text-xs min-w-[60px]">
-              {paragraph.type || "Text"}
+              {paragraph.type ? t(`paragraph.${paragraph.type.toLowerCase()}`) : t("paragraph.text")}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem onClick={() => { onTypeChange("Text"); setDropdownOpen(false); }}>
-              Text
+              {t("paragraph.text")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => { onTypeChange("Header"); setDropdownOpen(false); }}>
-              Header
+              {t("paragraph.header")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => { onTypeChange("Code"); setDropdownOpen(false); }}>
-              Code
+              {t("paragraph.code")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => { onTypeChange("Quote"); setDropdownOpen(false); }}>
-              Quote
+              {t("paragraph.quote")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => { onTypeChange("Image"); setDropdownOpen(false); }}>
-              Image
+              {t("paragraph.image")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => { onTypeChange("List"); setDropdownOpen(false); }}>
-              List
+              {t("paragraph.list")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -150,10 +153,10 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps
                       variant="secondary"
                       className="h-8 shadow-md"
                       onClick={() => onContentChange("")}
-                      title="Replace image"
+                      title={t("document.replaceImage")}
                     >
                       <Pencil className="h-3 w-3 mr-1" />
-                      Replace
+                      {t("document.replace")}
                     </Button>
                     <Button
                       size="sm"
@@ -163,24 +166,24 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps
                         onContentChange("");
                         if (onCaptionChange) onCaptionChange("");
                       }}
-                      title="Remove image (doesn't delete from storage)"
+                      title={t("document.removeImageNote")}
                     >
                       <Trash2 className="h-3 w-3 mr-1" />
-                      Remove
+                      {t("document.remove")}
                     </Button>
                   </div>
                 </div>
 
                 {/* Image URL (read-only) */}
                 <div className="text-xs text-muted-foreground truncate bg-muted/50 px-3 py-2 rounded">
-                  <span className="font-medium">URL:</span> {paragraph.content}
+                  <span className="font-medium">{t("document.urlLabel")}</span> {paragraph.content}
                 </div>
 
                 {/* Caption Input */}
                 <Input
                   value={paragraph.caption || ""}
                   onChange={(e) => onCaptionChange?.(e.target.value)}
-                  placeholder="Image caption (optional)..."
+                  placeholder={t("paragraph.imageCaption")}
                   className="text-sm"
                 />
               </div>
@@ -194,8 +197,8 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps
             onEnterKey={paragraph.type === "List" || paragraph.type === "Code" ? undefined : onEnterKey}
             placeholder={
               paragraph.type === "List"
-                ? "Enter list items (Shift+Enter for new line, Enter to finish)"
-                : "Type your content here..."
+                ? t("paragraph.listPlaceholder")
+                : t("paragraph.contentPlaceholder")
             }
             className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors"
           />
@@ -739,14 +742,10 @@ const DocumentPage = () => {
                 )}
                 {currentPage.updatedAt && (
                   <p className="text-sm text-muted-foreground">
-                    Last updated {new Date(currentPage.updatedAt).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
+                    {t("misc.lastUpdated")} {format(new Date(currentPage.updatedAt), 'MMMM d, yyyy \'at\' hh:mm a', {
+                      locale: getCurrentLanguage() === 'ru' ? ru : getCurrentLanguage() === 'kk' ? kk : enUS
                     })}
-                    {currentPage.updatedByUsername && ` by ${currentPage.updatedByUsername}`}
+                    {currentPage.updatedByUsername && ` ${t("misc.by")} ${currentPage.updatedByUsername}`}
                   </p>
                 )}
               </>

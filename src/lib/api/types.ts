@@ -7,6 +7,7 @@ export interface User {
   isBlocked: boolean;
   frozenUntil?: string;
   lastCommentAt?: string;
+  language: string;
 }
 
 export interface AuthResponse {

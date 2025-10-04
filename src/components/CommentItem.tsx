@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ThumbsUp, ThumbsDown, Reply, Send, Trash } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { ru, enUS, kk } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { authService } from "@/services/authService";
+import { t, getCurrentLanguage } from "@/lib/i18n";
 import type { Comment } from "@/lib/api/types";
 
 interface CommentItemProps {
@@ -37,6 +39,16 @@ const CommentItem = ({
   const isAdmin = authService.isAdmin();
   const isDeleted = comment.isDeleted;
 
+  // Get date-fns locale based on current language
+  const getDateLocale = () => {
+    const lang = getCurrentLanguage();
+    switch (lang) {
+      case 'ru': return ru;
+      case 'kk': return kk;
+      default: return enUS;
+    }
+  };
+
   const handleSubmitReply = (e: React.FormEvent) => {
     e.preventDefault();
     if (!replyContent.trim()) return;
@@ -50,16 +62,16 @@ const CommentItem = ({
       <div className="flex items-start gap-3">
         <div className="flex-1 space-y-2">
           {isDeleted ? (
-            <p className="text-sm text-muted-foreground italic">This comment was deleted by an admin</p>
+            <p className="text-sm text-muted-foreground italic">{t("comments.deletedByAdmin")}</p>
           ) : (
             <>
               <div className="flex items-center gap-2">
                 <span className="font-medium text-sm">{comment.user.username}</span>
                 <span className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: getDateLocale() })}
                 </span>
                 {comment.updatedAt && (
-                  <span className="text-xs text-muted-foreground italic">(edited)</span>
+                  <span className="text-xs text-muted-foreground italic">({t("comments.edited")})</span>
                 )}
                 {isAdmin && (
                   <Button
@@ -110,7 +122,7 @@ const CommentItem = ({
                   onClick={() => setShowReplyForm(!showReplyForm)}
                 >
                   <Reply className="h-3 w-3" />
-                  <span className="text-xs">Reply</span>
+                  <span className="text-xs">{t("comments.reply")}</span>
                 </Button>
               )}
             </div>
@@ -120,7 +132,7 @@ const CommentItem = ({
           {showReplyForm && (
             <form onSubmit={handleSubmitReply} className="mt-3 space-y-2">
               <Textarea
-                placeholder="Write a reply..."
+                placeholder={t("comments.writeReply")}
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
                 className="resize-none text-sm"
@@ -134,7 +146,7 @@ const CommentItem = ({
                   disabled={!replyContent.trim() || isReplying}
                 >
                   <Send className="h-3 w-3 mr-1" />
-                  {isReplying ? "Posting..." : "Post Reply"}
+                  {isReplying ? t("comments.posting") : t("comments.postReply")}
                 </Button>
                 <Button
                   type="button"
@@ -145,7 +157,7 @@ const CommentItem = ({
                     setReplyContent("");
                   }}
                 >
-                  Cancel
+                  {t("comments.cancel")}
                 </Button>
               </div>
             </form>

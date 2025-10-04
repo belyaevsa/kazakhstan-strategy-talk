@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { authService } from "@/services/authService";
+import { t } from "@/lib/i18n";
 import type { Chapter } from "@/lib/api/types";
 
 interface DocumentStructureProps {
@@ -53,7 +54,7 @@ const DocumentStructure = ({ chapters, onAddChapter }: DocumentStructureProps) =
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold flex items-center gap-2">
           <BookOpen className="h-4 w-4" />
-          Document Structure
+          {t("nav.documentStructure")}
         </h3>
         {isEditor && onAddChapter && (
           <Button
@@ -61,7 +62,7 @@ const DocumentStructure = ({ chapters, onAddChapter }: DocumentStructureProps) =
             variant="ghost"
             className="h-7 w-7 p-0"
             onClick={onAddChapter}
-            title="Add chapter"
+            title={t("editor.addChapter")}
           >
             <Plus className="h-4 w-4" />
           </Button>
@@ -93,7 +94,7 @@ const DocumentStructure = ({ chapters, onAddChapter }: DocumentStructureProps) =
                     <span className="text-sm font-medium truncate">{stripMarkdownLinks(chapter.title)}</span>
                     {isEditor && chapter.isDraft && (
                       <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded ml-auto">
-                        Draft
+                        {t("editor.draft")}
                       </span>
                     )}
                   </div>
@@ -104,7 +105,7 @@ const DocumentStructure = ({ chapters, onAddChapter }: DocumentStructureProps) =
                       size="sm"
                       variant="ghost"
                       className="h-7 w-7 p-0"
-                      title="Manage chapter"
+                      title={t("editor.manageChapter")}
                     >
                       <Settings className="h-3 w-3" />
                     </Button>
@@ -130,7 +131,7 @@ const DocumentStructure = ({ chapters, onAddChapter }: DocumentStructureProps) =
                         <span className="flex-1 truncate">{stripMarkdownLinks(page.title)}</span>
                         {isEditor && page.isDraft && (
                           <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded shrink-0">
-                            Draft
+                            {t("editor.draft")}
                           </span>
                         )}
                       </Link>

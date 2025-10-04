@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using KazakhstanStrategyApi.Data;
@@ -62,7 +63,8 @@ public class AuthController : ControllerBase
                 Roles = new List<string> { "Viewer" },
                 IsBlocked = false,
                 FrozenUntil = null,
-                LastCommentAt = null
+                LastCommentAt = null,
+                Language = user.Language
             }
         });
     }
@@ -101,7 +103,8 @@ public class AuthController : ControllerBase
                 Roles = roles,
                 IsBlocked = user.IsBlocked,
                 FrozenUntil = user.FrozenUntil,
-                LastCommentAt = user.LastCommentAt
+                LastCommentAt = user.LastCommentAt,
+                Language = user.Language
             }
         });
     }
@@ -137,7 +140,32 @@ public class AuthController : ControllerBase
             Roles = roles,
             IsBlocked = user.IsBlocked,
             FrozenUntil = user.FrozenUntil,
-            LastCommentAt = user.LastCommentAt
+            LastCommentAt = user.LastCommentAt,
+            Language = user.Language
         });
+    }
+
+    [HttpPut("language")]
+    [Authorize]
+    public async Task<IActionResult> UpdateLanguage(UpdateLanguageRequest request)
+    {
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+
+        var user = await _context.Profiles.FindAsync(Guid.Parse(userId));
+
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        user.Language = request.Language;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
     }
 }

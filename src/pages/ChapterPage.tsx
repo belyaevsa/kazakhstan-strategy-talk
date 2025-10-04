@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Pencil, Save, X, Plus, Trash2, GripVertical, Eye, EyeOff, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { t } from "@/lib/i18n";
 import type { Chapter, Page } from "@/lib/api/types";
 
 interface SortablePageItemProps {
@@ -75,7 +76,7 @@ const SortablePageItem = ({ page, index, onToggleDraft, onDelete }: SortablePage
           <h3 className="font-medium truncate">{page.title}</h3>
           {page.isDraft && (
             <span className="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800">
-              Draft
+              {t("editor.draft")}
             </span>
           )}
         </div>
@@ -90,7 +91,7 @@ const SortablePageItem = ({ page, index, onToggleDraft, onDelete }: SortablePage
           <Button
             size="sm"
             variant="ghost"
-            title="View page"
+            title={t("chapter.viewPage")}
           >
             <ExternalLink className="h-4 w-4" />
           </Button>
@@ -99,17 +100,17 @@ const SortablePageItem = ({ page, index, onToggleDraft, onDelete }: SortablePage
           onClick={onToggleDraft}
           size="sm"
           variant={page.isDraft ? "default" : "outline"}
-          title={page.isDraft ? "Publish page" : "Hide page"}
+          title={page.isDraft ? t("chapter.publishPage") : t("chapter.hidePage")}
         >
           {page.isDraft ? (
             <>
               <Eye className="h-4 w-4 mr-1" />
-              Publish
+              {t("chapter.publish")}
             </>
           ) : (
             <>
               <EyeOff className="h-4 w-4 mr-1" />
-              Hide
+              {t("chapter.hide")}
             </>
           )}
         </Button>
@@ -118,7 +119,7 @@ const SortablePageItem = ({ page, index, onToggleDraft, onDelete }: SortablePage
           size="sm"
           variant="ghost"
           className="text-destructive hover:text-destructive"
-          title="Delete page"
+          title={t("chapter.deletePage")}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -178,10 +179,10 @@ const ChapterPage = () => {
       await queryClient.invalidateQueries({ queryKey: ["chapters"] });
       await queryClient.refetchQueries({ queryKey: ["chapters"] });
       setIsEditMode(false);
-      toast.success("Chapter saved successfully!");
+      toast.success(t("chapter.chapterSaved"));
     },
     onError: (error: any) => {
-      toast.error("Failed to save chapter: " + error.message);
+      toast.error(t("chapter.chapterSaveFailed") + ": " + error.message);
     },
   });
 
@@ -189,10 +190,10 @@ const ChapterPage = () => {
     mutationFn: (pageId: string) => pageService.delete(pageId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chapters"] });
-      toast.success("Page deleted!");
+      toast.success(t("chapter.pageDeleted"));
     },
     onError: (error: any) => {
-      toast.error("Failed to delete page: " + error.message);
+      toast.error(t("chapter.pageDeleteFailed") + ": " + error.message);
     },
   });
 
@@ -202,10 +203,10 @@ const ChapterPage = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chapters"] });
-      toast.success("Page updated!");
+      toast.success(t("chapter.pageUpdated"));
     },
     onError: (error: any) => {
-      toast.error("Failed to update page: " + error.message);
+      toast.error(t("chapter.pageUpdateFailed") + ": " + error.message);
     },
   });
 
@@ -220,10 +221,10 @@ const ChapterPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chapters"] });
       setPageDialogOpen(false);
-      toast.success("Page created!");
+      toast.success(t("chapter.pageCreated"));
     },
     onError: (error: any) => {
-      toast.error("Failed to create page: " + error.message);
+      toast.error(t("chapter.pageCreateFailed") + ": " + error.message);
     },
   });
 
@@ -239,10 +240,10 @@ const ChapterPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chapters"] });
       setChapterDialogOpen(false);
-      toast.success("Chapter created!");
+      toast.success(t("chapter.chapterCreated"));
     },
     onError: (error: any) => {
-      toast.error("Failed to create chapter: " + error.message);
+      toast.error(t("chapter.chapterCreateFailed") + ": " + error.message);
     },
   });
 
@@ -304,7 +305,7 @@ const ChapterPage = () => {
     if (isEditMode) {
       setEditedPages(pages => pages.filter(p => p.id !== pageId));
     } else {
-      if (confirm("Are you sure you want to delete this page?")) {
+      if (confirm(t("chapter.deleteConfirm"))) {
         deletePageMutation.mutate(pageId);
       }
     }
@@ -334,8 +335,8 @@ const ChapterPage = () => {
     return (
       <DocumentLayout>
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold mb-2">Chapter not found</h2>
-          <p className="text-muted-foreground">The requested chapter could not be found.</p>
+          <h2 className="text-2xl font-bold mb-2">{t("chapter.notFound")}</h2>
+          <p className="text-muted-foreground">{t("chapter.notFoundDesc")}</p>
         </div>
       </DocumentLayout>
     );
@@ -353,27 +354,27 @@ const ChapterPage = () => {
                     value={editedTitle}
                     onChange={(e) => setEditedTitle(e.target.value)}
                     className="text-3xl lg:text-4xl font-bold"
-                    placeholder="Chapter title"
+                    placeholder={t("chapter.chapterTitle")}
                   />
                   <Textarea
                     value={editedDescription}
                     onChange={(e) => setEditedDescription(e.target.value)}
                     className="text-lg"
-                    placeholder="Chapter description (optional)"
+                    placeholder={t("chapter.chapterDescPlaceholder")}
                     rows={2}
                   />
                   <Input
                     value={editedIcon}
                     onChange={(e) => setEditedIcon(e.target.value)}
                     className="text-sm"
-                    placeholder="Icon name (e.g., BookOpen, FileText)"
+                    placeholder={t("chapter.iconPlaceholder")}
                   />
                   <Button
                     onClick={() => setEditedIsDraft(!editedIsDraft)}
                     variant={editedIsDraft ? "default" : "outline"}
                     size="sm"
                   >
-                    {editedIsDraft ? "Draft - Click to Publish" : "Published - Click to Hide"}
+                    {editedIsDraft ? t("editor.draftClickToPublish") : t("editor.publishedClickToHide")}
                   </Button>
                 </div>
               ) : (
@@ -382,7 +383,7 @@ const ChapterPage = () => {
                     <h1 className="text-3xl lg:text-4xl font-bold">{currentChapter.title}</h1>
                     {currentChapter.isDraft && (
                       <span className="text-sm px-3 py-1 rounded bg-yellow-100 text-yellow-800">
-                        Draft
+                        {t("editor.draft")}
                       </span>
                     )}
                   </div>
@@ -397,21 +398,21 @@ const ChapterPage = () => {
                 <>
                   <Button onClick={() => saveChapterMutation.mutate()} size="sm" disabled={saveChapterMutation.isPending}>
                     <Save className="h-4 w-4 mr-1" />
-                    Save
+                    {t("comments.save")}
                   </Button>
                   <Button onClick={handleCancel} variant="outline" size="sm">
                     <X className="h-4 w-4 mr-1" />
-                    Cancel
+                    {t("comments.cancel")}
                   </Button>
                 </>
               ) : isEditor ? (
                 <Button onClick={handleEditMode} variant="outline" size="sm">
                   <Pencil className="h-4 w-4 mr-1" />
-                  Edit Chapter
+                  {t("chapter.editChapter")}
                 </Button>
               ) : (
                 <Button onClick={() => navigate("/auth")} variant="outline" size="sm">
-                  Sign in to Edit
+                  {t("editor.signInToEdit")}
                 </Button>
               )}
             </div>
@@ -419,11 +420,11 @@ const ChapterPage = () => {
 
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Pages in this chapter</h2>
+              <h2 className="text-xl font-semibold">{t("chapter.pagesInChapter")}</h2>
               {isEditor && !isEditMode && (
                 <Button onClick={() => setPageDialogOpen(true)} size="sm">
                   <Plus className="h-4 w-4 mr-1" />
-                  Add Page
+                  {t("chapter.addPage")}
                 </Button>
               )}
             </div>
@@ -463,7 +464,7 @@ const ChapterPage = () => {
                         <h3 className="font-medium truncate">{page.title}</h3>
                         {page.isDraft && (
                           <span className="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800">
-                            Draft
+                            {t("editor.draft")}
                           </span>
                         )}
                       </div>
@@ -477,7 +478,7 @@ const ChapterPage = () => {
                       <Link to={`/document/${page.slug}`}>
                         <Button size="sm" variant="outline">
                           <ExternalLink className="h-4 w-4 mr-1" />
-                          View
+                          {t("chapter.view")}
                         </Button>
                       </Link>
                     </div>
@@ -488,7 +489,7 @@ const ChapterPage = () => {
 
             {currentChapter.pages.length === 0 && (
               <p className="text-center text-muted-foreground py-8">
-                No pages in this chapter yet.
+                {t("chapter.noPagesYet")}
               </p>
             )}
           </div>

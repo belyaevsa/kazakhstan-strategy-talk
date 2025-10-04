@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageSquare, Send, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { t } from "@/lib/i18n";
 import CommentItem from "@/components/CommentItem";
 
 interface CommentPanelProps {
@@ -156,7 +157,7 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
     return (
       <div className="rounded-lg border bg-card p-6 text-center text-muted-foreground">
         <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
-        <p>Select a paragraph to view comments</p>
+        <p>{t("document.selectParagraph")}</p>
       </div>
     );
   }
@@ -166,15 +167,15 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
       <div className="p-4 border-b">
         <h3 className="font-semibold flex items-center gap-2">
           <MessageSquare className="h-4 w-4" />
-          {mode === "paragraph" ? "Paragraph Comments" : "General Discussion"}
+          {mode === "paragraph" ? t("comments.paragraphComments") : t("comments.generalDiscussion")}
         </h3>
       </div>
 
       <div className="p-4 space-y-4 max-h-[600px] overflow-y-auto">
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading comments...</p>
+          <p className="text-sm text-muted-foreground">{t("document.loadingComments")}</p>
         ) : !comments || comments.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No comments yet. Be the first to share your thoughts!</p>
+          <p className="text-sm text-muted-foreground">{t("document.noComments")}</p>
         ) : (
           comments.map((comment) => (
             <div key={comment.id} className="pb-4 border-b last:border-0">
@@ -198,17 +199,17 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
         <form onSubmit={handleSubmit} className="p-4 border-t space-y-2">
           {isFrozen && !isEditorOrAdmin && (
             <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md text-sm text-red-800 dark:text-red-200">
-              🔒 Your account is frozen. You cannot post comments until {new Date(user.frozenUntil!).toLocaleString()}.
+              🔒 {t("document.accountFrozen")} {new Date(user.frozenUntil!).toLocaleString()}.
             </div>
           )}
           {countdown > 0 && !isEditorOrAdmin && (
             <div className="p-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2">
               <Clock className="h-3 w-3" />
-              Wait {countdown}s before posting another comment
+              {t("document.waitBeforePosting", { seconds: countdown.toString() })}
             </div>
           )}
           <Textarea
-            placeholder="Share your thoughts..."
+            placeholder={t("document.shareThoughts")}
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             className="resize-none"
@@ -226,12 +227,12 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
             }
           >
             <Send className="h-3 w-3 mr-2" />
-            {addCommentMutation.isPending ? "Posting..." : countdown > 0 && !isEditorOrAdmin ? `Wait ${countdown}s` : "Post Comment"}
+            {addCommentMutation.isPending ? t("document.posting") : countdown > 0 && !isEditorOrAdmin ? t("document.waitBeforePosting", { seconds: countdown.toString() }) : t("document.postComment")}
           </Button>
         </form>
       ) : (
         <div className="p-4 border-t text-center text-sm text-muted-foreground">
-          Please sign in to comment
+          {t("document.signInToComment")}
         </div>
       )}
     </div>

@@ -18,6 +18,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 builder.Services.AddMemoryCache();
+builder.Services.AddHealthChecks();
 
 // Database - Use environment variables if available, otherwise fallback to appsettings.json
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
@@ -128,5 +129,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Health check endpoint
+app.MapHealthChecks("/health");
 
 app.Run();

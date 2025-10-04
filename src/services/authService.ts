@@ -77,6 +77,10 @@ class AuthService {
     return this.hasRole('Admin');
   }
 
+  async updateLanguage(language: string): Promise<void> {
+    await apiClient.put('/auth/language', { language });
+  }
+
   private setSession(response: AuthResponse): void {
     localStorage.setItem('auth_token', response.token);
     localStorage.setItem('auth_user', JSON.stringify(response.user));

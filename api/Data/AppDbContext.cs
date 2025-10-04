@@ -18,6 +18,9 @@ public class AppDbContext : DbContext
     public DbSet<CommentVote> CommentVotes { get; set; }
     public DbSet<PageVersion> PageVersions { get; set; }
     public DbSet<ParagraphVersion> ParagraphVersions { get; set; }
+    public DbSet<ChapterTranslation> ChapterTranslations { get; set; }
+    public DbSet<PageTranslation> PageTranslations { get; set; }
+    public DbSet<ParagraphTranslation> ParagraphTranslations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -149,6 +152,42 @@ public class AppDbContext : DbContext
 
             entity.HasIndex(e => new { e.ParagraphId, e.Version }).IsUnique();
             entity.HasIndex(e => e.UpdatedAt);
+        });
+
+        // ChapterTranslation configuration
+        modelBuilder.Entity<ChapterTranslation>(entity =>
+        {
+            entity.HasOne(ct => ct.Chapter)
+                .WithMany()
+                .HasForeignKey(ct => ct.ChapterId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // One translation per language per chapter
+            entity.HasIndex(e => new { e.ChapterId, e.Language }).IsUnique();
+        });
+
+        // PageTranslation configuration
+        modelBuilder.Entity<PageTranslation>(entity =>
+        {
+            entity.HasOne(pt => pt.Page)
+                .WithMany()
+                .HasForeignKey(pt => pt.PageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // One translation per language per page
+            entity.HasIndex(e => new { e.PageId, e.Language }).IsUnique();
+        });
+
+        // ParagraphTranslation configuration
+        modelBuilder.Entity<ParagraphTranslation>(entity =>
+        {
+            entity.HasOne(pt => pt.Paragraph)
+                .WithMany()
+                .HasForeignKey(pt => pt.ParagraphId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // One translation per language per paragraph
+            entity.HasIndex(e => new { e.ParagraphId, e.Language }).IsUnique();
         });
     }
 }

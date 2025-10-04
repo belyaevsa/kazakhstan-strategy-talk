@@ -44,4 +44,12 @@ public class UserDTO
     public bool IsBlocked { get; set; }
     public DateTime? FrozenUntil { get; set; }
     public DateTime? LastCommentAt { get; set; }
+    public string Language { get; set; } = "ru";
+}
+
+public class UpdateLanguageRequest
+{
+    [Required]
+    [RegularExpression("^(ru|en|kk)$", ErrorMessage = "Language must be ru, en, or kk")]
+    public string Language { get; set; } = string.Empty;
 }
