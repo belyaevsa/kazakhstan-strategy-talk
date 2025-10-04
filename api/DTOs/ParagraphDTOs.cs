@@ -10,6 +10,7 @@ public class ParagraphDTO
     public int CommentCount { get; set; }
     public bool IsHidden { get; set; }
     public string Type { get; set; } = "Text";
+    public string? Caption { get; set; }
     public Guid PageId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
@@ -28,6 +29,7 @@ public class CreateParagraphRequest
     public Guid PageId { get; set; }
 
     public string Type { get; set; } = "Text";
+    public string? Caption { get; set; }
 }
 
 public class UpdateParagraphRequest
@@ -36,4 +38,5 @@ public class UpdateParagraphRequest
     public int? OrderIndex { get; set; }
     public bool? IsHidden { get; set; }
     public string? Type { get; set; }
+    public string? Caption { get; set; }
 }

@@ -20,6 +20,9 @@ public class Paragraph
 
     public ParagraphType Type { get; set; } = ParagraphType.Text;
 
+    // For Image type: caption/subtitle
+    public string? Caption { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public Guid? UpdatedByProfileId { get; set; }

@@ -39,21 +39,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Pencil, Save, X, Plus, Trash2, Type, Image, Quote, Code, Share2, GripVertical } from "lucide-react";
+import { Pencil, Save, X, Plus, Trash2, Type, Image, Quote, Code, Share2, GripVertical, List, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Chapter, Page } from "@/lib/api/types";
 
 interface SortableParagraphProps {
-  paragraph: { id: string; content: string; orderIndex: number; type?: string };
+  paragraph: { id: string; content: string; orderIndex: number; type?: string; caption?: string };
   index: number;
   onContentChange: (content: string) => void;
+  onCaptionChange?: (caption: string) => void;
   onDelete: () => void;
   onEnterKey: () => void;
   onTypeChange: (type: string) => void;
 }
 
 const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps>(
-  ({ paragraph, index, onContentChange, onDelete, onEnterKey, onTypeChange }, ref) => {
+  ({ paragraph, index, onContentChange, onCaptionChange, onDelete, onEnterKey, onTypeChange }, ref) => {
   const {
     attributes,
     listeners,
@@ -71,38 +72,53 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps
 
   return (
     <div ref={setNodeRef} style={style} className="relative group flex items-start gap-2">
-      <button
-        className="mt-4 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical className="h-5 w-5" />
-      </button>
-      <div className="flex-1">
-        <div className="flex items-center gap-2 mb-1">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
-                {paragraph.type || "Text"}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => onTypeChange("Text")}>Text</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onTypeChange("Header")}>Header</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onTypeChange("Code")}>Code</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onTypeChange("Quote")}>Quote</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onTypeChange("Image")}>Image</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+      <div className="flex items-center gap-1 mt-4 ml-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs min-w-[60px]">
+              {paragraph.type || "Text"}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => onTypeChange("Text")}>Text</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onTypeChange("Header")}>Header</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onTypeChange("Code")}>Code</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onTypeChange("Quote")}>Quote</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onTypeChange("Image")}>Image</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onTypeChange("List")}>List</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <button
+          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-5 w-5" />
+        </button>
+      </div>
+      <div className="flex-1 space-y-2">
         <AutoResizeTextarea
           ref={ref}
           value={paragraph.content}
           onChange={(e) => onContentChange(e.target.value)}
-          onEnterKey={onEnterKey}
-          placeholder="Type your content here..."
+          onEnterKey={paragraph.type === "List" || paragraph.type === "Code" ? undefined : onEnterKey}
+          placeholder={
+            paragraph.type === "Image"
+              ? "Image URL..."
+              : paragraph.type === "List"
+              ? "Enter list items (Shift+Enter for new line, Enter to finish)"
+              : "Type your content here..."
+          }
           className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors"
         />
+        {paragraph.type === "Image" && onCaptionChange && (
+          <Input
+            value={paragraph.caption || ""}
+            onChange={(e) => onCaptionChange(e.target.value)}
+            placeholder="Image caption (optional)..."
+            className="w-full text-sm"
+          />
+        )}
       </div>
       <Button
         onClick={onDelete}
@@ -129,7 +145,7 @@ const DocumentPage = () => {
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
   const [editedIsDraft, setEditedIsDraft] = useState(false);
-  const [editedParagraphs, setEditedParagraphs] = useState<Array<{ id: string; content: string; orderIndex: number; type?: string }>>([]);
+  const [editedParagraphs, setEditedParagraphs] = useState<Array<{ id: string; content: string; orderIndex: number; type?: string; caption?: string }>>([]);
   const [chapterDialogOpen, setChapterDialogOpen] = useState(false);
   const [pageDialogOpen, setPageDialogOpen] = useState(false);
   const [editingChapter, setEditingChapter] = useState<Chapter | undefined>();
@@ -137,6 +153,44 @@ const DocumentPage = () => {
   const [newPageChapterId, setNewPageChapterId] = useState<string | undefined>();
   const paragraphRefs = useRef<Map<string, React.RefObject<HTMLTextAreaElement>>>(new Map());
   const isEditor = authService.isEditor();
+
+  // Parse Markdown-style links [text](url) for TOC
+  const parseMarkdownLinks = (text: string) => {
+    const parts: (string | JSX.Element)[] = [];
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = linkRegex.exec(text)) !== null) {
+      // Add text before the link
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+
+      // Add the link
+      parts.push(
+        <a
+          key={match.index}
+          href={match[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {match[1]}
+        </a>
+      );
+
+      lastIndex = linkRegex.lastIndex;
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : text;
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -195,7 +249,8 @@ const DocumentPage = () => {
         await paragraphService.update(para.id, {
           content: para.content,
           orderIndex: para.orderIndex,
-          type: para.type
+          type: para.type,
+          caption: para.caption
         });
       }
     },
@@ -489,7 +544,7 @@ const DocumentPage = () => {
                             document.getElementById(`paragraph-${paragraph.id}`)?.scrollIntoView({ behavior: 'smooth' });
                           }}
                         >
-                          {paragraph.content}
+                          {parseMarkdownLinks(paragraph.content)}
                         </a>
                       ))
                   ) : (
@@ -635,6 +690,11 @@ const DocumentPage = () => {
                           updated[index].content = content;
                           setEditedParagraphs(updated);
                         }}
+                        onCaptionChange={(caption) => {
+                          const updated = [...editedParagraphs];
+                          updated[index].caption = caption;
+                          setEditedParagraphs(updated);
+                        }}
                         onDelete={() => {
                           deleteParagraphMutation.mutate(paragraph.id);
                           setEditedParagraphs(editedParagraphs.filter(p => p.id !== paragraph.id));
@@ -699,6 +759,10 @@ const DocumentPage = () => {
                   <DropdownMenuItem onClick={() => addParagraphMutation.mutate("Code")}>
                     <Code className="h-4 w-4 mr-2" />
                     Code Block
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => addParagraphMutation.mutate("List")}>
+                    <List className="h-4 w-4 mr-2" />
+                    List
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

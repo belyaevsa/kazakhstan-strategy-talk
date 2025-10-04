@@ -43,7 +43,8 @@ export interface Paragraph {
   orderIndex: number;
   commentCount: number;
   isHidden: boolean;
-  type: 'Text' | 'Header' | 'Image' | 'Quote' | 'Code';
+  type: 'Text' | 'Header' | 'Image' | 'Quote' | 'Code' | 'List';
+  caption?: string;
   pageId: string;
   createdAt: string;
   updatedAt?: string;
@@ -98,6 +99,7 @@ export interface CreateParagraphRequest {
   orderIndex: number;
   pageId: string;
   type?: string;
+  caption?: string;
 }
 
 export interface UpdateParagraphRequest {
@@ -105,6 +107,7 @@ export interface UpdateParagraphRequest {
   orderIndex?: number;
   isHidden?: boolean;
   type?: string;
+  caption?: string;
 }
 
 export interface ReorderRequest {

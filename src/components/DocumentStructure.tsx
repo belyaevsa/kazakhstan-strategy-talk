@@ -31,6 +31,44 @@ const DocumentStructure = ({ chapters, onAddChapter }: DocumentStructureProps) =
     return Icon || BookOpen;
   };
 
+  // Parse Markdown-style links [text](url) for display in TOC
+  const parseMarkdownLinks = (text: string) => {
+    const parts: (string | JSX.Element)[] = [];
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = linkRegex.exec(text)) !== null) {
+      // Add text before the link
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+
+      // Add the link
+      parts.push(
+        <a
+          key={match.index}
+          href={match[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {match[1]}
+        </a>
+      );
+
+      lastIndex = linkRegex.lastIndex;
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : text;
+  };
+
   // Filter chapters and pages based on user role
   const visibleChapters = isEditor
     ? chapters
@@ -84,7 +122,7 @@ const DocumentStructure = ({ chapters, onAddChapter }: DocumentStructureProps) =
                       const ChapterIcon = getChapterIcon(chapter.icon);
                       return <ChapterIcon className="h-4 w-4 shrink-0" />;
                     })()}
-                    <span className="text-sm font-medium truncate">{chapter.title}</span>
+                    <span className="text-sm font-medium truncate">{parseMarkdownLinks(chapter.title)}</span>
                     {isEditor && chapter.isDraft && (
                       <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded ml-auto">
                         Draft
@@ -121,7 +159,7 @@ const DocumentStructure = ({ chapters, onAddChapter }: DocumentStructureProps) =
                         )}
                       >
                         <FileText className="h-3.5 w-3.5 shrink-0" />
-                        <span className="flex-1 truncate">{page.title}</span>
+                        <span className="flex-1 truncate">{parseMarkdownLinks(page.title)}</span>
                         {isEditor && page.isDraft && (
                           <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded shrink-0">
                             Draft

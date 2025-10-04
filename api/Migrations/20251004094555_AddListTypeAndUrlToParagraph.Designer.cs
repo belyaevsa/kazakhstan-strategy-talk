@@ -3,6 +3,7 @@ using System;
 using KazakhstanStrategyApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace KazakhstanStrategyApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251004094555_AddListTypeAndUrlToParagraph")]
+    partial class AddListTypeAndUrlToParagraph
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -242,9 +245,6 @@ namespace KazakhstanStrategyApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Caption")
-                        .HasColumnType("text");
-
                     b.Property<int>("CommentCount")
                         .HasColumnType("integer");
 
@@ -272,6 +272,9 @@ namespace KazakhstanStrategyApi.Migrations
 
                     b.Property<Guid?>("UpdatedByProfileId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Url")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 

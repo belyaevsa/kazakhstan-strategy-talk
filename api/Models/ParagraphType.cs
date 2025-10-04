@@ -6,5 +6,6 @@ public enum ParagraphType
     Header,     // Header/title
     Image,      // Image with optional caption
     Quote,      // Blockquote
-    Code        // Code block
+    Code,       // Code block
+    List        // List (bulleted or numbered)
 }

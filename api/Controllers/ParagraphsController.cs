@@ -58,6 +58,7 @@ public class ParagraphsController : ControllerBase
                 CommentCount = commentCount,
                 IsHidden = p.IsHidden,
                 Type = p.Type.ToString(),
+                Caption = p.Caption,
                 PageId = p.PageId,
                 CreatedAt = p.CreatedAt,
                 UpdatedAt = p.UpdatedAt,
@@ -94,6 +95,7 @@ public class ParagraphsController : ControllerBase
             CommentCount = commentCount,
             IsHidden = paragraph.IsHidden,
             Type = paragraph.Type.ToString(),
+            Caption = paragraph.Caption,
             PageId = paragraph.PageId,
             CreatedAt = paragraph.CreatedAt,
             UpdatedAt = paragraph.UpdatedAt,
@@ -115,7 +117,8 @@ public class ParagraphsController : ControllerBase
             Content = request.Content,
             OrderIndex = request.OrderIndex,
             PageId = request.PageId,
-            Type = paragraphType
+            Type = paragraphType,
+            Caption = request.Caption
         };
 
         _context.Paragraphs.Add(paragraph);
@@ -129,6 +132,7 @@ public class ParagraphsController : ControllerBase
             CommentCount = paragraph.CommentCount,
             IsHidden = paragraph.IsHidden,
             Type = paragraph.Type.ToString(),
+            Caption = paragraph.Caption,
             PageId = paragraph.PageId,
             CreatedAt = paragraph.CreatedAt
         };
@@ -178,6 +182,7 @@ public class ParagraphsController : ControllerBase
         {
             paragraph.Type = paragraphType;
         }
+        if (request.Caption != null) paragraph.Caption = request.Caption;
 
         paragraph.UpdatedAt = now;
         paragraph.UpdatedByProfileId = userId;

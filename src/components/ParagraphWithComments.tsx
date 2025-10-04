@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageSquare, Link2 } from "lucide-react";
+import { MessageSquare, Link2, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -9,6 +9,7 @@ interface ParagraphWithCommentsProps {
     content: string;
     commentCount: number;
     type: string;
+    caption?: string;
   };
   isActive: boolean;
   onClick: (position: number) => void;
@@ -84,10 +85,48 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick }: ParagraphWithCo
     }, 2000);
   };
 
+  // Parse Markdown-style links [text](url)
+  const parseMarkdownLinks = (text: string) => {
+    const parts: (string | JSX.Element)[] = [];
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = linkRegex.exec(text)) !== null) {
+      // Add text before the link
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+
+      // Add the link
+      parts.push(
+        <a
+          key={match.index}
+          href={match[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {match[1]}
+        </a>
+      );
+
+      lastIndex = linkRegex.lastIndex;
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : text;
+  };
+
   const renderContent = () => {
     switch (paragraph.type) {
       case 'Header':
-        return <h2 className="text-2xl font-bold text-foreground mb-2">{paragraph.content}</h2>;
+        return <h2 className="text-2xl font-bold text-foreground mb-2">{parseMarkdownLinks(paragraph.content)}</h2>;
       case 'Code':
         return (
           <pre className="bg-muted p-4 rounded-md overflow-x-auto">
@@ -97,17 +136,38 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick }: ParagraphWithCo
       case 'Quote':
         return (
           <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground">
-            {paragraph.content}
+            {parseMarkdownLinks(paragraph.content)}
           </blockquote>
         );
       case 'Image':
         return (
-          <div className="my-4">
-            <img src={paragraph.content} alt="" className="max-w-full h-auto rounded-lg" />
+          <div className="my-4 space-y-2">
+            <a
+              href={paragraph.content}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ExternalLink className="h-4 w-4" />
+              View Image
+            </a>
+            {paragraph.caption && (
+              <p className="text-sm text-muted-foreground italic">{paragraph.caption}</p>
+            )}
           </div>
         );
+      case 'List':
+        const items = paragraph.content.split('\n').filter(line => line.trim());
+        return (
+          <ul className="list-disc list-inside space-y-1 text-foreground">
+            {items.map((item, i) => (
+              <li key={i} className="leading-relaxed">{parseMarkdownLinks(item)}</li>
+            ))}
+          </ul>
+        );
       default:
-        return <p className="document-content text-foreground leading-relaxed">{paragraph.content}</p>;
+        return <p className="document-content text-foreground leading-relaxed">{parseMarkdownLinks(paragraph.content)}</p>;
     }
   };
 
