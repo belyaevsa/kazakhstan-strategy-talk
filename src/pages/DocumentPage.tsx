@@ -42,6 +42,7 @@ import {
 import { Pencil, Save, X, Plus, Trash2, Type, Image, Quote, Code, Share2, GripVertical, List, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Chapter, Page } from "@/lib/api/types";
+import ImageUploadZone from "@/components/ImageUploadZone";
 
 interface SortableParagraphProps {
   paragraph: { id: string; content: string; orderIndex: number; type?: string; caption?: string };
@@ -97,26 +98,80 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps
         </button>
       </div>
       <div className="flex-1 space-y-2">
-        <AutoResizeTextarea
-          ref={ref}
-          value={paragraph.content}
-          onChange={(e) => onContentChange(e.target.value)}
-          onEnterKey={paragraph.type === "List" || paragraph.type === "Code" ? undefined : onEnterKey}
-          placeholder={
-            paragraph.type === "Image"
-              ? "Image URL..."
-              : paragraph.type === "List"
-              ? "Enter list items (Shift+Enter for new line, Enter to finish)"
-              : "Type your content here..."
-          }
-          className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors"
-        />
-        {paragraph.type === "Image" && onCaptionChange && (
-          <Input
-            value={paragraph.caption || ""}
-            onChange={(e) => onCaptionChange(e.target.value)}
-            placeholder="Image caption (optional)..."
-            className="w-full text-sm"
+        {paragraph.type === "Image" ? (
+          <>
+            {!paragraph.content ? (
+              <ImageUploadZone
+                onUploadComplete={(url) => onContentChange(url)}
+                className="my-2"
+              />
+            ) : (
+              <div className="space-y-3">
+                {/* Image Preview */}
+                <div className="relative rounded-lg border border-border overflow-hidden bg-muted/30">
+                  <img
+                    src={paragraph.content}
+                    alt={paragraph.caption || "Uploaded image"}
+                    className="w-full h-auto max-h-96 object-contain"
+                    onError={(e) => {
+                      e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23ccc' width='100' height='100'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23666'%3EImage Error%3C/text%3E%3C/svg%3E";
+                    }}
+                  />
+                  {/* Action buttons overlay */}
+                  <div className="absolute top-2 right-2 flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-8 shadow-md"
+                      onClick={() => onContentChange("")}
+                      title="Replace image"
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Replace
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="h-8 shadow-md"
+                      onClick={() => {
+                        onContentChange("");
+                        if (onCaptionChange) onCaptionChange("");
+                      }}
+                      title="Remove image (doesn't delete from storage)"
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Image URL (read-only) */}
+                <div className="text-xs text-muted-foreground truncate bg-muted/50 px-3 py-2 rounded">
+                  <span className="font-medium">URL:</span> {paragraph.content}
+                </div>
+
+                {/* Caption Input */}
+                <Input
+                  value={paragraph.caption || ""}
+                  onChange={(e) => onCaptionChange?.(e.target.value)}
+                  placeholder="Image caption (optional)..."
+                  className="text-sm"
+                />
+              </div>
+            )}
+          </>
+        ) : (
+          <AutoResizeTextarea
+            ref={ref}
+            value={paragraph.content}
+            onChange={(e) => onContentChange(e.target.value)}
+            onEnterKey={paragraph.type === "List" || paragraph.type === "Code" ? undefined : onEnterKey}
+            placeholder={
+              paragraph.type === "List"
+                ? "Enter list items (Shift+Enter for new line, Enter to finish)"
+                : "Type your content here..."
+            }
+            className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors"
           />
         )}
       </div>
@@ -154,42 +209,10 @@ const DocumentPage = () => {
   const paragraphRefs = useRef<Map<string, React.RefObject<HTMLTextAreaElement>>>(new Map());
   const isEditor = authService.isEditor();
 
-  // Parse Markdown-style links [text](url) for TOC
-  const parseMarkdownLinks = (text: string) => {
-    const parts: (string | JSX.Element)[] = [];
-    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-    let lastIndex = 0;
-    let match;
-
-    while ((match = linkRegex.exec(text)) !== null) {
-      // Add text before the link
-      if (match.index > lastIndex) {
-        parts.push(text.substring(lastIndex, match.index));
-      }
-
-      // Add the link
-      parts.push(
-        <a
-          key={match.index}
-          href={match[2]}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary hover:underline"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {match[1]}
-        </a>
-      );
-
-      lastIndex = linkRegex.lastIndex;
-    }
-
-    // Add remaining text
-    if (lastIndex < text.length) {
-      parts.push(text.substring(lastIndex));
-    }
-
-    return parts.length > 0 ? parts : text;
+  // Strip Markdown-style links [text](url) and return just the text for TOC
+  const stripMarkdownLinks = (text: string) => {
+    // Replace [text](url) with just text
+    return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
   };
 
   const sensors = useSensors(
@@ -281,7 +304,7 @@ const DocumentPage = () => {
       const maxOrder = paragraphs?.reduce((max, p) => Math.max(max, p.orderIndex), -1) ?? -1;
       const newParagraph = await paragraphService.create({
         pageId: currentPage!.id,
-        content: "New paragraph content...",
+        content: type === "Image" ? "" : "New paragraph content...",
         orderIndex: maxOrder + 1,
         type,
       });
@@ -293,7 +316,9 @@ const DocumentPage = () => {
         setEditedParagraphs(prev => [...prev, {
           id: newParagraph.id,
           content: newParagraph.content,
-          orderIndex: newParagraph.orderIndex
+          orderIndex: newParagraph.orderIndex,
+          type: newParagraph.type,
+          caption: newParagraph.caption
         }]);
       }
       queryClient.invalidateQueries({ queryKey: ["paragraphs", currentPage?.id] });
@@ -544,7 +569,7 @@ const DocumentPage = () => {
                             document.getElementById(`paragraph-${paragraph.id}`)?.scrollIntoView({ behavior: 'smooth' });
                           }}
                         >
-                          {parseMarkdownLinks(paragraph.content)}
+                          {stripMarkdownLinks(paragraph.content)}
                         </a>
                       ))
                   ) : (
@@ -725,6 +750,11 @@ const DocumentPage = () => {
                         onTypeChange={(type) => {
                           const updated = [...editedParagraphs];
                           updated[index].type = type;
+                          // Clear content when switching to Image type to show upload zone
+                          if (type === "Image" && updated[index].content && !updated[index].content.startsWith("http")) {
+                            updated[index].content = "";
+                            updated[index].caption = "";
+                          }
                           setEditedParagraphs(updated);
                         }}
                       />

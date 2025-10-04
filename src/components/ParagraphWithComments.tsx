@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from "react";
-import { MessageSquare, Link2, ExternalLink } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { MessageSquare, Link2, ExternalLink, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { authService } from "@/services/authService";
 
 interface ParagraphWithCommentsProps {
   paragraph: {
@@ -141,20 +142,42 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick }: ParagraphWithCo
         );
       case 'Image':
         return (
-          <div className="my-4 space-y-2">
-            <a
-              href={paragraph.content}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ExternalLink className="h-4 w-4" />
-              View Image
-            </a>
+          <div className="my-6 space-y-3">
+            <div className="rounded-lg overflow-hidden border border-border bg-muted/30">
+              <a
+                href={paragraph.content}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <img
+                  src={paragraph.content}
+                  alt={paragraph.caption || "Image"}
+                  className="w-full h-auto max-h-[600px] object-contain hover:opacity-90 transition-opacity cursor-pointer"
+                  onError={(e) => {
+                    e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f0f0f0' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-size='16'%3EImage not available%3C/text%3E%3C/svg%3E";
+                  }}
+                />
+              </a>
+            </div>
             {paragraph.caption && (
-              <p className="text-sm text-muted-foreground italic">{paragraph.caption}</p>
+              <p className="text-sm text-center text-muted-foreground italic px-4">
+                {paragraph.caption}
+              </p>
             )}
+            <div className="flex justify-center">
+              <a
+                href={paragraph.content}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ExternalLink className="h-3 w-3" />
+                Open in new tab
+              </a>
+            </div>
           </div>
         );
       case 'List':
