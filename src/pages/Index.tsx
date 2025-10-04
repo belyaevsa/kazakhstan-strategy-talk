@@ -6,6 +6,7 @@ import { authService } from "@/services/authService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, ArrowRight, BookOpen } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import DocumentLayout from "@/components/DocumentLayout";
 import { getCurrentLanguage, setLanguage, type Language, t } from "@/lib/i18n";
 
@@ -41,14 +42,31 @@ const Index = () => {
     }
   };
 
+  const getChapterIcon = (iconName?: string) => {
+    if (!iconName) return BookOpen;
+
+    // Convert kebab-case to PascalCase (e.g., "mail-open" -> "MailOpen")
+    const pascalCaseName = iconName
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join('');
+
+    const Icon = (LucideIcons as any)[pascalCaseName];
+    return Icon || BookOpen;
+  };
+
   return (
     <DocumentLayout>
       <div className="max-w-4xl mx-auto">
         {/* Hero Section */}
         <section className="text-center py-12 mb-12">
-          <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-6">
-            <FileText className="h-12 w-12 text-primary" />
-          </div>
+            <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-6">
+            <img
+              src="/main-icon.png"
+              alt="Kazakhstan IT Strategy logo featuring a stylized digital motif, centered in a circular background, conveying a modern and optimistic atmosphere"
+              className="h-12 w-12"
+            />
+            </div>
           <h1 className="text-4xl lg:text-5xl font-bold mb-4 leading-tight">
             {t("home.heroTitle")}
           </h1>
@@ -73,24 +91,26 @@ const Index = () => {
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-center">{t("home.documentChapters")}</h2>
             <div className="grid md:grid-cols-3 gap-6">
-              {chapters.map((chapter) => (
-                <Card key={chapter.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => {
-                  if (chapter.pages.length > 0) {
-                    const currentLang = lang || getCurrentLanguage();
-                    navigate(`/${currentLang}/${chapter.pages[0].slug}`);
-                  }
-                }}>
-                  <CardHeader>
-                    <BookOpen className="h-8 w-8 text-primary mb-2" />
-                    <CardTitle className="flex items-center justify-between">
-                      <span>{chapter.title}</span>
-                      {chapter.isDraft && (
-                        <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded font-normal">
-                          {t("editor.draft")}
-                        </span>
-                      )}
-                    </CardTitle>
-                  </CardHeader>
+              {chapters.map((chapter) => {
+                const ChapterIcon = getChapterIcon(chapter.icon);
+                return (
+                  <Card key={chapter.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => {
+                    if (chapter.pages.length > 0) {
+                      const currentLang = lang || getCurrentLanguage();
+                      navigate(`/${currentLang}/${chapter.pages[0].slug}`);
+                    }
+                  }}>
+                    <CardHeader>
+                      <ChapterIcon className="h-8 w-8 text-primary mb-2" />
+                      <CardTitle className="flex items-center justify-between">
+                        <span>{chapter.title}</span>
+                        {chapter.isDraft && (
+                          <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded font-normal">
+                            {t("editor.draft")}
+                          </span>
+                        )}
+                      </CardTitle>
+                    </CardHeader>
                   <CardContent>
                     <CardDescription className="mb-3">
                       {chapter.description || t("home.exploreChapter")}
@@ -103,7 +123,8 @@ const Index = () => {
                     )}
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}

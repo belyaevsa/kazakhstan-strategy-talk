@@ -44,7 +44,14 @@ const DocumentStructure = ({ chapters, onAddChapter, onNavigate }: DocumentStruc
 
   const getChapterIcon = (iconName?: string) => {
     if (!iconName) return BookOpen;
-    const Icon = (LucideIcons as any)[iconName];
+
+    // Convert kebab-case to PascalCase (e.g., "mail-open" -> "MailOpen")
+    const pascalCaseName = iconName
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join('');
+
+    const Icon = (LucideIcons as any)[pascalCaseName];
     return Icon || BookOpen;
   };
 
