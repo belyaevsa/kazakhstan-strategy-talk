@@ -20,82 +20,87 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("users")]
-    public async Task<ActionResult<IEnumerable<UserDTO>>> GetAllUsers()
+    public async Task<ActionResult<IEnumerable<AdminUserDTO>>> GetUsers([FromQuery] string? email = null)
     {
-        var users = await _context.Profiles
-            .Include(p => p.ProfileRoles)
-            .Select(u => new UserDTO
+        var query = _context.Profiles.AsQueryable();
+
+        if (!string.IsNullOrEmpty(email))
+        {
+            query = query.Where(p => p.Email.Contains(email));
+        }
+
+        var users = await query
+            .OrderByDescending(p => p.CreatedAt)
+            .Select(p => new AdminUserDTO
             {
-                Id = u.Id,
-                Email = u.Email,
-                Username = u.Username,
-                AvatarUrl = u.AvatarUrl,
-                Roles = u.ProfileRoles.Select(pr => pr.Role.ToString()).ToList(),
-                IsBlocked = u.IsBlocked
+                Id = p.Id,
+                Username = p.Username,
+                Email = p.Email,
+                CreatedAt = p.CreatedAt,
+                LastCommentAt = p.LastCommentAt,
+                FrozenUntil = p.FrozenUntil,
+                IsBlocked = p.IsBlocked
             })
             .ToListAsync();
 
         return Ok(users);
     }
 
-    [HttpPost("users/{userId}/roles")]
-    public async Task<IActionResult> AssignRole(Guid userId, [FromBody] AssignRoleRequest request)
+    [HttpGet("comments")]
+    public async Task<ActionResult<IEnumerable<AdminCommentDTO>>> GetComments([FromQuery] Guid? pageId = null)
+    {
+        var query = _context.Comments
+            .Include(c => c.User)
+            .Include(c => c.Page)
+            .Include(c => c.Paragraph)
+                .ThenInclude(p => p.Page)
+            .AsQueryable();
+
+        if (pageId.HasValue)
+        {
+            query = query.Where(c => c.PageId == pageId.Value || (c.Paragraph != null && c.Paragraph.PageId == pageId.Value));
+        }
+
+        var comments = await query
+            .OrderByDescending(c => c.CreatedAt)
+            .Select(c => new AdminCommentDTO
+            {
+                Id = c.Id,
+                Content = c.Content,
+                AuthorName = c.User.Username,
+                AuthorEmail = c.User.Email,
+                CreatedAt = c.CreatedAt,
+                PageTitle = c.Page != null ? c.Page.Title : (c.Paragraph != null && c.Paragraph.Page != null ? c.Paragraph.Page.Title : null),
+                PageSlug = c.Page != null ? c.Page.Slug : (c.Paragraph != null && c.Paragraph.Page != null ? c.Paragraph.Page.Slug : null),
+                PageId = c.PageId ?? (c.Paragraph != null ? c.Paragraph.PageId : null),
+                ParagraphId = c.ParagraphId,
+                IpAddress = c.IpAddress,
+                IsDeleted = c.IsDeleted
+            })
+            .ToListAsync();
+
+        return Ok(comments);
+    }
+
+    [HttpPost("users/{userId}/freeze")]
+    public async Task<IActionResult> FreezeUser(Guid userId, [FromBody] FreezeUserRequest request)
     {
         var user = await _context.Profiles.FindAsync(userId);
         if (user == null) return NotFound();
 
-        if (!Enum.TryParse<UserRole>(request.Role, out var role))
-        {
-            return BadRequest(new { message = "Invalid role" });
-        }
-
-        // Check if role already assigned
-        var existingRole = await _context.ProfileRoles
-            .FirstOrDefaultAsync(pr => pr.ProfileId == userId && pr.Role == role);
-
-        if (existingRole != null)
-        {
-            return BadRequest(new { message = "User already has this role" });
-        }
-
-        var profileRole = new ProfileRole
-        {
-            ProfileId = userId,
-            Role = role
-        };
-
-        _context.ProfileRoles.Add(profileRole);
+        user.FrozenUntil = request.FreezeUntil;
         await _context.SaveChangesAsync();
 
         return NoContent();
     }
 
-    [HttpDelete("users/{userId}/roles/{role}")]
-    public async Task<IActionResult> RemoveRole(Guid userId, string role)
+    [HttpPost("users/{userId}/unfreeze")]
+    public async Task<IActionResult> UnfreezeUser(Guid userId)
     {
-        if (!Enum.TryParse<UserRole>(role, out var userRole))
-        {
-            return BadRequest(new { message = "Invalid role" });
-        }
+        var user = await _context.Profiles.FindAsync(userId);
+        if (user == null) return NotFound();
 
-        var profileRole = await _context.ProfileRoles
-            .FirstOrDefaultAsync(pr => pr.ProfileId == userId && pr.Role == userRole);
-
-        if (profileRole == null)
-        {
-            return NotFound();
-        }
-
-        // Don't allow removing Viewer role if it's the only role
-        var userRolesCount = await _context.ProfileRoles
-            .CountAsync(pr => pr.ProfileId == userId);
-
-        if (userRolesCount <= 1 && userRole == UserRole.Viewer)
-        {
-            return BadRequest(new { message = "Cannot remove Viewer role - users must have at least one role" });
-        }
-
-        _context.ProfileRoles.Remove(profileRole);
+        user.FrozenUntil = null;
         await _context.SaveChangesAsync();
 
         return NoContent();
@@ -125,33 +130,4 @@ public class AdminController : ControllerBase
         return NoContent();
     }
 
-    [HttpDelete("comments/{commentId}")]
-    public async Task<IActionResult> DeleteComment(Guid commentId)
-    {
-        var comment = await _context.Comments.FindAsync(commentId);
-        if (comment == null) return NotFound();
-
-        // Soft delete - keep in database but mark as deleted
-        comment.IsDeleted = true;
-        comment.DeletedAt = DateTime.UtcNow;
-
-        // Update comment count if it's a paragraph comment
-        if (comment.ParagraphId.HasValue)
-        {
-            var paragraph = await _context.Paragraphs.FindAsync(comment.ParagraphId.Value);
-            if (paragraph != null && paragraph.CommentCount > 0)
-            {
-                paragraph.CommentCount--;
-            }
-        }
-
-        await _context.SaveChangesAsync();
-
-        return NoContent();
-    }
-}
-
-public class AssignRoleRequest
-{
-    public string Role { get; set; } = string.Empty;
 }

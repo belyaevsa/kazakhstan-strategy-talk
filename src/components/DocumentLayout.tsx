@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileText, LogOut, User, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileText, LogOut, User, ChevronLeft, ChevronRight, Shield } from "lucide-react";
 import { authService } from "@/services/authService";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -49,6 +49,7 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
   const user = userState;
   const isFrozen = user?.frozenUntil && new Date(user.frozenUntil) > new Date();
   const isEditorOrAdmin = user?.roles.includes("Editor") || user?.roles.includes("Admin");
+  const isAdmin = user?.roles.includes("Admin");
 
   const handleLogout = () => {
     authService.logout();
@@ -78,6 +79,12 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
                   <User className="h-4 w-4" />
                   <span className="hidden sm:inline">{user?.username}</span>
                 </div>
+                {isAdmin && (
+                  <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
+                    <Shield className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Admin</span>
+                  </Button>
+                )}
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
                   <LogOut className="h-4 w-4 mr-2" />
                   <span className="hidden sm:inline">Logout</span>

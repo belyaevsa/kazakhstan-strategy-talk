@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using KazakhstanStrategyApi.Data;
 using KazakhstanStrategyApi.DTOs;
 using KazakhstanStrategyApi.Models;
+using KazakhstanStrategyApi.Services;
 using System.Security.Claims;
 
 namespace KazakhstanStrategyApi.Controllers;
@@ -13,10 +14,12 @@ namespace KazakhstanStrategyApi.Controllers;
 public class CommentsController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly ICacheService _cache;
 
-    public CommentsController(AppDbContext context)
+    public CommentsController(AppDbContext context, ICacheService cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     [HttpGet("page/{pageId}")]
@@ -117,6 +120,16 @@ public class CommentsController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
+
+        // Invalidate paragraph cache if this is a paragraph comment
+        if (request.ParagraphId.HasValue)
+        {
+            var paragraph = await _context.Paragraphs.FindAsync(request.ParagraphId.Value);
+            if (paragraph != null)
+            {
+                _cache.RemoveByPattern(CacheKeys.ParagraphsByPage(paragraph.PageId));
+            }
+        }
 
         // Check for IP-based abuse (only for non-editors/admins)
         if (!isEditorOrAdmin && !string.IsNullOrEmpty(ipAddress))
@@ -242,6 +255,8 @@ public class CommentsController : ControllerBase
             if (paragraph != null && paragraph.CommentCount > 0)
             {
                 paragraph.CommentCount--;
+                // Invalidate paragraph cache
+                _cache.RemoveByPattern(CacheKeys.ParagraphsByPage(paragraph.PageId));
             }
         }
 

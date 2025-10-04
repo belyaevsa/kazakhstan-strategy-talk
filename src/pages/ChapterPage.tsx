@@ -368,18 +368,13 @@ const ChapterPage = () => {
                     className="text-sm"
                     placeholder="Icon name (e.g., BookOpen, FileText)"
                   />
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="isDraft"
-                      checked={editedIsDraft}
-                      onChange={(e) => setEditedIsDraft(e.target.checked)}
-                      className="h-4 w-4"
-                    />
-                    <label htmlFor="isDraft" className="text-sm">
-                      Keep as draft
-                    </label>
-                  </div>
+                  <Button
+                    onClick={() => setEditedIsDraft(!editedIsDraft)}
+                    variant={editedIsDraft ? "default" : "outline"}
+                    size="sm"
+                  >
+                    {editedIsDraft ? "Draft - Click to Publish" : "Published - Click to Hide"}
+                  </Button>
                 </div>
               ) : (
                 <>
