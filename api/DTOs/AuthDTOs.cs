@@ -42,4 +42,6 @@ public class UserDTO
     public string? AvatarUrl { get; set; }
     public List<string> Roles { get; set; } = new();
     public bool IsBlocked { get; set; }
+    public DateTime? FrozenUntil { get; set; }
+    public DateTime? LastCommentAt { get; set; }
 }

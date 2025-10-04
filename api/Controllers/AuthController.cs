@@ -60,7 +60,9 @@ public class AuthController : ControllerBase
                 Username = user.Username,
                 AvatarUrl = user.AvatarUrl,
                 Roles = new List<string> { "Viewer" },
-                IsBlocked = false
+                IsBlocked = false,
+                FrozenUntil = null,
+                LastCommentAt = null
             }
         });
     }
@@ -97,7 +99,9 @@ public class AuthController : ControllerBase
                 Username = user.Username,
                 AvatarUrl = user.AvatarUrl,
                 Roles = roles,
-                IsBlocked = user.IsBlocked
+                IsBlocked = user.IsBlocked,
+                FrozenUntil = user.FrozenUntil,
+                LastCommentAt = user.LastCommentAt
             }
         });
     }
@@ -131,7 +135,9 @@ public class AuthController : ControllerBase
             Username = user.Username,
             AvatarUrl = user.AvatarUrl,
             Roles = roles,
-            IsBlocked = user.IsBlocked
+            IsBlocked = user.IsBlocked,
+            FrozenUntil = user.FrozenUntil,
+            LastCommentAt = user.LastCommentAt
         });
     }
 }

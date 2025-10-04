@@ -23,6 +23,9 @@ public class Comment
 
     public DateTime? DeletedAt { get; set; }
 
+    [MaxLength(45)]
+    public string? IpAddress { get; set; }
+
     // Foreign keys
     [Required]
     public Guid UserId { get; set; }

@@ -50,16 +50,61 @@ public class CommentsController : ControllerBase
         var userId = GetCurrentUserId();
         if (userId == null) return Unauthorized();
 
+        var user = await _context.Profiles
+            .Include(p => p.ProfileRoles)
+            .FirstOrDefaultAsync(p => p.Id == userId.Value);
+
+        if (user == null) return Unauthorized();
+
+        var isEditorOrAdmin = user.ProfileRoles.Any(pr => pr.Role == UserRole.Editor || pr.Role == UserRole.Admin);
+
+        // Check if user is frozen (only for non-editors/admins)
+        if (!isEditorOrAdmin && user.FrozenUntil.HasValue && user.FrozenUntil.Value > DateTime.UtcNow)
+        {
+            var remainingTime = user.FrozenUntil.Value - DateTime.UtcNow;
+            return BadRequest(new {
+                error = "AccountFrozen",
+                message = $"Your account is frozen until {user.FrozenUntil.Value:yyyy-MM-dd HH:mm:ss} UTC",
+                frozenUntil = user.FrozenUntil.Value,
+                remainingSeconds = (int)remainingTime.TotalSeconds
+            });
+        }
+
+        // Check throttling (only for non-editors/admins)
+        if (!isEditorOrAdmin && user.LastCommentAt.HasValue)
+        {
+            var timeSinceLastComment = DateTime.UtcNow - user.LastCommentAt.Value;
+            if (timeSinceLastComment.TotalSeconds < 30)
+            {
+                var waitTime = 30 - (int)timeSinceLastComment.TotalSeconds;
+                return BadRequest(new {
+                    error = "TooManyRequests",
+                    message = $"Please wait {waitTime} seconds before posting another comment",
+                    waitSeconds = waitTime
+                });
+            }
+        }
+
+        // Get client IP address (IPv4)
+        var ipAddress = GetClientIPv4Address();
+
         var comment = new Comment
         {
             Content = request.Content,
             UserId = userId.Value,
             PageId = request.PageId,
             ParagraphId = request.ParagraphId,
-            ParentId = request.ParentId
+            ParentId = request.ParentId,
+            IpAddress = ipAddress
         };
 
         _context.Comments.Add(comment);
+
+        // Update last comment time (only for non-editors/admins)
+        if (!isEditorOrAdmin)
+        {
+            user.LastCommentAt = DateTime.UtcNow;
+        }
 
         // Update comment count if it's a paragraph comment
         if (request.ParagraphId.HasValue)
@@ -73,7 +118,11 @@ public class CommentsController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        var user = await _context.Profiles.FindAsync(userId.Value);
+        // Check for IP-based abuse (only for non-editors/admins)
+        if (!isEditorOrAdmin && !string.IsNullOrEmpty(ipAddress))
+        {
+            await CheckAndFreezeIPAbuse(ipAddress);
+        }
 
         var commentDto = new CommentDTO
         {
@@ -260,6 +309,48 @@ public class CommentsController : ControllerBase
         return userIdClaim != null ? Guid.Parse(userIdClaim) : null;
     }
 
+    private string? GetClientIPv4Address()
+    {
+        // Check X-Forwarded-For header (for proxies/load balancers)
+        var forwardedFor = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        if (!string.IsNullOrEmpty(forwardedFor))
+        {
+            // X-Forwarded-For can contain multiple IPs, take the first one
+            var ips = forwardedFor.Split(',');
+            if (ips.Length > 0)
+            {
+                var ip = ips[0].Trim();
+                // Try to parse as IPv4
+                if (System.Net.IPAddress.TryParse(ip, out var parsedIp))
+                {
+                    if (parsedIp.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                    {
+                        return ip;
+                    }
+                }
+            }
+        }
+
+        // Fallback to RemoteIpAddress
+        var remoteIp = HttpContext.Connection.RemoteIpAddress;
+        if (remoteIp != null)
+        {
+            // If it's IPv6 mapped to IPv4, extract the IPv4 address
+            if (remoteIp.IsIPv4MappedToIPv6)
+            {
+                return remoteIp.MapToIPv4().ToString();
+            }
+            // If it's IPv4, return it
+            if (remoteIp.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+            {
+                return remoteIp.ToString();
+            }
+        }
+
+        // Return null if no valid IPv4 address found
+        return null;
+    }
+
     private async Task<List<CommentDTO>> MapCommentsWithReplies(List<Comment> comments)
     {
         var result = new List<CommentDTO>();
@@ -301,5 +392,37 @@ public class CommentsController : ControllerBase
             .ToListAsync();
 
         return await MapCommentsWithReplies(replies);
+    }
+
+    private async Task CheckAndFreezeIPAbuse(string ipAddress)
+    {
+        // Look for comments from this IP in the last 30 seconds
+        var recentComments = await _context.Comments
+            .Where(c => c.IpAddress == ipAddress && c.CreatedAt > DateTime.UtcNow.AddSeconds(-30))
+            .Select(c => c.UserId)
+            .Distinct()
+            .ToListAsync();
+
+        // If 3 or more different users posted from the same IP in the last 30 seconds
+        if (recentComments.Count >= 3)
+        {
+            var usersToFreeze = await _context.Profiles
+                .Include(p => p.ProfileRoles)
+                    .ThenInclude(pr => pr.Role)
+                .Where(p => recentComments.Contains(p.Id))
+                .ToListAsync();
+
+            foreach (var user in usersToFreeze)
+            {
+                // Only freeze non-editors/admins
+                var isEditorOrAdmin = user.ProfileRoles.Any(pr => pr.Role == UserRole.Editor || pr.Role == UserRole.Admin);
+                if (!isEditorOrAdmin)
+                {
+                    user.FrozenUntil = DateTime.UtcNow.AddHours(24);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+        }
     }
 }

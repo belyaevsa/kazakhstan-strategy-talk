@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FileText, LogOut, User, ChevronLeft, ChevronRight } from "lucide-react";
@@ -15,9 +15,40 @@ interface DocumentLayoutProps {
 const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) => {
   const navigate = useNavigate();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [userState, setUserState] = useState(authService.getUser());
 
-  const user = authService.getUser();
   const isAuthenticated = authService.isAuthenticated();
+
+  // Listen for localStorage changes to update user state
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setUserState(authService.getUser());
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Periodically refresh user data from server to check for frozen status
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const refreshUserData = async () => {
+      await authService.getCurrentUser();
+      setUserState(authService.getUser());
+    };
+
+    // Refresh immediately on mount
+    refreshUserData();
+
+    // Then refresh every 30 seconds
+    const interval = setInterval(refreshUserData, 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
+  const user = userState;
+  const isFrozen = user?.frozenUntil && new Date(user.frozenUntil) > new Date();
+  const isEditorOrAdmin = user?.roles.includes("Editor") || user?.roles.includes("Admin");
 
   const handleLogout = () => {
     authService.logout();
@@ -34,10 +65,15 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
             <FileText className="h-6 w-6" />
             <span>IT Development Strategy</span>
           </Link>
-          
+
           <div className="flex items-center gap-3">
             {isAuthenticated ? (
               <>
+                {isFrozen && !isEditorOrAdmin && user?.frozenUntil && (
+                  <div className="flex items-center gap-2 px-3 py-1 bg-red-100 dark:bg-red-950/30 text-red-800 dark:text-red-200 rounded-md text-xs font-medium border border-red-200 dark:border-red-800">
+                    <span>🔒 Frozen until {new Date(user.frozenUntil).toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 text-sm">
                   <User className="h-4 w-4" />
                   <span className="hidden sm:inline">{user?.username}</span>

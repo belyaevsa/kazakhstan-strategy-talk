@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authService } from "@/services/authService";
 import { commentService } from "@/services/commentService";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, Send } from "lucide-react";
+import { MessageSquare, Send, Clock } from "lucide-react";
 import { toast } from "sonner";
 import CommentItem from "@/components/CommentItem";
 
@@ -16,8 +16,44 @@ interface CommentPanelProps {
 
 const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
   const [newComment, setNewComment] = useState("");
+  const [countdown, setCountdown] = useState(0);
+  const [userState, setUserState] = useState(authService.getUser());
   const queryClient = useQueryClient();
   const isAuthenticated = authService.isAuthenticated();
+
+  // Listen for localStorage changes to update user state
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setUserState(authService.getUser());
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const user = userState;
+  const isEditorOrAdmin = user?.roles.includes("Editor") || user?.roles.includes("Admin");
+  const isFrozen = user?.frozenUntil && new Date(user.frozenUntil) > new Date();
+
+  // Update countdown timer
+  useEffect(() => {
+    if (!user || isEditorOrAdmin || !user.lastCommentAt) {
+      setCountdown(0);
+      return;
+    }
+
+    const updateCountdown = () => {
+      const lastCommentTime = new Date(user.lastCommentAt!).getTime();
+      const now = Date.now();
+      const elapsed = (now - lastCommentTime) / 1000; // seconds
+      const remaining = Math.max(0, 30 - elapsed);
+      setCountdown(Math.ceil(remaining));
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [user, isEditorOrAdmin]);
 
   const { data: comments, isLoading } = useQuery({
     queryKey: ["comments", paragraphId, pageId, mode],
@@ -49,16 +85,26 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
 
       return commentService.create(commentData);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["comments"] });
       if (paragraphId) {
         queryClient.invalidateQueries({ queryKey: ["paragraphs"] });
       }
+      // Refresh user data to get updated lastCommentAt
+      await authService.getCurrentUser();
       setNewComment("");
       toast.success("Comment added!");
+      // Force re-render by triggering a state update
+      window.dispatchEvent(new Event('storage'));
     },
-    onError: () => {
-      toast.error("Failed to add comment");
+    onError: (error: any) => {
+      if (error.response?.data?.error === "AccountFrozen") {
+        toast.error(error.response.data.message);
+      } else if (error.response?.data?.error === "TooManyRequests") {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Failed to add comment");
+      }
     },
   });
 
@@ -149,17 +195,38 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
       </div>
 
       {isAuthenticated ? (
-        <form onSubmit={handleSubmit} className="p-4 border-t">
+        <form onSubmit={handleSubmit} className="p-4 border-t space-y-2">
+          {isFrozen && !isEditorOrAdmin && (
+            <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md text-sm text-red-800 dark:text-red-200">
+              🔒 Your account is frozen. You cannot post comments until {new Date(user.frozenUntil!).toLocaleString()}.
+            </div>
+          )}
+          {countdown > 0 && !isEditorOrAdmin && (
+            <div className="p-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2">
+              <Clock className="h-3 w-3" />
+              Wait {countdown}s before posting another comment
+            </div>
+          )}
           <Textarea
             placeholder="Share your thoughts..."
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            className="mb-2 resize-none"
+            className="resize-none"
             rows={3}
+            disabled={(isFrozen && !isEditorOrAdmin) || addCommentMutation.isPending}
           />
-          <Button type="submit" size="sm" disabled={!newComment.trim() || addCommentMutation.isPending}>
+          <Button
+            type="submit"
+            size="sm"
+            disabled={
+              !newComment.trim() ||
+              addCommentMutation.isPending ||
+              (countdown > 0 && !isEditorOrAdmin) ||
+              (isFrozen && !isEditorOrAdmin)
+            }
+          >
             <Send className="h-3 w-3 mr-2" />
-            {addCommentMutation.isPending ? "Posting..." : "Post Comment"}
+            {addCommentMutation.isPending ? "Posting..." : countdown > 0 && !isEditorOrAdmin ? `Wait ${countdown}s` : "Post Comment"}
           </Button>
         </form>
       ) : (

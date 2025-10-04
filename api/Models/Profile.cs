@@ -23,6 +23,10 @@ public class Profile
 
     public bool IsBlocked { get; set; } = false;
 
+    public DateTime? FrozenUntil { get; set; }
+
+    public DateTime? LastCommentAt { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties

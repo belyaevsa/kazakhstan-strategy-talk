@@ -30,7 +30,12 @@ class AuthService {
       const token = localStorage.getItem('auth_token');
       if (!token) return null;
 
-      return await apiClient.get<User>('/auth/me');
+      const user = await apiClient.get<User>('/auth/me');
+      // Update localStorage with fresh user data
+      if (user) {
+        localStorage.setItem('auth_user', JSON.stringify(user));
+      }
+      return user;
     } catch (error) {
       this.logout();
       return null;

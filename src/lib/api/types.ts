@@ -5,6 +5,8 @@ export interface User {
   avatarUrl?: string;
   roles: string[];
   isBlocked: boolean;
+  frozenUntil?: string;
+  lastCommentAt?: string;
 }
 
 export interface AuthResponse {
