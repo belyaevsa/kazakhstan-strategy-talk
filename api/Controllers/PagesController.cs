@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using KazakhstanStrategyApi.Data;
 using KazakhstanStrategyApi.DTOs;
 using KazakhstanStrategyApi.Models;
+using System.Security.Claims;
+using System.Text.Json;
 
 namespace KazakhstanStrategyApi.Controllers;
 
@@ -18,6 +20,12 @@ public class PagesController : ControllerBase
         _context = context;
     }
 
+    private Guid GetCurrentUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return userIdClaim != null ? Guid.Parse(userIdClaim) : Guid.Empty;
+    }
+
     [HttpGet]
     public async Task<ActionResult<IEnumerable<PageDTO>>> GetPages([FromQuery] Guid? chapterId = null)
     {
@@ -29,6 +37,7 @@ public class PagesController : ControllerBase
         }
 
         var pages = await query
+            .Include(p => p.UpdatedByProfile)
             .OrderBy(p => p.OrderIndex)
             .Select(p => new PageDTO
             {
@@ -39,7 +48,9 @@ public class PagesController : ControllerBase
                 OrderIndex = p.OrderIndex,
                 IsDraft = p.IsDraft,
                 ChapterId = p.ChapterId,
-                CreatedAt = p.CreatedAt
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+                UpdatedByUsername = p.UpdatedByProfile != null ? p.UpdatedByProfile.Username : null
             })
             .ToListAsync();
 
@@ -50,6 +61,7 @@ public class PagesController : ControllerBase
     public async Task<ActionResult<PageDTO>> GetPageBySlug(string slug)
     {
         var page = await _context.Pages
+            .Include(p => p.UpdatedByProfile)
             .Where(p => p.Slug == slug)
             .Select(p => new PageDTO
             {
@@ -60,7 +72,9 @@ public class PagesController : ControllerBase
                 OrderIndex = p.OrderIndex,
                 IsDraft = p.IsDraft,
                 ChapterId = p.ChapterId,
-                CreatedAt = p.CreatedAt
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+                UpdatedByUsername = p.UpdatedByProfile != null ? p.UpdatedByProfile.Username : null
             })
             .FirstOrDefaultAsync();
 
@@ -142,19 +156,55 @@ public class PagesController : ControllerBase
     [Authorize(Policy = "EditorPolicy")]
     public async Task<IActionResult> UpdatePage(Guid id, UpdatePageRequest request)
     {
-        var page = await _context.Pages.FindAsync(id);
+        var page = await _context.Pages
+            .Include(p => p.Paragraphs)
+            .FirstOrDefaultAsync(p => p.Id == id);
 
         if (page == null)
         {
             return NotFound();
         }
 
+        var userId = GetCurrentUserId();
+        var now = DateTime.UtcNow;
+
+        // Create page version before updating (with paragraphs snapshot)
+        var lastVersion = await _context.PageVersions
+            .Where(pv => pv.PageId == id)
+            .OrderByDescending(pv => pv.Version)
+            .FirstOrDefaultAsync();
+
+        var paragraphsSnapshot = JsonSerializer.Serialize(page.Paragraphs.OrderBy(p => p.OrderIndex).Select(p => new
+        {
+            p.Id,
+            p.Content,
+            p.OrderIndex,
+            Type = p.Type.ToString()
+        }));
+
+        var newVersion = new PageVersion
+        {
+            PageId = page.Id,
+            Version = (lastVersion?.Version ?? 0) + 1,
+            Title = page.Title,
+            Description = page.Description,
+            ParagraphsSnapshot = paragraphsSnapshot,
+            UpdatedByProfileId = userId,
+            UpdatedAt = now
+        };
+
+        _context.PageVersions.Add(newVersion);
+
+        // Update page
         if (request.Title != null) page.Title = request.Title;
         if (request.Description != null) page.Description = request.Description;
         if (request.Slug != null) page.Slug = request.Slug;
         if (request.OrderIndex.HasValue) page.OrderIndex = request.OrderIndex.Value;
         if (request.IsDraft.HasValue) page.IsDraft = request.IsDraft.Value;
         if (request.ChapterId.HasValue) page.ChapterId = request.ChapterId.Value;
+
+        page.UpdatedAt = now;
+        page.UpdatedByProfileId = userId;
 
         await _context.SaveChangesAsync();
 

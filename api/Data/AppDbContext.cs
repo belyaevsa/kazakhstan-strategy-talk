@@ -16,6 +16,8 @@ public class AppDbContext : DbContext
     public DbSet<Paragraph> Paragraphs { get; set; }
     public DbSet<Comment> Comments { get; set; }
     public DbSet<CommentVote> CommentVotes { get; set; }
+    public DbSet<PageVersion> PageVersions { get; set; }
+    public DbSet<ParagraphVersion> ParagraphVersions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -113,6 +115,40 @@ public class AppDbContext : DbContext
 
             // Ensure one vote per user per comment
             entity.HasIndex(e => new { e.CommentId, e.UserId }).IsUnique();
+        });
+
+        // PageVersion configuration
+        modelBuilder.Entity<PageVersion>(entity =>
+        {
+            entity.HasOne(pv => pv.Page)
+                .WithMany()
+                .HasForeignKey(pv => pv.PageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(pv => pv.UpdatedByProfile)
+                .WithMany()
+                .HasForeignKey(pv => pv.UpdatedByProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => new { e.PageId, e.Version }).IsUnique();
+            entity.HasIndex(e => e.UpdatedAt);
+        });
+
+        // ParagraphVersion configuration
+        modelBuilder.Entity<ParagraphVersion>(entity =>
+        {
+            entity.HasOne(pv => pv.Paragraph)
+                .WithMany()
+                .HasForeignKey(pv => pv.ParagraphId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(pv => pv.UpdatedByProfile)
+                .WithMany()
+                .HasForeignKey(pv => pv.UpdatedByProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => new { e.ParagraphId, e.Version }).IsUnique();
+            entity.HasIndex(e => e.UpdatedAt);
         });
     }
 }

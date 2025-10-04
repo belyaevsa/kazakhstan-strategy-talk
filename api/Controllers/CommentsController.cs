@@ -24,7 +24,7 @@ public class CommentsController : ControllerBase
     {
         var comments = await _context.Comments
             .Include(c => c.User)
-            .Where(c => c.PageId == pageId && c.ParentId == null && !c.IsDeleted)
+            .Where(c => c.PageId == pageId && c.ParentId == null)
             .OrderBy(c => c.CreatedAt)
             .ToListAsync();
 
@@ -36,7 +36,7 @@ public class CommentsController : ControllerBase
     {
         var comments = await _context.Comments
             .Include(c => c.User)
-            .Where(c => c.ParagraphId == paragraphId && c.ParentId == null && !c.IsDeleted)
+            .Where(c => c.ParagraphId == paragraphId && c.ParentId == null)
             .OrderBy(c => c.CreatedAt)
             .ToListAsync();
 
@@ -83,6 +83,7 @@ public class CommentsController : ControllerBase
             DisagreeCount = comment.DisagreeCount,
             CreatedAt = comment.CreatedAt,
             UpdatedAt = comment.UpdatedAt,
+            IsDeleted = comment.IsDeleted,
             ParentId = comment.ParentId,
             User = new UserDTO
             {
@@ -118,6 +119,7 @@ public class CommentsController : ControllerBase
             DisagreeCount = comment.DisagreeCount,
             CreatedAt = comment.CreatedAt,
             UpdatedAt = comment.UpdatedAt,
+            IsDeleted = comment.IsDeleted,
             ParentId = comment.ParentId,
             User = new UserDTO
             {
@@ -171,10 +173,18 @@ public class CommentsController : ControllerBase
             return NotFound();
         }
 
-        if (comment.UserId != userId.Value)
+        // Check if user is admin or comment owner
+        var isAdmin = User.IsInRole("Admin");
+
+        if (!isAdmin && comment.UserId != userId.Value)
         {
             return Forbid();
         }
+
+        // Mark as deleted instead of removing (soft delete)
+        comment.IsDeleted = true;
+        comment.DeletedAt = DateTime.UtcNow;
+        comment.Content = "";
 
         // Update comment count if it's a paragraph comment
         if (comment.ParagraphId.HasValue)
@@ -186,7 +196,6 @@ public class CommentsController : ControllerBase
             }
         }
 
-        _context.Comments.Remove(comment);
         await _context.SaveChangesAsync();
 
         return NoContent();
@@ -267,6 +276,7 @@ public class CommentsController : ControllerBase
                 DisagreeCount = comment.DisagreeCount,
                 CreatedAt = comment.CreatedAt,
                 UpdatedAt = comment.UpdatedAt,
+                IsDeleted = comment.IsDeleted,
                 ParentId = comment.ParentId,
                 User = new UserDTO
                 {
@@ -286,7 +296,7 @@ public class CommentsController : ControllerBase
     {
         var replies = await _context.Comments
             .Include(c => c.User)
-            .Where(c => c.ParentId == commentId && !c.IsDeleted)
+            .Where(c => c.ParentId == commentId)
             .OrderBy(c => c.CreatedAt)
             .ToListAsync();
 

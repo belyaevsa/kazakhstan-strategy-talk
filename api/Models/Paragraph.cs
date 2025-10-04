@@ -21,6 +21,8 @@ public class Paragraph
     public ParagraphType Type { get; set; } = ParagraphType.Text;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
+    public Guid? UpdatedByProfileId { get; set; }
 
     // Foreign keys
     [Required]
@@ -29,6 +31,9 @@ public class Paragraph
     // Navigation properties
     [ForeignKey(nameof(PageId))]
     public Page Page { get; set; } = null!;
+
+    [ForeignKey(nameof(UpdatedByProfileId))]
+    public Profile? UpdatedByProfile { get; set; }
 
     public ICollection<Comment> Comments { get; set; } = new List<Comment>();
 }

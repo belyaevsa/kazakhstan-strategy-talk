@@ -32,6 +32,8 @@ export interface Page {
   isDraft: boolean;
   chapterId: string;
   createdAt: string;
+  updatedAt?: string;
+  updatedByUsername?: string;
 }
 
 export interface Paragraph {
@@ -43,6 +45,8 @@ export interface Paragraph {
   type: 'Text' | 'Header' | 'Image' | 'Quote' | 'Code';
   pageId: string;
   createdAt: string;
+  updatedAt?: string;
+  updatedByUsername?: string;
 }
 
 export interface Comment {
@@ -52,6 +56,7 @@ export interface Comment {
   disagreeCount: number;
   createdAt: string;
   updatedAt?: string;
+  isDeleted: boolean;
   user: User;
   parentId?: string;
   replies: Comment[];

@@ -12,6 +12,8 @@ public class ParagraphDTO
     public string Type { get; set; } = "Text";
     public Guid PageId { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public string? UpdatedByUsername { get; set; }
 }
 
 public class CreateParagraphRequest

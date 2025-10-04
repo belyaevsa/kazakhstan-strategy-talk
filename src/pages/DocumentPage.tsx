@@ -44,13 +44,15 @@ import { toast } from "sonner";
 import type { Chapter, Page } from "@/lib/api/types";
 
 interface SortableParagraphProps {
-  paragraph: { id: string; content: string; orderIndex: number };
+  paragraph: { id: string; content: string; orderIndex: number; type?: string };
   index: number;
   onContentChange: (content: string) => void;
   onDelete: () => void;
+  onEnterKey: () => void;
+  onTypeChange: (type: string) => void;
 }
 
-const SortableParagraph = ({ paragraph, index, onContentChange, onDelete }: SortableParagraphProps) => {
+const SortableParagraph = ({ paragraph, index, onContentChange, onDelete, onEnterKey, onTypeChange }: SortableParagraphProps) => {
   const {
     attributes,
     listeners,
@@ -76,9 +78,26 @@ const SortableParagraph = ({ paragraph, index, onContentChange, onDelete }: Sort
         <GripVertical className="h-5 w-5" />
       </button>
       <div className="flex-1">
+        <div className="flex items-center gap-2 mb-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
+                {paragraph.type || "Text"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => onTypeChange("Text")}>Text</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onTypeChange("Header")}>Header</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onTypeChange("Code")}>Code</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onTypeChange("Quote")}>Quote</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onTypeChange("Image")}>Image</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         <AutoResizeTextarea
           value={paragraph.content}
           onChange={(e) => onContentChange(e.target.value)}
+          onEnterKey={onEnterKey}
           placeholder="Type your content here..."
           className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors"
         />
@@ -101,11 +120,12 @@ const DocumentPage = () => {
   const queryClient = useQueryClient();
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(null);
   const [paragraphPosition, setParagraphPosition] = useState(0);
+  const [scrollOffset, setScrollOffset] = useState(0);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
   const [editedIsDraft, setEditedIsDraft] = useState(false);
-  const [editedParagraphs, setEditedParagraphs] = useState<Array<{ id: string; content: string; orderIndex: number }>>([]);
+  const [editedParagraphs, setEditedParagraphs] = useState<Array<{ id: string; content: string; orderIndex: number; type?: string }>>([]);
   const [chapterDialogOpen, setChapterDialogOpen] = useState(false);
   const [pageDialogOpen, setPageDialogOpen] = useState(false);
   const [editingChapter, setEditingChapter] = useState<Chapter | undefined>();
@@ -137,6 +157,27 @@ const DocumentPage = () => {
     enabled: !!currentPage?.id,
   });
 
+  // Track scroll position and recalculate paragraph position to keep comment aligned
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+      setScrollOffset(currentScroll);
+
+      // Recalculate paragraph position if one is selected
+      if (activeParagraphId) {
+        const paragraphElement = document.getElementById(`paragraph-${activeParagraphId}`);
+        if (paragraphElement) {
+          const rect = paragraphElement.getBoundingClientRect();
+          const absolutePosition = rect.top + currentScroll;
+          setParagraphPosition(absolutePosition);
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [activeParagraphId]);
+
   const savePageMutation = useMutation({
     mutationFn: async () => {
       await pageService.update(currentPage!.id, {
@@ -148,7 +189,8 @@ const DocumentPage = () => {
       for (const para of editedParagraphs) {
         await paragraphService.update(para.id, {
           content: para.content,
-          orderIndex: para.orderIndex
+          orderIndex: para.orderIndex,
+          type: para.type
         });
       }
     },
@@ -293,7 +335,7 @@ const DocumentPage = () => {
       setEditedTitle(currentPage.title);
       setEditedDescription(currentPage.description || "");
       setEditedIsDraft(currentPage.isDraft);
-      setEditedParagraphs(paragraphs?.map(p => ({ id: p.id, content: p.content, orderIndex: p.orderIndex })) || []);
+      setEditedParagraphs(paragraphs?.map(p => ({ id: p.id, content: p.content, orderIndex: p.orderIndex, type: p.type })) || []);
     }
     setIsEditMode(!isEditMode);
   };
@@ -456,7 +498,7 @@ const DocumentPage = () => {
                 <div
                   className="transition-all duration-300"
                   style={{
-                    transform: `translateY(${Math.max(0, paragraphPosition - window.pageYOffset - 100)}px)`
+                    transform: `translateY(${Math.max(0, paragraphPosition - scrollOffset - 84)}px)`
                   }}
                 >
                   <CommentPanel
@@ -513,7 +555,19 @@ const DocumentPage = () => {
                   )}
                 </div>
                 {currentPage.description && (
-                  <p className="text-lg text-muted-foreground">{currentPage.description}</p>
+                  <p className="text-lg text-muted-foreground mb-2">{currentPage.description}</p>
+                )}
+                {currentPage.updatedAt && (
+                  <p className="text-sm text-muted-foreground">
+                    Last updated {new Date(currentPage.updatedAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                    {currentPage.updatedByUsername && ` by ${currentPage.updatedByUsername}`}
+                  </p>
                 )}
               </>
             )}
@@ -571,6 +625,28 @@ const DocumentPage = () => {
                       onDelete={() => {
                         deleteParagraphMutation.mutate(paragraph.id);
                         setEditedParagraphs(editedParagraphs.filter(p => p.id !== paragraph.id));
+                      }}
+                      onEnterKey={() => {
+                        addParagraphMutation.mutate("Text", {
+                          onSuccess: (newPara: any) => {
+                            // Reorder: insert new paragraph after current one
+                            const updated = [...editedParagraphs];
+                            updated.splice(index + 1, 0, {
+                              id: newPara.id,
+                              content: "",
+                              orderIndex: paragraph.orderIndex + 1,
+                              type: "Text"
+                            });
+                            // Update order indices for subsequent paragraphs
+                            updated.forEach((p, i) => p.orderIndex = i);
+                            setEditedParagraphs(updated);
+                          }
+                        });
+                      }}
+                      onTypeChange={(type) => {
+                        const updated = [...editedParagraphs];
+                        updated[index].type = type;
+                        setEditedParagraphs(updated);
                       }}
                     />
                   ))}

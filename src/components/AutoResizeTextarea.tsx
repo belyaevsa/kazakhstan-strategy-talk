@@ -3,9 +3,10 @@ import { cn } from "@/lib/utils";
 
 interface AutoResizeTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   value: string;
+  onEnterKey?: () => void;
 }
 
-const AutoResizeTextarea = ({ value, className, ...props }: AutoResizeTextareaProps) => {
+const AutoResizeTextarea = ({ value, className, onEnterKey, ...props }: AutoResizeTextareaProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -18,12 +19,21 @@ const AutoResizeTextarea = ({ value, className, ...props }: AutoResizeTextareaPr
     }
   }, [value]);
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey && onEnterKey) {
+      e.preventDefault();
+      onEnterKey();
+    }
+    props.onKeyDown?.(e);
+  };
+
   return (
     <textarea
       ref={textareaRef}
       value={value}
       className={cn("resize-none overflow-hidden", className)}
       {...props}
+      onKeyDown={handleKeyDown}
     />
   );
 };

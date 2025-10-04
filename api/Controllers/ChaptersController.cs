@@ -23,6 +23,7 @@ public class ChaptersController : ControllerBase
     {
         var query = _context.Chapters
             .Include(c => c.Pages)
+                .ThenInclude(p => p.UpdatedByProfile)
             .AsQueryable();
 
         if (!includeDrafts)
@@ -55,7 +56,9 @@ public class ChaptersController : ControllerBase
                     OrderIndex = p.OrderIndex,
                     IsDraft = p.IsDraft,
                     ChapterId = p.ChapterId,
-                    CreatedAt = p.CreatedAt
+                    CreatedAt = p.CreatedAt,
+                    UpdatedAt = p.UpdatedAt,
+                    UpdatedByUsername = p.UpdatedByProfile != null ? p.UpdatedByProfile.Username : null
                 }).ToList()
         }).ToList();
 
@@ -67,6 +70,7 @@ public class ChaptersController : ControllerBase
     {
         var chapter = await _context.Chapters
             .Include(c => c.Pages)
+                .ThenInclude(p => p.UpdatedByProfile)
             .FirstOrDefaultAsync(c => c.Id == id);
 
         if (chapter == null)
@@ -92,7 +96,9 @@ public class ChaptersController : ControllerBase
                 OrderIndex = p.OrderIndex,
                 IsDraft = p.IsDraft,
                 ChapterId = p.ChapterId,
-                CreatedAt = p.CreatedAt
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+                UpdatedByUsername = p.UpdatedByProfile != null ? p.UpdatedByProfile.Username : null
             }).ToList()
         };
 

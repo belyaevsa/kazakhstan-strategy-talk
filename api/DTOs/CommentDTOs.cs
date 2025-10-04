@@ -10,6 +10,7 @@ public class CommentDTO
     public int DisagreeCount { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public bool IsDeleted { get; set; }
     public UserDTO User { get; set; } = null!;
     public Guid? ParentId { get; set; }
     public List<CommentDTO> Replies { get; set; } = new();

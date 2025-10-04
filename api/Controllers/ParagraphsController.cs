@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using KazakhstanStrategyApi.Data;
 using KazakhstanStrategyApi.DTOs;
 using KazakhstanStrategyApi.Models;
+using System.Security.Claims;
+using System.Text.Json;
 
 namespace KazakhstanStrategyApi.Controllers;
 
@@ -18,6 +20,12 @@ public class ParagraphsController : ControllerBase
         _context = context;
     }
 
+    private Guid GetCurrentUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return userIdClaim != null ? Guid.Parse(userIdClaim) : Guid.Empty;
+    }
+
     [HttpGet("page/{pageId}")]
     public async Task<ActionResult<IEnumerable<ParagraphDTO>>> GetParagraphsByPage(Guid pageId, [FromQuery] bool includeHidden = false)
     {
@@ -29,39 +37,43 @@ public class ParagraphsController : ControllerBase
         }
 
         var paragraphs = await query
+            .Include(p => p.UpdatedByProfile)
             .OrderBy(p => p.OrderIndex)
-            .Select(p => new ParagraphDTO
+            .ToListAsync();
+
+        var paragraphDTOs = new List<ParagraphDTO>();
+
+        foreach (var p in paragraphs)
+        {
+            // Count only non-deleted comments
+            var commentCount = await _context.Comments
+                .Where(c => c.ParagraphId == p.Id && !c.IsDeleted)
+                .CountAsync();
+
+            paragraphDTOs.Add(new ParagraphDTO
             {
                 Id = p.Id,
                 Content = p.Content,
                 OrderIndex = p.OrderIndex,
-                CommentCount = p.CommentCount,
+                CommentCount = commentCount,
                 IsHidden = p.IsHidden,
                 Type = p.Type.ToString(),
                 PageId = p.PageId,
-                CreatedAt = p.CreatedAt
-            })
-            .ToListAsync();
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+                UpdatedByUsername = p.UpdatedByProfile != null ? p.UpdatedByProfile.Username : null
+            });
+        }
 
-        return Ok(paragraphs);
+        return Ok(paragraphDTOs);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<ParagraphDTO>> GetParagraph(Guid id)
     {
         var paragraph = await _context.Paragraphs
+            .Include(p => p.UpdatedByProfile)
             .Where(p => p.Id == id)
-            .Select(p => new ParagraphDTO
-            {
-                Id = p.Id,
-                Content = p.Content,
-                OrderIndex = p.OrderIndex,
-                CommentCount = p.CommentCount,
-                IsHidden = p.IsHidden,
-                Type = p.Type.ToString(),
-                PageId = p.PageId,
-                CreatedAt = p.CreatedAt
-            })
             .FirstOrDefaultAsync();
 
         if (paragraph == null)
@@ -69,7 +81,24 @@ public class ParagraphsController : ControllerBase
             return NotFound();
         }
 
-        return Ok(paragraph);
+        // Count only non-deleted comments
+        var commentCount = await _context.Comments
+            .Where(c => c.ParagraphId == paragraph.Id && !c.IsDeleted)
+            .CountAsync();
+
+        return Ok(new ParagraphDTO
+        {
+            Id = paragraph.Id,
+            Content = paragraph.Content,
+            OrderIndex = paragraph.OrderIndex,
+            CommentCount = commentCount,
+            IsHidden = paragraph.IsHidden,
+            Type = paragraph.Type.ToString(),
+            PageId = paragraph.PageId,
+            CreatedAt = paragraph.CreatedAt,
+            UpdatedAt = paragraph.UpdatedAt,
+            UpdatedByUsername = paragraph.UpdatedByProfile != null ? paragraph.UpdatedByProfile.Username : null
+        });
     }
 
     [HttpPost]
@@ -111,13 +140,37 @@ public class ParagraphsController : ControllerBase
     [Authorize(Policy = "EditorPolicy")]
     public async Task<IActionResult> UpdateParagraph(Guid id, UpdateParagraphRequest request)
     {
-        var paragraph = await _context.Paragraphs.FindAsync(id);
+        var paragraph = await _context.Paragraphs
+            .Include(p => p.Page)
+            .FirstOrDefaultAsync(p => p.Id == id);
 
         if (paragraph == null)
         {
             return NotFound();
         }
 
+        var userId = GetCurrentUserId();
+        var now = DateTime.UtcNow;
+
+        // Create paragraph version before updating
+        var lastVersion = await _context.ParagraphVersions
+            .Where(pv => pv.ParagraphId == id)
+            .OrderByDescending(pv => pv.Version)
+            .FirstOrDefaultAsync();
+
+        var newVersion = new ParagraphVersion
+        {
+            ParagraphId = paragraph.Id,
+            Version = (lastVersion?.Version ?? 0) + 1,
+            Content = paragraph.Content,
+            Type = paragraph.Type,
+            UpdatedByProfileId = userId,
+            UpdatedAt = now
+        };
+
+        _context.ParagraphVersions.Add(newVersion);
+
+        // Update paragraph
         if (request.Content != null) paragraph.Content = request.Content;
         if (request.OrderIndex.HasValue) paragraph.OrderIndex = request.OrderIndex.Value;
         if (request.IsHidden.HasValue) paragraph.IsHidden = request.IsHidden.Value;
@@ -125,6 +178,13 @@ public class ParagraphsController : ControllerBase
         {
             paragraph.Type = paragraphType;
         }
+
+        paragraph.UpdatedAt = now;
+        paragraph.UpdatedByProfileId = userId;
+
+        // Update page's UpdatedAt and UpdatedByProfileId
+        paragraph.Page.UpdatedAt = now;
+        paragraph.Page.UpdatedByProfileId = userId;
 
         await _context.SaveChangesAsync();
 
@@ -181,5 +241,25 @@ public class ParagraphsController : ControllerBase
         await _context.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    [HttpPost("recalculate-comment-counts")]
+    [Authorize(Policy = "EditorPolicy")]
+    public async Task<IActionResult> RecalculateCommentCounts()
+    {
+        var paragraphs = await _context.Paragraphs.ToListAsync();
+
+        foreach (var paragraph in paragraphs)
+        {
+            var count = await _context.Comments
+                .Where(c => c.ParagraphId == paragraph.Id && !c.IsDeleted)
+                .CountAsync();
+
+            paragraph.CommentCount = count;
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Comment counts recalculated successfully" });
     }
 }
