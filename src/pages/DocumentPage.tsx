@@ -632,7 +632,7 @@ const DocumentPage = () => {
   return (
     <>
       <DocumentLayout
-        sidebar={chapters && <DocumentStructure chapters={chapters} />}
+        sidebar={chapters && <DocumentStructure chapters={chapters} onAddChapter={handleAddChapter} />}
         comments={
           !isEditMode && (
             <div className="space-y-4">

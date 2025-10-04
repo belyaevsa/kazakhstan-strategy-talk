@@ -105,15 +105,15 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
           <div className="flex gap-6">
             {/* Left Sidebar - Document Structure */}
             {sidebar && (
-              <div className="hidden md:block relative">
+              <>
                 <aside
                   className={cn(
-                    "transition-all duration-300 ease-in-out shrink-0 overflow-hidden",
+                    "hidden md:block transition-all duration-300 ease-in-out shrink-0 overflow-hidden",
                     isSidebarCollapsed ? "w-0" : "w-[250px] xl:w-[280px]"
                   )}
                 >
                   <div className={cn(
-                    "sticky top-20 space-y-4 transition-opacity duration-200 w-[250px] xl:w-[280px]",
+                    "sticky top space-y-4 transition-opacity duration-200 w-[250px] xl:w-[280px]",
                     isSidebarCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
                   )}>
                     {sidebar}
@@ -121,8 +121,8 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
                 </aside>
 
                 {/* Toggle Button */}
-                <div className="absolute top-0 -right-3 z-10">
-                  <div className="sticky top-20">
+                <div className="hidden md:block">
+                  <div className="sticky top -ml-5">
                     <Button
                       variant="outline"
                       size="icon"
@@ -137,7 +137,7 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
                     </Button>
                   </div>
                 </div>
-              </div>
+              </>
             )}
 
             {/* Main Content */}
@@ -148,7 +148,7 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
             {/* Right Sidebar - Comments */}
             {comments && (
               <aside className="hidden xl:block w-[320px] shrink-0">
-                <div className="sticky top-4">
+                <div className="sticky top">
                   {comments}
                 </div>
               </aside>
