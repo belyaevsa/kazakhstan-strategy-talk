@@ -260,20 +260,20 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps
               <option value="success">Success (Green)</option>
               <option value="error">Error (Red)</option>
             </select>
-            <div className={`p-4 border-l-4 rounded-r flex gap-3 ${
-              paragraph.caption === "warning" ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30" :
-              paragraph.caption === "success" ? "border-green-500 bg-green-50 dark:bg-green-950/30" :
-              paragraph.caption === "error" ? "border-red-500 bg-red-50 dark:bg-red-950/30" :
-              "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+            <div className={`p-4 rounded-r flex gap-3 ${
+              paragraph.caption === "warning" ? "border-l-4 border-dashed border-gray-500 bg-gray-50 dark:bg-gray-900/20" :
+              paragraph.caption === "success" ? "border-l-4 border-gray-700 bg-gray-50 dark:bg-gray-900/20" :
+              paragraph.caption === "error" ? "border-l-[6px] border-gray-900 dark:border-gray-100 bg-gray-100 dark:bg-gray-900/40" :
+              "border-l-4 border-gray-600 bg-gray-50 dark:bg-gray-900/20"
             }`}>
               {paragraph.caption === "warning" ? (
-                <AlertTriangle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="h-5 w-5 text-gray-600 dark:text-gray-400 flex-shrink-0 mt-0.5" />
               ) : paragraph.caption === "success" ? (
-                <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                <CheckCircle className="h-5 w-5 text-gray-700 dark:text-gray-300 flex-shrink-0 mt-0.5" />
               ) : paragraph.caption === "error" ? (
-                <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="h-5 w-5 text-gray-900 dark:text-gray-100 flex-shrink-0 mt-0.5" />
               ) : (
-                <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                <Info className="h-5 w-5 text-gray-600 dark:text-gray-400 flex-shrink-0 mt-0.5" />
               )}
               <AutoResizeTextarea
                 ref={ref}

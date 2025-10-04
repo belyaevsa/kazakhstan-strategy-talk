@@ -264,16 +264,36 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
       case 'Callout':
         const variant = paragraph.caption || "info";
         const variantStyles = {
-          info: { border: "border-blue-500", bg: "bg-blue-50 dark:bg-blue-950/30", icon: Info, iconColor: "text-blue-500" },
-          warning: { border: "border-yellow-500", bg: "bg-yellow-50 dark:bg-yellow-950/30", icon: AlertTriangle, iconColor: "text-yellow-500" },
-          success: { border: "border-green-500", bg: "bg-green-50 dark:bg-green-950/30", icon: CheckCircle, iconColor: "text-green-500" },
-          error: { border: "border-red-500", bg: "bg-red-50 dark:bg-red-950/30", icon: AlertCircle, iconColor: "text-red-500" },
+          info: {
+            border: "border-l-4 border-gray-600",
+            bg: "bg-gray-50 dark:bg-gray-900/20",
+            icon: Info,
+            iconColor: "text-gray-600 dark:text-gray-400"
+          },
+          warning: {
+            border: "border-l-4 border-dashed border-gray-500",
+            bg: "bg-gray-50 dark:bg-gray-900/20",
+            icon: AlertTriangle,
+            iconColor: "text-gray-600 dark:text-gray-400"
+          },
+          success: {
+            border: "border-l-4 border-gray-700",
+            bg: "bg-gray-50 dark:bg-gray-900/20",
+            icon: CheckCircle,
+            iconColor: "text-gray-700 dark:text-gray-300"
+          },
+          error: {
+            border: "border-l-[6px] border-gray-900 dark:border-gray-100",
+            bg: "bg-gray-100 dark:bg-gray-900/40",
+            icon: AlertCircle,
+            iconColor: "text-gray-900 dark:text-gray-100"
+          },
         };
         const style = variantStyles[variant as keyof typeof variantStyles] || variantStyles.info;
         const IconComponent = style.icon;
 
         return (
-          <div className={`p-4 my-4 border-l-4 ${style.border} ${style.bg} rounded-r flex gap-3`}>
+          <div className={`p-4 my-4 ${style.border} ${style.bg} rounded-r flex gap-3`}>
             <IconComponent className={`h-5 w-5 ${style.iconColor} flex-shrink-0 mt-0.5`} />
             <p className="text-foreground leading-relaxed flex-1">{parseMarkdownLinks(paragraph.content)}</p>
           </div>
