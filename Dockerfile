@@ -15,6 +15,9 @@ RUN npm ci
 # Copy frontend source
 COPY . .
 
+# Set API URL to relative path for production (same origin as frontend)
+ENV VITE_API_URL=/api
+
 # Build frontend for production
 RUN npm run build
 

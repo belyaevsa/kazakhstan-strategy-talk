@@ -125,6 +125,9 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowReactApp");
 
+// Serve static files from wwwroot
+app.UseStaticFiles();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -132,5 +135,8 @@ app.MapControllers();
 
 // Health check endpoint
 app.MapHealthChecks("/health");
+
+// SPA fallback - serve index.html for all non-API routes
+app.MapFallbackToFile("index.html");
 
 app.Run();
