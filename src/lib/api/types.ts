@@ -47,8 +47,9 @@ export interface Paragraph {
   orderIndex: number;
   commentCount: number;
   isHidden: boolean;
-  type: 'Text' | 'Header' | 'Image' | 'Quote' | 'Code' | 'List';
+  type: 'Text' | 'Header' | 'Image' | 'Quote' | 'Code' | 'List' | 'Table' | 'Link';
   caption?: string;
+  linkedPageId?: string;
   pageId: string;
   createdAt: string;
   updatedAt?: string;
@@ -112,6 +113,7 @@ export interface UpdateParagraphRequest {
   isHidden?: boolean;
   type?: string;
   caption?: string;
+  linkedPageId?: string;
 }
 
 export interface ReorderRequest {

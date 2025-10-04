@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MessageSquare, Link2, ExternalLink, Upload } from "lucide-react";
+import { MessageSquare, Link2, ExternalLink, Upload, Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { authService } from "@/services/authService";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface ParagraphWithCommentsProps {
   paragraph: {
@@ -11,14 +12,17 @@ interface ParagraphWithCommentsProps {
     commentCount: number;
     type: string;
     caption?: string;
+    linkedPageId?: string;
   };
   isActive: boolean;
   onClick: (position: number) => void;
+  chapters?: any[];
 }
 
-const ParagraphWithComments = ({ paragraph, isActive, onClick }: ParagraphWithCommentsProps) => {
+const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: ParagraphWithCommentsProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState(false);
+  const [tableZoomOpen, setTableZoomOpen] = useState(false);
   const paragraphRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -189,9 +193,110 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick }: ParagraphWithCo
             ))}
           </ul>
         );
+      case 'Table':
+        return renderTable(paragraph.content);
+      case 'Link':
+        const linkedPage = chapters?.flatMap(c => c.pages).find(p => p.id === paragraph.linkedPageId);
+        if (!linkedPage) {
+          return <p className="text-muted-foreground italic">Link not configured</p>;
+        }
+        const currentLang = window.location.pathname.split('/')[1] || 'ru';
+        return (
+          <div className="my-4 p-4 border rounded-lg bg-accent/20 hover:bg-accent/30 transition-colors">
+            <a
+              href={`/${currentLang}/${linkedPage.slug}`}
+              className="block"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              <div className="flex items-center gap-2 text-primary hover:underline">
+                <Link2 className="h-4 w-4" />
+                <span className="font-medium">{linkedPage.title}</span>
+              </div>
+              {paragraph.caption && (
+                <p className="text-sm text-muted-foreground mt-2">{paragraph.caption}</p>
+              )}
+            </a>
+          </div>
+        );
       default:
         return <p className="document-content text-foreground leading-relaxed">{parseMarkdownLinks(paragraph.content)}</p>;
     }
+  };
+
+  const renderTable = (markdown: string) => {
+    // Parse Markdown table
+    const lines = markdown.trim().split('\n').filter(line => line.trim());
+    if (lines.length < 2) return <p className="text-muted-foreground italic">Invalid table format</p>;
+
+    // Parse header
+    const headers = lines[0].split('|').map(h => h.trim()).filter(h => h);
+
+    // Skip separator line (line 1)
+    const rows = lines.slice(2).map(line =>
+      line.split('|').map(cell => cell.trim()).filter(cell => cell !== '')
+    );
+
+    return (
+      <div className="my-4">
+        <div
+          className="relative overflow-x-auto border rounded-lg cursor-pointer hover:shadow-md transition-shadow"
+          onClick={(e) => {
+            e.stopPropagation();
+            setTableZoomOpen(true);
+          }}
+        >
+          <table className="w-full text-sm text-left">
+            <thead className="text-xs uppercase bg-muted">
+              <tr>
+                {headers.map((header, i) => (
+                  <th key={i} className="px-6 py-3">{header}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => (
+                <tr key={i} className="border-b hover:bg-muted/50">
+                  {row.map((cell, j) => (
+                    <td key={j} className="px-6 py-4">{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="absolute top-2 right-2 bg-background/80 rounded p-1">
+            <Maximize2 className="h-4 w-4 text-muted-foreground" />
+          </div>
+        </div>
+
+        {/* Zoom Dialog */}
+        <Dialog open={tableZoomOpen} onOpenChange={setTableZoomOpen}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-auto">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs uppercase bg-muted">
+                  <tr>
+                    {headers.map((header, i) => (
+                      <th key={i} className="px-6 py-3">{header}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, i) => (
+                    <tr key={i} className="border-b hover:bg-muted/50">
+                      {row.map((cell, j) => (
+                        <td key={j} className="px-6 py-4">{cell}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
   };
 
   return (

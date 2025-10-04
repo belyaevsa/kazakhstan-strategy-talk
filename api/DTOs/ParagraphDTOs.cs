@@ -11,6 +11,7 @@ public class ParagraphDTO
     public bool IsHidden { get; set; }
     public string Type { get; set; } = "Text";
     public string? Caption { get; set; }
+    public Guid? LinkedPageId { get; set; }
     public Guid PageId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
@@ -30,6 +31,7 @@ public class CreateParagraphRequest
 
     public string Type { get; set; } = "Text";
     public string? Caption { get; set; }
+    public Guid? LinkedPageId { get; set; }
 }
 
 public class UpdateParagraphRequest
@@ -39,4 +41,5 @@ public class UpdateParagraphRequest
     public bool? IsHidden { get; set; }
     public string? Type { get; set; }
     public string? Caption { get; set; }
+    public Guid? LinkedPageId { get; set; }
 }

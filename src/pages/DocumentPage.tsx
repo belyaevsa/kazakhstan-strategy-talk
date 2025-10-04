@@ -39,7 +39,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Pencil, Save, X, Plus, Trash2, Type, Image, Quote, Code, Share2, GripVertical, List, Link2, Eye } from "lucide-react";
+import { Pencil, Save, X, Plus, Trash2, Type, Image, Quote, Code, Share2, GripVertical, List, Link2, Eye, Table } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ru, enUS, kk } from "date-fns/locale";
@@ -48,17 +48,19 @@ import type { Chapter, Page } from "@/lib/api/types";
 import ImageUploadZone from "@/components/ImageUploadZone";
 
 interface SortableParagraphProps {
-  paragraph: { id: string; content: string; orderIndex: number; type?: string; caption?: string };
+  paragraph: { id: string; content: string; orderIndex: number; type?: string; caption?: string; linkedPageId?: string };
   index: number;
   onContentChange: (content: string) => void;
   onCaptionChange?: (caption: string) => void;
+  onLinkedPageChange?: (linkedPageId: string | undefined) => void;
   onDelete: () => void;
   onEnterKey: () => void;
   onTypeChange: (type: string) => void;
+  chapters?: Chapter[];
 }
 
 const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps>(
-  ({ paragraph, index, onContentChange, onCaptionChange, onDelete, onEnterKey, onTypeChange }, ref) => {
+  ({ paragraph, index, onContentChange, onCaptionChange, onLinkedPageChange, onDelete, onEnterKey, onTypeChange, chapters }, ref) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const {
     attributes,
@@ -115,6 +117,12 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => { onTypeChange("List"); setDropdownOpen(false); }}>
               {t("paragraph.list")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { onTypeChange("Table"); setDropdownOpen(false); }}>
+              {t("paragraph.table")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { onTypeChange("Link"); setDropdownOpen(false); }}>
+              {t("paragraph.link")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -189,12 +197,45 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps
               </div>
             )}
           </>
+        ) : paragraph.type === "Table" ? (
+          <AutoResizeTextarea
+            ref={ref}
+            value={paragraph.content}
+            onChange={(e) => onContentChange(e.target.value)}
+            placeholder={t("paragraph.tablePlaceholder")}
+            className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors font-mono text-sm"
+          />
+        ) : paragraph.type === "Link" ? (
+          <div className="space-y-3">
+            <select
+              value={paragraph.linkedPageId || ""}
+              onChange={(e) => onLinkedPageChange?.(e.target.value || undefined)}
+              className="w-full border border-border rounded-md px-3 py-2 bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent"
+            >
+              <option value="">{t("paragraph.selectPage")}</option>
+              {chapters?.map(chapter => (
+                <optgroup key={chapter.id} label={chapter.title}>
+                  {chapter.pages.map(page => (
+                    <option key={page.id} value={page.id}>
+                      {page.title}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            <Input
+              value={paragraph.caption || ""}
+              onChange={(e) => onCaptionChange?.(e.target.value)}
+              placeholder={t("paragraph.linkComment")}
+              className="text-sm"
+            />
+          </div>
         ) : (
           <AutoResizeTextarea
             ref={ref}
             value={paragraph.content}
             onChange={(e) => onContentChange(e.target.value)}
-            onEnterKey={paragraph.type === "List" || paragraph.type === "Code" ? undefined : onEnterKey}
+            onEnterKey={paragraph.type === "List" || paragraph.type === "Code" || paragraph.type === "Table" ? undefined : onEnterKey}
             placeholder={
               paragraph.type === "List"
                 ? t("paragraph.listPlaceholder")
@@ -389,7 +430,8 @@ const DocumentPage = () => {
           content: para.content,
           orderIndex: para.orderIndex,
           type: para.type,
-          caption: para.caption
+          caption: para.caption,
+          linkedPageId: para.linkedPageId
         });
       }
     },
@@ -556,7 +598,7 @@ const DocumentPage = () => {
           setEditedTitle(currentPage.title);
           setEditedDescription(currentPage.description || "");
           setEditedIsDraft(currentPage.isDraft);
-          setEditedParagraphs(paragraphs?.map(p => ({ id: p.id, content: p.content, orderIndex: p.orderIndex, type: p.type, caption: p.caption })) || []);
+          setEditedParagraphs(paragraphs?.map(p => ({ id: p.id, content: p.content, orderIndex: p.orderIndex, type: p.type, caption: p.caption, linkedPageId: p.linkedPageId })) || []);
         }
       } else {
         setEditedTitle(currentPage.title);
@@ -800,19 +842,17 @@ const DocumentPage = () => {
                 {currentPage.description && (
                   <p className="text-lg text-muted-foreground mb-2">{currentPage.description}</p>
                 )}
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  {currentPage.updatedAt && (
+                    <p>
+                      {t("misc.lastUpdated")} {format(new Date(currentPage.updatedAt), 'dd/MM/yyyy')}
+                      {currentPage.updatedByUsername && ` ${t("misc.by")} ${currentPage.updatedByUsername}`}
+                    </p>
+                  )}
                   {currentPage.viewCount > 0 && (
                     <p className="flex items-center gap-1">
                       <Eye className="h-4 w-4 text-gray-400" />
                       {currentPage.viewCount.toLocaleString()}
-                    </p>
-                  )}
-                  {currentPage.updatedAt && (
-                    <p>
-                      {t("misc.lastUpdated")} {format(new Date(currentPage.updatedAt), 'MMMM d, yyyy \'at\' hh:mm a', {
-                        locale: getCurrentLanguage() === 'ru' ? ru : getCurrentLanguage() === 'kk' ? kk : enUS
-                      })}
-                      {currentPage.updatedByUsername && ` ${t("misc.by")} ${currentPage.updatedByUsername}`}
                     </p>
                   )}
                 </div>
@@ -872,6 +912,7 @@ const DocumentPage = () => {
                         ref={ref}
                         paragraph={paragraph}
                         index={index}
+                        chapters={chapters}
                         onContentChange={(content) => {
                           const updated = [...editedParagraphs];
                           updated[index].content = content;
@@ -880,6 +921,11 @@ const DocumentPage = () => {
                         onCaptionChange={(caption) => {
                           const updated = [...editedParagraphs];
                           updated[index].caption = caption;
+                          setEditedParagraphs(updated);
+                        }}
+                        onLinkedPageChange={(linkedPageId) => {
+                          const updated = [...editedParagraphs];
+                          updated[index].linkedPageId = linkedPageId;
                           setEditedParagraphs(updated);
                         }}
                         onDelete={() => {
@@ -956,6 +1002,14 @@ const DocumentPage = () => {
                     <List className="h-4 w-4 mr-2" />
                     List
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => addParagraphMutation.mutate("Table")}>
+                    <Table className="h-4 w-4 mr-2" />
+                    Table
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => addParagraphMutation.mutate("Link")}>
+                    <Link2 className="h-4 w-4 mr-2" />
+                    Link
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </>
@@ -965,6 +1019,7 @@ const DocumentPage = () => {
                 <ParagraphWithComments
                   key={paragraph.id}
                   paragraph={paragraph}
+                  chapters={chapters}
                   isActive={activeParagraphId === paragraph.id}
                   onClick={(position) => {
                     if (activeParagraphId === paragraph.id) {

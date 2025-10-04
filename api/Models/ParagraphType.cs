@@ -7,5 +7,7 @@ public enum ParagraphType
     Image,      // Image with optional caption
     Quote,      // Blockquote
     Code,       // Code block
-    List        // List (bulleted or numbered)
+    List,       // List (bulleted or numbered)
+    Table,      // Table in Markdown format
+    Link        // Internal link to another page
 }

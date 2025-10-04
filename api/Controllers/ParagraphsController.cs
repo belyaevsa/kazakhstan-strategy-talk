@@ -69,6 +69,7 @@ public class ParagraphsController : ControllerBase
                 IsHidden = p.IsHidden,
                 Type = p.Type.ToString(),
                 Caption = p.Caption,
+                LinkedPageId = p.LinkedPageId,
                 PageId = p.PageId,
                 CreatedAt = p.CreatedAt,
                 UpdatedAt = p.UpdatedAt,
@@ -129,7 +130,8 @@ public class ParagraphsController : ControllerBase
             OrderIndex = request.OrderIndex,
             PageId = request.PageId,
             Type = paragraphType,
-            Caption = request.Caption
+            Caption = request.Caption,
+            LinkedPageId = request.LinkedPageId
         };
 
         _context.Paragraphs.Add(paragraph);
@@ -148,6 +150,7 @@ public class ParagraphsController : ControllerBase
             IsHidden = paragraph.IsHidden,
             Type = paragraph.Type.ToString(),
             Caption = paragraph.Caption,
+            LinkedPageId = paragraph.LinkedPageId,
             PageId = paragraph.PageId,
             CreatedAt = paragraph.CreatedAt
         };
@@ -198,6 +201,7 @@ public class ParagraphsController : ControllerBase
             paragraph.Type = paragraphType;
         }
         if (request.Caption != null) paragraph.Caption = request.Caption;
+        if (request.LinkedPageId.HasValue) paragraph.LinkedPageId = request.LinkedPageId;
 
         paragraph.UpdatedAt = now;
         paragraph.UpdatedByProfileId = userId;

@@ -21,7 +21,11 @@ public class Paragraph
     public ParagraphType Type { get; set; } = ParagraphType.Text;
 
     // For Image type: caption/subtitle
+    // For Link type: additional comment/description
     public string? Caption { get; set; }
+
+    // For Link type: stores the linked page ID
+    public Guid? LinkedPageId { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
