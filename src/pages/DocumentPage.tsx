@@ -56,6 +56,7 @@ interface SortableParagraphProps {
 
 const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps>(
   ({ paragraph, index, onContentChange, onCaptionChange, onDelete, onEnterKey, onTypeChange }, ref) => {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const {
     attributes,
     listeners,
@@ -71,22 +72,47 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps
     opacity: isDragging ? 0.5 : 1,
   };
 
+  // Handle keyboard shortcut to open type menu
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "/") {
+      e.preventDefault();
+      setDropdownOpen(true);
+    }
+  };
+
   return (
-    <div ref={setNodeRef} style={style} className="relative group flex items-start gap-2">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="relative group flex items-start gap-2"
+      onKeyDown={handleKeyDown}
+    >
       <div className="flex items-center gap-1 mt-4 ml-2">
-        <DropdownMenu>
+        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-6 px-2 text-xs min-w-[60px]">
               {paragraph.type || "Text"}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => onTypeChange("Text")}>Text</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onTypeChange("Header")}>Header</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onTypeChange("Code")}>Code</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onTypeChange("Quote")}>Quote</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onTypeChange("Image")}>Image</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onTypeChange("List")}>List</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { onTypeChange("Text"); setDropdownOpen(false); }}>
+              Text
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { onTypeChange("Header"); setDropdownOpen(false); }}>
+              Header
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { onTypeChange("Code"); setDropdownOpen(false); }}>
+              Code
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { onTypeChange("Quote"); setDropdownOpen(false); }}>
+              Quote
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { onTypeChange("Image"); setDropdownOpen(false); }}>
+              Image
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { onTypeChange("List"); setDropdownOpen(false); }}>
+              List
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         <button
@@ -260,6 +286,34 @@ const DocumentPage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [activeParagraphId]);
 
+  // Save to localStorage when editing
+  useEffect(() => {
+    if (isEditMode && currentPage) {
+      const storageKey = `edit_${currentPage.id}`;
+      const dataToSave = {
+        title: editedTitle,
+        description: editedDescription,
+        isDraft: editedIsDraft,
+        paragraphs: editedParagraphs,
+      };
+      localStorage.setItem(storageKey, JSON.stringify(dataToSave));
+    }
+  }, [isEditMode, currentPage, editedTitle, editedDescription, editedIsDraft, editedParagraphs]);
+
+  // Warn before leaving page with unsaved changes
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+      return "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isEditMode]);
+
   const savePageMutation = useMutation({
     mutationFn: async () => {
       await pageService.update(currentPage!.id, {
@@ -278,6 +332,11 @@ const DocumentPage = () => {
       }
     },
     onSuccess: () => {
+      // Clear localStorage on successful save
+      if (currentPage) {
+        const storageKey = `edit_${currentPage.id}`;
+        localStorage.removeItem(storageKey);
+      }
       queryClient.invalidateQueries({ queryKey: ["page", slug] });
       queryClient.invalidateQueries({ queryKey: ["paragraphs", currentPage?.id] });
       setIsEditMode(false);
@@ -417,15 +476,40 @@ const DocumentPage = () => {
     }
 
     if (!isEditMode && currentPage) {
-      setEditedTitle(currentPage.title);
-      setEditedDescription(currentPage.description || "");
-      setEditedIsDraft(currentPage.isDraft);
-      setEditedParagraphs(paragraphs?.map(p => ({ id: p.id, content: p.content, orderIndex: p.orderIndex, type: p.type })) || []);
+      // Try to load from localStorage first
+      const storageKey = `edit_${currentPage.id}`;
+      const savedData = localStorage.getItem(storageKey);
+
+      if (savedData) {
+        try {
+          const { title, description, isDraft, paragraphs: savedParagraphs } = JSON.parse(savedData);
+          setEditedTitle(title);
+          setEditedDescription(description);
+          setEditedIsDraft(isDraft);
+          setEditedParagraphs(savedParagraphs);
+          toast.info("Restored unsaved changes from local storage");
+        } catch (e) {
+          // If parsing fails, use current data
+          setEditedTitle(currentPage.title);
+          setEditedDescription(currentPage.description || "");
+          setEditedIsDraft(currentPage.isDraft);
+          setEditedParagraphs(paragraphs?.map(p => ({ id: p.id, content: p.content, orderIndex: p.orderIndex, type: p.type, caption: p.caption })) || []);
+        }
+      } else {
+        setEditedTitle(currentPage.title);
+        setEditedDescription(currentPage.description || "");
+        setEditedIsDraft(currentPage.isDraft);
+        setEditedParagraphs(paragraphs?.map(p => ({ id: p.id, content: p.content, orderIndex: p.orderIndex, type: p.type, caption: p.caption })) || []);
+      }
     }
     setIsEditMode(!isEditMode);
   };
 
   const handleCancel = () => {
+    if (currentPage) {
+      const storageKey = `edit_${currentPage.id}`;
+      localStorage.removeItem(storageKey);
+    }
     setIsEditMode(false);
     setEditedTitle("");
     setEditedDescription("");
@@ -597,6 +681,17 @@ const DocumentPage = () => {
         }
       >
       <article className="bg-card rounded-lg shadow-sm border p-8 lg:p-12">
+        {isEditMode && (
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <p className="text-sm text-blue-800 dark:text-blue-200 flex items-center gap-2">
+              <span className="font-medium">✏️ Edit Mode:</span>
+              Your changes are being saved locally but not to the database yet. Click "Save" to persist changes.
+            </p>
+            <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
+              💡 Tip: Press Ctrl/Cmd+/ to open paragraph type menu, then use arrow keys to navigate and Enter to select
+            </p>
+          </div>
+        )}
         <header className="mb-8 pb-6 border-b flex justify-between items-start">
           <div className="flex-1">
             {isEditMode ? (

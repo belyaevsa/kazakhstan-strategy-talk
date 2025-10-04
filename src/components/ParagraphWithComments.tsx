@@ -130,7 +130,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick }: ParagraphWithCo
         return <h2 className="text-2xl font-bold text-foreground mb-2">{parseMarkdownLinks(paragraph.content)}</h2>;
       case 'Code':
         return (
-          <pre className="bg-muted p-4 rounded-md overflow-x-auto">
+          <pre className="bg-muted p-4 rounded-md overflow-x-auto whitespace-pre-wrap break-words">
             <code className="text-sm font-mono">{paragraph.content}</code>
           </pre>
         );
