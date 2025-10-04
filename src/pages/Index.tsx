@@ -1,16 +1,31 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { chapterService } from "@/services/chapterService";
 import { authService } from "@/services/authService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, MessageSquare, Users, ArrowRight, BookOpen } from "lucide-react";
+import { FileText, ArrowRight, BookOpen } from "lucide-react";
 import DocumentLayout from "@/components/DocumentLayout";
+import { getCurrentLanguage, setLanguage, type Language, t } from "@/lib/i18n";
 
 const Index = () => {
+  const { lang } = useParams();
   const navigate = useNavigate();
   const isAuthenticated = authService.isAuthenticated();
   const isEditor = authService.isEditor();
+
+  // Set language from URL or redirect to language-specific URL
+  useEffect(() => {
+    const urlLang = lang as Language | undefined;
+    if (urlLang && (urlLang === 'ru' || urlLang === 'en' || urlLang === 'kk')) {
+      setLanguage(urlLang);
+    } else if (!lang) {
+      // If no language in URL, redirect to default language (ru)
+      const currentLang = getCurrentLanguage();
+      navigate(`/${currentLang}`, { replace: true });
+    }
+  }, [lang, navigate]);
 
   const { data: chapters } = useQuery({
     queryKey: ["chapters", isEditor],
@@ -21,7 +36,8 @@ const Index = () => {
 
   const handleGetStarted = () => {
     if (chapters && chapters.length > 0 && chapters[0].pages.length > 0) {
-      navigate(`/document/${chapters[0].pages[0].slug}`);
+      const currentLang = lang || getCurrentLanguage();
+      navigate(`/${currentLang}/${chapters[0].pages[0].slug}`);
     }
   };
 
@@ -34,19 +50,19 @@ const Index = () => {
             <FileText className="h-12 w-12 text-primary" />
           </div>
           <h1 className="text-4xl lg:text-5xl font-bold mb-4 leading-tight">
-            Open Letter on IT Development Strategy
+            {t("home.heroTitle")}
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            A comprehensive analytical document exploring the future of information technology development in Kazakhstan
+            {t("home.heroSubtitle")}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" onClick={handleGetStarted}>
-              Start Reading
+              {t("home.startReading")}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             {!isAuthenticated && (
               <Button size="lg" variant="outline" onClick={() => navigate("/auth")}>
-                Sign In to Comment
+                {t("home.signInToComment")}
               </Button>
             )}
           </div>
@@ -55,12 +71,13 @@ const Index = () => {
         {/* Chapters Section */}
         {chapters && chapters.length > 0 && (
           <section className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-center">Document Chapters</h2>
+            <h2 className="text-2xl font-bold mb-6 text-center">{t("home.documentChapters")}</h2>
             <div className="grid md:grid-cols-3 gap-6">
               {chapters.map((chapter) => (
                 <Card key={chapter.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => {
                   if (chapter.pages.length > 0) {
-                    navigate(`/document/${chapter.pages[0].slug}`);
+                    const currentLang = lang || getCurrentLanguage();
+                    navigate(`/${currentLang}/${chapter.pages[0].slug}`);
                   }
                 }}>
                   <CardHeader>
@@ -69,19 +86,19 @@ const Index = () => {
                       <span>{chapter.title}</span>
                       {chapter.isDraft && (
                         <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded font-normal">
-                          Draft
+                          {t("editor.draft")}
                         </span>
                       )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <CardDescription className="mb-3">
-                      {chapter.description || "Explore this chapter of the strategy document"}
+                      {chapter.description || t("home.exploreChapter")}
                     </CardDescription>
                     {chapter.pages.length > 0 && (
                       <div className="text-sm text-muted-foreground">
                         <FileText className="h-4 w-4 inline mr-1" />
-                        {chapter.pages.length} {chapter.pages.length === 1 ? 'page' : 'pages'}
+                        {t(chapter.pages.length === 1 ? "home.pageCount" : "home.pageCount_plural", { count: chapter.pages.length })}
                       </div>
                     )}
                   </CardContent>
@@ -93,20 +110,16 @@ const Index = () => {
 
         {/* About Section */}
         <section className="bg-card rounded-lg shadow-sm border p-8">
-          <h2 className="text-2xl font-bold mb-4">About This Document</h2>
+          <h2 className="text-2xl font-bold mb-4">{t("home.aboutTitle")}</h2>
           <div className="document-content space-y-4">
             <p>
-              This open letter presents a detailed analysis of IT development strategy in Kazakhstan.
-              The document is designed to foster discussion and collaboration among stakeholders,
-              experts, and interested parties.
+              {t("home.aboutPara1")}
             </p>
             <p>
-              Each paragraph is open for commentary, allowing readers to provide targeted feedback,
-              share expertise, and engage in constructive dialogue. Your participation helps refine
-              and strengthen the strategic vision outlined in this document.
+              {t("home.aboutPara2")}
             </p>
             <p className="font-semibold text-primary">
-              {isAuthenticated ? "You're signed in and ready to participate!" : "Sign in to join the discussion and share your insights."}
+              {isAuthenticated ? t("home.readyToParticipate") : t("home.joinDiscussion")}
             </p>
           </div>
         </section>

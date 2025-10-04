@@ -89,3 +89,5 @@ api/*.suo
 api/.vs/
 api/publish/
 api/.env
+api/.env.prod
+

@@ -43,7 +43,7 @@ import { Pencil, Save, X, Plus, Trash2, Type, Image, Quote, Code, Share2, GripVe
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ru, enUS, kk } from "date-fns/locale";
-import { t, getCurrentLanguage } from "@/lib/i18n";
+import { t, getCurrentLanguage, setLanguage, type Language } from "@/lib/i18n";
 import type { Chapter, Page } from "@/lib/api/types";
 import ImageUploadZone from "@/components/ImageUploadZone";
 
@@ -219,7 +219,7 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps
 SortableParagraph.displayName = "SortableParagraph";
 
 const DocumentPage = () => {
-  const { slug } = useParams();
+  const { slug, lang } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(null);
@@ -237,6 +237,18 @@ const DocumentPage = () => {
   const [newPageChapterId, setNewPageChapterId] = useState<string | undefined>();
   const paragraphRefs = useRef<Map<string, React.RefObject<HTMLTextAreaElement>>>(new Map());
   const isEditor = authService.isEditor();
+
+  // Set language from URL parameter or default to 'ru'
+  useEffect(() => {
+    const urlLang = lang as Language | undefined;
+    if (urlLang && (urlLang === 'ru' || urlLang === 'en' || urlLang === 'kk')) {
+      setLanguage(urlLang);
+    } else if (!lang) {
+      // If no language in URL, redirect to language-specific URL
+      const currentLang = getCurrentLanguage();
+      navigate(`/${currentLang}/${slug}`, { replace: true });
+    }
+  }, [lang, slug, navigate]);
 
   // Strip Markdown-style links [text](url) and return just the text for TOC
   const stripMarkdownLinks = (text: string) => {
@@ -463,7 +475,8 @@ const DocumentPage = () => {
       setNewPageChapterId(undefined);
       toast.success(editingPage ? "Page updated!" : "Page created!");
       if (!editingPage && newPage) {
-        navigate(`/document/${newPage.slug}`);
+        const currentLang = lang || getCurrentLanguage();
+        navigate(`/${currentLang}/${newPage.slug}`);
       }
     },
     onError: (error: any) => {
@@ -641,7 +654,7 @@ const DocumentPage = () => {
             <div className="space-y-4">
               {/* Table of Contents - Always visible */}
               <div className="bg-card border shadow-sm rounded-lg p-4">
-                <h3 className="font-semibold mb-4">Table of Contents</h3>
+                <h3 className="font-semibold mb-4">{t("document.tableOfContents")}</h3>
                 <div className="space-y-2">
                   {paragraphs && paragraphs.length > 0 ? (
                     paragraphs

@@ -22,6 +22,11 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin" element={<AdminPanel />} />
+          {/* Language-based routes */}
+          <Route path="/:lang" element={<Index />} />
+          <Route path="/:lang/chapter/:chapterId" element={<ChapterPage />} />
+          <Route path="/:lang/:slug" element={<DocumentPage />} />
+          {/* Legacy routes for backwards compatibility */}
           <Route path="/chapter/:chapterId" element={<ChapterPage />} />
           <Route path="/document/:slug" element={<DocumentPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

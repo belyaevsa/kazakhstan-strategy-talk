@@ -137,6 +137,20 @@ app.MapControllers();
 app.MapHealthChecks("/health");
 
 // SPA fallback - serve index.html for all non-API routes
-app.MapFallbackToFile("index.html");
+// Exclude sitemap.xml and robots.txt so controllers can handle them
+app.MapFallbackToFile("index.html").Add(endpointBuilder =>
+{
+    var originalRequestDelegate = endpointBuilder.RequestDelegate!;
+    endpointBuilder.RequestDelegate = async context =>
+    {
+        var path = context.Request.Path.Value?.ToLower();
+        if (path == "/sitemap.xml" || path == "/robots.txt")
+        {
+            context.Response.StatusCode = 404;
+            return;
+        }
+        await originalRequestDelegate(context);
+    };
+});
 
 app.Run();

@@ -194,5 +194,20 @@
     "newParagraphContent": "New paragraph content...",
     "replaceImage": "Replace image",
     "removeImageNote": "Remove image (doesn't delete from storage)"
+  },
+  "home": {
+    "heroTitle": "Open Letter on IT Development Strategy",
+    "heroSubtitle": "A comprehensive analytical document exploring the future of information technology development in Kazakhstan",
+    "startReading": "Start Reading",
+    "signInToComment": "Sign In to Comment",
+    "documentChapters": "Document Chapters",
+    "exploreChapter": "Explore this chapter of the strategy document",
+    "pageCount": "{count} page",
+    "pageCount_plural": "{count} pages",
+    "aboutTitle": "About This Document",
+    "aboutPara1": "This open letter presents a detailed analysis of IT development strategy in Kazakhstan. The document is designed to foster discussion and collaboration among stakeholders, experts, and interested parties.",
+    "aboutPara2": "Each paragraph is open for commentary, allowing readers to provide targeted feedback, share expertise, and engage in constructive dialogue. Your participation helps refine and strengthen the strategic vision outlined in this document.",
+    "readyToParticipate": "You're signed in and ready to participate!",
+    "joinDiscussion": "Sign in to join the discussion and share your insights."
   }
 }

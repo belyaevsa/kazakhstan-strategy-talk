@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +16,9 @@ import { toast } from "sonner";
 const LanguageSelector = () => {
   const { language, setLanguage: setLocalLanguage } = useTranslation();
   const [isUpdating, setIsUpdating] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const params = useParams();
 
   const handleLanguageChange = async (newLang: Language) => {
     setIsUpdating(true);
@@ -23,6 +27,28 @@ const LanguageSelector = () => {
       // Update UI immediately for better UX
       setLocalLanguage(newLang);
       setLanguage(newLang);
+
+      // Update URL to reflect new language
+      const currentPath = location.pathname;
+      const currentLang = params.lang;
+
+      // Replace language in URL or prepend it
+      let newPath: string;
+      if (currentLang && (currentLang === 'ru' || currentLang === 'en' || currentLang === 'kk')) {
+        // Replace existing language
+        newPath = currentPath.replace(`/${currentLang}`, `/${newLang}`);
+      } else if (currentPath === '/') {
+        // Homepage without language
+        newPath = `/${newLang}`;
+      } else if (currentPath.startsWith('/auth') || currentPath.startsWith('/admin')) {
+        // Don't modify auth/admin paths
+        newPath = currentPath;
+      } else {
+        // Prepend language to path
+        newPath = `/${newLang}${currentPath}`;
+      }
+
+      navigate(newPath, { replace: true });
 
       // Update on server if user is logged in
       if (authService.isAuthenticated()) {

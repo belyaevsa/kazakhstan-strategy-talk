@@ -31,7 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Pencil, Save, X, Plus, Trash2, GripVertical, Eye, EyeOff, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { t } from "@/lib/i18n";
+import { t, getCurrentLanguage, setLanguage, type Language } from "@/lib/i18n";
 import type { Chapter, Page } from "@/lib/api/types";
 
 interface SortablePageItemProps {
@@ -56,6 +56,8 @@ const SortablePageItem = ({ page, index, onToggleDraft, onDelete }: SortablePage
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
+
+  const currentLang = getCurrentLanguage();
 
   return (
     <div
@@ -87,7 +89,7 @@ const SortablePageItem = ({ page, index, onToggleDraft, onDelete }: SortablePage
       </div>
 
       <div className="flex items-center gap-2">
-        <Link to={`/document/${page.slug}`} target="_blank">
+        <Link to={`/${currentLang}/${page.slug}`} target="_blank">
           <Button
             size="sm"
             variant="ghost"
@@ -129,9 +131,21 @@ const SortablePageItem = ({ page, index, onToggleDraft, onDelete }: SortablePage
 };
 
 const ChapterPage = () => {
-  const { chapterId } = useParams();
+  const { chapterId, lang } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  // Set language from URL parameter or default to 'ru'
+  useEffect(() => {
+    const urlLang = lang as Language | undefined;
+    if (urlLang && (urlLang === 'ru' || urlLang === 'en' || urlLang === 'kk')) {
+      setLanguage(urlLang);
+    } else if (!lang) {
+      // If no language in URL, redirect to language-specific URL
+      const currentLang = getCurrentLanguage();
+      navigate(`/${currentLang}/chapter/${chapterId}`, { replace: true });
+    }
+  }, [lang, chapterId, navigate]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
