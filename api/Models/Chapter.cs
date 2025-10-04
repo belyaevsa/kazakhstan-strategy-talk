@@ -12,6 +12,8 @@ public class Chapter
 
     public string? Description { get; set; }
 
+    public string? Icon { get; set; }
+
     public int OrderIndex { get; set; }
 
     public bool IsDraft { get; set; } = true;

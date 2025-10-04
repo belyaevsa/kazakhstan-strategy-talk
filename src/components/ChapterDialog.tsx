@@ -17,27 +17,30 @@ interface ChapterDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   chapter?: Chapter;
-  onSave: (data: { title: string; description: string }) => void;
+  onSave: (data: { title: string; description: string; icon: string }) => void;
   isSaving: boolean;
 }
 
 const ChapterDialog = ({ open, onOpenChange, chapter, onSave, isSaving }: ChapterDialogProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [icon, setIcon] = useState("");
 
   useEffect(() => {
     if (chapter) {
       setTitle(chapter.title);
       setDescription(chapter.description || "");
+      setIcon(chapter.icon || "");
     } else {
       setTitle("");
       setDescription("");
+      setIcon("");
     }
   }, [chapter, open]);
 
   const handleSave = () => {
     if (!title.trim()) return;
-    onSave({ title, description });
+    onSave({ title, description, icon });
   };
 
   return (
@@ -67,6 +70,25 @@ const ChapterDialog = ({ open, onOpenChange, chapter, onSave, isSaving }: Chapte
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Brief description of the chapter (optional)"
               rows={3}
+            />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="icon">Icon</Label>
+              <a
+                href="https://lucide.dev/icons/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-primary hover:underline"
+              >
+                Browse icons
+              </a>
+            </div>
+            <Input
+              id="icon"
+              value={icon}
+              onChange={(e) => setIcon(e.target.value)}
+              placeholder="Icon name (e.g., BookOpen, FileText)"
             />
           </div>
         </div>

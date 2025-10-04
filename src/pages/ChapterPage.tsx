@@ -24,6 +24,7 @@ import { pageService } from "@/services/pageService";
 import DocumentLayout from "@/components/DocumentLayout";
 import DocumentStructure from "@/components/DocumentStructure";
 import PageDialog from "@/components/PageDialog";
+import ChapterDialog from "@/components/ChapterDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -133,9 +134,11 @@ const ChapterPage = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
+  const [editedIcon, setEditedIcon] = useState("");
   const [editedIsDraft, setEditedIsDraft] = useState(false);
   const [editedPages, setEditedPages] = useState<Page[]>([]);
   const [pageDialogOpen, setPageDialogOpen] = useState(false);
+  const [chapterDialogOpen, setChapterDialogOpen] = useState(false);
   const isEditor = authService.isEditor();
 
   const sensors = useSensors(
@@ -159,6 +162,7 @@ const ChapterPage = () => {
       await chapterService.update(currentChapter.id, {
         title: editedTitle,
         description: editedDescription,
+        icon: editedIcon,
         isDraft: editedIsDraft,
       });
 
@@ -223,10 +227,30 @@ const ChapterPage = () => {
     },
   });
 
+  const addChapterMutation = useMutation({
+    mutationFn: async (data: { title: string; description: string; icon: string }) => {
+      const maxOrder = chapters?.reduce((max, c) => Math.max(max, c.orderIndex), -1) || 0;
+      return chapterService.create({
+        ...data,
+        orderIndex: maxOrder + 1,
+        isDraft: true,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chapters"] });
+      setChapterDialogOpen(false);
+      toast.success("Chapter created!");
+    },
+    onError: (error: any) => {
+      toast.error("Failed to create chapter: " + error.message);
+    },
+  });
+
   useEffect(() => {
     if (currentChapter && !isEditMode) {
       setEditedTitle(currentChapter.title);
       setEditedDescription(currentChapter.description || "");
+      setEditedIcon(currentChapter.icon || "");
       setEditedIsDraft(currentChapter.isDraft);
       setEditedPages([...currentChapter.pages]);
     }
@@ -246,6 +270,7 @@ const ChapterPage = () => {
     if (currentChapter) {
       setEditedTitle(currentChapter.title);
       setEditedDescription(currentChapter.description || "");
+      setEditedIcon(currentChapter.icon || "");
       setEditedIsDraft(currentChapter.isDraft);
       setEditedPages([...currentChapter.pages]);
     }
@@ -289,6 +314,10 @@ const ChapterPage = () => {
     addPageMutation.mutate(data);
   };
 
+  const handleSaveChapter = (data: { title: string; description: string; icon: string }) => {
+    addChapterMutation.mutate(data);
+  };
+
   if (chaptersLoading) {
     return (
       <DocumentLayout>
@@ -314,7 +343,7 @@ const ChapterPage = () => {
 
   return (
     <>
-      <DocumentLayout sidebar={chapters && <DocumentStructure chapters={chapters} />}>
+      <DocumentLayout sidebar={chapters && <DocumentStructure chapters={chapters} onAddChapter={() => setChapterDialogOpen(true)} />}>
         <article className="bg-card rounded-lg shadow-sm border p-8 lg:p-12">
           <header className="mb-8 pb-6 border-b flex justify-between items-start">
             <div className="flex-1">
@@ -332,6 +361,12 @@ const ChapterPage = () => {
                     className="text-lg"
                     placeholder="Chapter description (optional)"
                     rows={2}
+                  />
+                  <Input
+                    value={editedIcon}
+                    onChange={(e) => setEditedIcon(e.target.value)}
+                    className="text-sm"
+                    placeholder="Icon name (e.g., BookOpen, FileText)"
                   />
                   <div className="flex items-center gap-2">
                     <input
@@ -471,6 +506,13 @@ const ChapterPage = () => {
         chapterId={chapterId}
         onSave={handleSavePage}
         isSaving={addPageMutation.isPending}
+      />
+
+      <ChapterDialog
+        open={chapterDialogOpen}
+        onOpenChange={setChapterDialogOpen}
+        onSave={handleSaveChapter}
+        isSaving={addChapterMutation.isPending}
       />
     </>
   );

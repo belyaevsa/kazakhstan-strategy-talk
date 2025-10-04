@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FileText, ChevronRight, ChevronDown, BookOpen, Settings } from "lucide-react";
+import { FileText, ChevronRight, ChevronDown, BookOpen, Settings, Plus } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
@@ -9,9 +10,10 @@ import type { Chapter } from "@/lib/api/types";
 
 interface DocumentStructureProps {
   chapters: Chapter[];
+  onAddChapter?: () => void;
 }
 
-const DocumentStructure = ({ chapters }: DocumentStructureProps) => {
+const DocumentStructure = ({ chapters, onAddChapter }: DocumentStructureProps) => {
   const location = useLocation();
   const [openChapters, setOpenChapters] = useState<Record<string, boolean>>({});
   const isEditor = authService.isEditor();
@@ -21,6 +23,12 @@ const DocumentStructure = ({ chapters }: DocumentStructureProps) => {
       ...prev,
       [chapterId]: !prev[chapterId]
     }));
+  };
+
+  const getChapterIcon = (iconName?: string) => {
+    if (!iconName) return BookOpen;
+    const Icon = (LucideIcons as any)[iconName];
+    return Icon || BookOpen;
   };
 
   // Filter chapters and pages based on user role
@@ -41,6 +49,17 @@ const DocumentStructure = ({ chapters }: DocumentStructureProps) => {
           <BookOpen className="h-4 w-4" />
           Document Structure
         </h3>
+        {isEditor && onAddChapter && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 w-7 p-0"
+            onClick={onAddChapter}
+            title="Add chapter"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       <nav className="space-y-3">
         {visibleChapters.map((chapter) => {
@@ -61,6 +80,10 @@ const DocumentStructure = ({ chapters }: DocumentStructureProps) => {
                     ) : (
                       <ChevronRight className="h-4 w-4 shrink-0" />
                     )}
+                    {(() => {
+                      const ChapterIcon = getChapterIcon(chapter.icon);
+                      return <ChapterIcon className="h-4 w-4 shrink-0" />;
+                    })()}
                     <span className="text-sm font-medium truncate">{chapter.title}</span>
                     {isEditor && chapter.isDraft && (
                       <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded ml-auto">

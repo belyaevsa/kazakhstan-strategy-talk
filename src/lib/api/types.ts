@@ -16,6 +16,7 @@ export interface Chapter {
   id: string;
   title: string;
   description?: string;
+  icon?: string;
   orderIndex: number;
   isDraft: boolean;
   createdAt: string;
@@ -65,6 +66,7 @@ export interface Comment {
 export interface CreateChapterRequest {
   title: string;
   description?: string;
+  icon?: string;
   orderIndex: number;
   isDraft?: boolean;
 }
@@ -72,6 +74,7 @@ export interface CreateChapterRequest {
 export interface UpdateChapterRequest {
   title?: string;
   description?: string;
+  icon?: string;
   orderIndex?: number;
   isDraft?: boolean;
 }

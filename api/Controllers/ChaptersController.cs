@@ -40,6 +40,7 @@ public class ChaptersController : ControllerBase
             Id = c.Id,
             Title = c.Title,
             Description = c.Description,
+            Icon = c.Icon,
             OrderIndex = c.OrderIndex,
             IsDraft = c.IsDraft,
             CreatedAt = c.CreatedAt,
@@ -83,6 +84,7 @@ public class ChaptersController : ControllerBase
             Id = chapter.Id,
             Title = chapter.Title,
             Description = chapter.Description,
+            Icon = chapter.Icon,
             OrderIndex = chapter.OrderIndex,
             IsDraft = chapter.IsDraft,
             CreatedAt = chapter.CreatedAt,
@@ -113,6 +115,7 @@ public class ChaptersController : ControllerBase
         {
             Title = request.Title,
             Description = request.Description,
+            Icon = request.Icon,
             OrderIndex = request.OrderIndex,
             IsDraft = request.IsDraft
         };
@@ -125,6 +128,7 @@ public class ChaptersController : ControllerBase
             Id = chapter.Id,
             Title = chapter.Title,
             Description = chapter.Description,
+            Icon = chapter.Icon,
             OrderIndex = chapter.OrderIndex,
             IsDraft = chapter.IsDraft,
             CreatedAt = chapter.CreatedAt,
@@ -148,6 +152,7 @@ public class ChaptersController : ControllerBase
 
         if (request.Title != null) chapter.Title = request.Title;
         if (request.Description != null) chapter.Description = request.Description;
+        if (request.Icon != null) chapter.Icon = request.Icon;
         if (request.OrderIndex.HasValue) chapter.OrderIndex = request.OrderIndex.Value;
         if (request.IsDraft.HasValue) chapter.IsDraft = request.IsDraft.Value;
 
