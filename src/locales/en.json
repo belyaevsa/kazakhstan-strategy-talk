@@ -261,5 +261,41 @@
     "message": "This website uses cookies to enhance your browsing experience and collects analytics data to help us understand how visitors interact with our site. Your privacy is important to us.",
     "accept": "Accept",
     "decline": "Decline"
+  },
+  "profile": {
+    "notFound": "Profile not found",
+    "memberSince": "Member since",
+    "lastSeen": "Last seen",
+    "edit": "Edit Profile",
+    "save": "Save Changes",
+    "cancel": "Cancel",
+    "bio": "Bio",
+    "bioPlaceholder": "Tell us about yourself...",
+    "displayNamePlaceholder": "Your display name",
+    "totalComments": "Total Comments",
+    "votesReceived": "Votes Received",
+    "activeDiscussions": "Active Discussions",
+    "activity": "Activity",
+    "discussions": "Discussions",
+    "settings": "Settings",
+    "mostPopularComment": "Most Popular Comment",
+    "latestComments": "Latest Comments",
+    "noComments": "No comments yet",
+    "noDiscussions": "No active discussions",
+    "comments": "comments",
+    "lastActivity": "Last activity",
+    "settingsDesc": "Manage your profile settings and preferences",
+    "showEmail": "Show email on profile",
+    "showEmailDesc": "Allow other users to see your email address",
+    "emailNotifications": "Email notifications",
+    "emailNotificationsDesc": "Receive notifications when someone replies to your comments",
+    "timeZone": "Time Zone",
+    "saveSettings": "Save Settings",
+    "updateSuccess": "Profile updated successfully!",
+    "updateError": "Failed to update profile",
+    "activeDiscussionsDesc": "Pages where you have recent comments"
+  },
+  "common": {
+    "loading": "Loading..."
   }
 }

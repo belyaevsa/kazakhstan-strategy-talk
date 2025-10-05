@@ -78,10 +78,15 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
                     <span>🔒 {t('comments.accountFrozen')} {new Date(user.frozenUntil).toLocaleString()}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2 text-sm">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate(`/profile/${user?.id}`)}
+                  className="flex items-center gap-2"
+                >
                   <User className="h-4 w-4" />
                   <span className="hidden sm:inline">{user?.username}</span>
-                </div>
+                </Button>
                 {isAdmin && (
                   <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
                     <Shield className="h-4 w-4 mr-2" />

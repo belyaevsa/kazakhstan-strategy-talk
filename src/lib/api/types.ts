@@ -7,7 +7,58 @@ export interface User {
   isBlocked: boolean;
   frozenUntil?: string;
   lastCommentAt?: string;
+  lastSeenAt?: string;
   language: string;
+}
+
+export interface PublicProfile {
+  id: string;
+  username: string;
+  displayName?: string;
+  bio?: string;
+  avatarUrl?: string;
+  email?: string;
+  createdAt: string;
+  lastSeenAt?: string;
+  totalComments: number;
+  totalVotesReceived: number;
+  // Settings (only present when viewing own profile)
+  showEmail?: boolean;
+  emailNotifications?: boolean;
+  timeZone?: string;
+}
+
+export interface CommentWithContext {
+  id: string;
+  content: string;
+  createdAt: string;
+  voteScore: number;
+  pageId: string;
+  pageTitle: string;
+  pageSlug: string;
+  paragraphId?: string;
+}
+
+export interface ActiveDiscussion {
+  pageId: string;
+  pageTitle: string;
+  pageSlug: string;
+  commentCount: number;
+  lastCommentAt: string;
+}
+
+export interface ProfileStats {
+  latestComments: CommentWithContext[];
+  mostPopularComment?: CommentWithContext;
+  activeDiscussions: ActiveDiscussion[];
+}
+
+export interface UpdateProfileRequest {
+  displayName?: string;
+  bio?: string;
+  showEmail?: boolean;
+  emailNotifications?: boolean;
+  timeZone?: string;
 }
 
 export interface AuthResponse {

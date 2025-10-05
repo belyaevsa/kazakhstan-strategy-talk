@@ -11,6 +11,7 @@ import EmailVerified from "./pages/EmailVerified";
 import DocumentPage from "./pages/DocumentPage";
 import ChapterPage from "./pages/ChapterPage";
 import AdminPanel from "./pages/AdminPanel";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/verify-email" element={<EmailVerified />} />
           <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/profile/:userId" element={<Profile />} />
           {/* Language-based routes */}
           <Route path="/:lang" element={<Index />} />
           <Route path="/:lang/chapter/:chapterId" element={<ChapterPage />} />

@@ -11,6 +11,12 @@ public class Profile
     [MaxLength(100)]
     public string Username { get; set; } = string.Empty;
 
+    [MaxLength(100)]
+    public string? DisplayName { get; set; }
+
+    [MaxLength(500)]
+    public string? Bio { get; set; }
+
     public string? AvatarUrl { get; set; }
 
     [Required]
@@ -31,6 +37,13 @@ public class Profile
 
     [MaxLength(10)]
     public string Language { get; set; } = "ru"; // Default: Russian (ru), also supports: en (English), kk (Kazakh)
+
+    // Privacy settings
+    public bool ShowEmail { get; set; } = false;
+    public bool EmailNotifications { get; set; } = true;
+
+    [MaxLength(50)]
+    public string TimeZone { get; set; } = "UTC";
 
     // Email verification
     public bool EmailVerified { get; set; } = false;

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ThumbsUp, ThumbsDown, Reply, Send, Trash } from "lucide-react";
@@ -66,7 +67,12 @@ const CommentItem = ({
           ) : (
             <>
               <div className="flex items-center gap-2">
-                <span className="font-medium text-sm">{comment.user.username}</span>
+                <Link
+                  to={`/profile/${comment.user.id}`}
+                  className="font-medium text-sm hover:text-primary hover:underline"
+                >
+                  {comment.user.username}
+                </Link>
                 <span className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: getDateLocale() })}
                 </span>
