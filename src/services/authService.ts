@@ -14,9 +14,9 @@ export interface LoginData {
 }
 
 class AuthService {
-  async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>('/auth/register', data);
-    this.setSession(response);
+  async register(data: RegisterData): Promise<{ message: string }> {
+    const response = await apiClient.post<{ message: string }>('/auth/register', data);
+    // Registration now requires email verification, so we don't set session
     return response;
   }
 
@@ -54,7 +54,12 @@ class AuthService {
 
   getUser(): User | null {
     const userJson = localStorage.getItem('auth_user');
-    return userJson ? JSON.parse(userJson) : null;
+    if (!userJson || userJson === 'undefined') return null;
+    try {
+      return JSON.parse(userJson);
+    } catch {
+      return null;
+    }
   }
 
   isAuthenticated(): boolean {
