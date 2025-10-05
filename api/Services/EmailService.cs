@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
+using KazakhstanStrategyApi.Data;
+using KazakhstanStrategyApi.Models;
 
 namespace KazakhstanStrategyApi.Services;
 
@@ -9,11 +11,13 @@ public class EmailService
     private readonly IConfiguration _configuration;
     private readonly SmtpClient _smtpClient;
     private readonly ILogger<EmailService> _logger;
+    private readonly AppDbContext _context;
 
-    public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
+    public EmailService(IConfiguration configuration, ILogger<EmailService> logger, AppDbContext context)
     {
         _configuration = configuration;
         _logger = logger;
+        _context = context;
 
         // Use environment variables if available, otherwise fallback to appsettings.json
         var smtpHost = Environment.GetEnvironmentVariable("SMTP_HOST")
@@ -107,6 +111,19 @@ public class EmailService
         };
         message.To.Add(toEmail);
 
+        // Create email log entry
+        var emailLog = new EmailLog
+        {
+            ToEmail = toEmail,
+            FromEmail = fromEmail,
+            FromName = fromName,
+            Subject = subject,
+            Body = body,
+            EmailType = "EmailVerification",
+            IsSent = false,
+            CreatedAt = DateTime.UtcNow
+        };
+
         try
         {
             _logger.LogInformation("Sending verification email via SMTP. SMTP Host: {SmtpHost}, Port: {SmtpPort}, From: {FromEmail} ({FromName}), To: {ToEmail}, Subject: {Subject}, VerificationUrl: {VerificationUrl}",
@@ -117,10 +134,15 @@ public class EmailService
             try
             {
                 await _smtpClient.SendMailAsync(message, cts.Token);
+
+                // Mark as sent
+                emailLog.IsSent = true;
+                emailLog.SentAt = DateTime.UtcNow;
             }
             catch (OperationCanceledException)
             {
                 _logger.LogError("Email sending timed out after 15 seconds. To: {ToEmail}", toEmail);
+                emailLog.ErrorMessage = "Email sending operation timed out after 15 seconds";
                 throw new TimeoutException("Email sending operation timed out after 15 seconds");
             }
 
@@ -129,7 +151,14 @@ public class EmailService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send verification email. To: {ToEmail}", toEmail);
+            emailLog.ErrorMessage = ex.Message;
             throw;
+        }
+        finally
+        {
+            // Save email log to database
+            _context.EmailLogs.Add(emailLog);
+            await _context.SaveChangesAsync();
         }
     }
 }

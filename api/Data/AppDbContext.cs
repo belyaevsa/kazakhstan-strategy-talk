@@ -22,6 +22,7 @@ public class AppDbContext : DbContext
     public DbSet<PageTranslation> PageTranslations { get; set; }
     public DbSet<ParagraphTranslation> ParagraphTranslations { get; set; }
     public DbSet<Setting> Settings { get; set; }
+    public DbSet<EmailLog> EmailLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -189,6 +190,15 @@ public class AppDbContext : DbContext
 
             // One translation per language per paragraph
             entity.HasIndex(e => new { e.ParagraphId, e.Language }).IsUnique();
+        });
+
+        // EmailLog configuration
+        modelBuilder.Entity<EmailLog>(entity =>
+        {
+            entity.HasIndex(e => e.ToEmail);
+            entity.HasIndex(e => e.EmailType);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.IsSent);
         });
     }
 }
