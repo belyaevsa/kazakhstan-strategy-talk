@@ -159,7 +159,7 @@ jobs:
             --name $NEW_CONTAINER \
             --restart unless-stopped \
             -p ${{ env.PORT }}:8080 \
-            -v $HOME/app-logs:/app/logs \
+            -v /var/logs/app-logs:/app/logs \
             -e DB_HOST="$DB_HOST" \
             -e DB_PORT="$DB_PORT" \
             -e DB_NAME="$DB_NAME" \
@@ -232,7 +232,7 @@ jobs:
                 --name ${{ env.OLD_CONTAINER }} \
                 --restart unless-stopped \
                 -p ${{ env.PORT }}:8080 \
-                -v $HOME/app-logs:/app/logs \
+                -v /var/logs/app-logs:/app-logs \
                 -e DB_HOST="${{ secrets.DB_HOST }}" \
                 -e DB_PORT="${{ secrets.DB_PORT }}" \
                 -e DB_NAME="${{ secrets.DB_NAME }}" \
