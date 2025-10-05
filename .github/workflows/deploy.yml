@@ -161,8 +161,11 @@ jobs:
           fi
 
           # Create logs directory if it doesn't exist
-          sudo mkdir -p /var/log/nginx/app-logs
-          sudo chown -R $(whoami):$(whoami) /var/log/nginx/app-logs
+          # Use Docker to create and set permissions without sudo
+          docker run --rm \
+            -v /var/log/nginx:/var/log/nginx \
+            alpine:latest \
+            sh -c "mkdir -p /var/log/nginx/app-logs && chmod 777 /var/log/nginx/app-logs"
 
           # Start new container
           echo "Starting new container: $NEW_CONTAINER"
