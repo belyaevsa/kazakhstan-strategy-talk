@@ -48,14 +48,14 @@ public class EmailService
         var fromName = Environment.GetEnvironmentVariable("EMAIL_FROM_NAME")
             ?? _configuration["Email:FromName"]
             ?? "Kazakhstan IT Strategy";
-        var baseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL")
-            ?? _configuration["App:BaseUrl"]
-            ?? "http://localhost:8080";
+        var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL")
+            ?? _configuration["Api:BaseUrl"]
+            ?? "https://localhost:7001";
 
-        var verificationUrl = $"{baseUrl}/verify-email?token={verificationToken}";
+        var verificationUrl = $"{apiBaseUrl}/api/auth/verify-email?token={verificationToken}";
 
-        _logger.LogDebug("Email configuration - From: {FromEmail}, FromName: {FromName}, BaseUrl: {BaseUrl}",
-            fromEmail, fromName, baseUrl);
+        _logger.LogDebug("Email configuration - From: {FromEmail}, FromName: {FromName}, ApiBaseUrl: {ApiBaseUrl}",
+            fromEmail, fromName, apiBaseUrl);
 
         var subject = "Verify your email | Подтвердите вашу почту - Kazakhstan IT Strategy";
         var body = $@"
