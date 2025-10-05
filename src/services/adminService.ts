@@ -13,6 +13,7 @@ export interface AdminUser {
 export interface AdminComment {
   id: string;
   content: string;
+  authorId: string;
   authorName: string;
   authorEmail: string;
   createdAt: string;

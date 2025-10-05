@@ -66,8 +66,9 @@ var awsAccessKey = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID");
 var awsSecretKey = Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY");
 var awsRegion = Environment.GetEnvironmentVariable("AWS_REGION") ?? "ru-central1";
 var awsServiceUrl = Environment.GetEnvironmentVariable("AWS_S3_SERVICE_URL");
+var awsBucketName = Environment.GetEnvironmentVariable("AWS_S3_BUCKET_NAME");
 
-if (!string.IsNullOrEmpty(awsAccessKey) && !string.IsNullOrEmpty(awsSecretKey))
+if (!string.IsNullOrEmpty(awsAccessKey) && !string.IsNullOrEmpty(awsSecretKey) && !string.IsNullOrEmpty(awsBucketName))
 {
     var awsCredentials = new BasicAWSCredentials(awsAccessKey, awsSecretKey);
     var s3Config = new AmazonS3Config();
@@ -85,6 +86,11 @@ if (!string.IsNullOrEmpty(awsAccessKey) && !string.IsNullOrEmpty(awsSecretKey))
 
     builder.Services.AddSingleton<IAmazonS3>(new AmazonS3Client(awsCredentials, s3Config));
     builder.Services.AddScoped<IS3UploadService, S3UploadService>();
+    Log.Information("S3 Upload Service configured with bucket: {BucketName}", awsBucketName);
+}
+else
+{
+    Log.Warning("S3 Upload Service not configured - missing credentials or bucket name");
 }
 
 // JWT Authentication - Use environment variables if available

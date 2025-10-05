@@ -67,6 +67,7 @@ public class AdminController : ControllerBase
             {
                 Id = c.Id,
                 Content = c.Content,
+                AuthorId = c.UserId,
                 AuthorName = c.User.Username,
                 AuthorEmail = c.User.Email,
                 CreatedAt = c.CreatedAt,

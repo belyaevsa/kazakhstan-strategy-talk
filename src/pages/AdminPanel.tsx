@@ -9,10 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { authService } from "@/services/authService";
 import DocumentLayout from "@/components/DocumentLayout";
-import { Shield, Users, MessageSquare, ExternalLink } from "lucide-react";
+import { Shield, Users, MessageSquare, ExternalLink, UserCircle } from "lucide-react";
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -130,6 +130,7 @@ const AdminPanel = () => {
                       <TableHead>Last Comment</TableHead>
                       <TableHead>Frozen Until</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Profile</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -161,6 +162,14 @@ const AdminPanel = () => {
                             ) : (
                               <Badge variant="secondary">Active</Badge>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            <Link to={`/profile/${user.id}`}>
+                              <Button variant="ghost" size="sm" className="gap-1">
+                                <UserCircle className="h-4 w-4" />
+                                View
+                              </Button>
+                            </Link>
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
@@ -255,8 +264,10 @@ const AdminPanel = () => {
                       return (
                         <TableRow key={comment.id}>
                           <TableCell>
-                            <div>
-                              <div className="font-medium">{comment.authorName}</div>
+                            <div className="space-y-1">
+                              <Link to={`/profile/${comment.authorId}`} className="font-medium hover:text-primary hover:underline">
+                                {comment.authorName}
+                              </Link>
                               <div className="text-xs text-muted-foreground">{comment.authorEmail}</div>
                             </div>
                           </TableCell>
