@@ -37,8 +37,10 @@ public class SitemapController : ControllerBase
             }
         }
 
-        // Get base URL from configuration or request
-        var baseUrl = _configuration["App:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
+        // Get base URL from environment variable or configuration or request
+        var baseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL")
+            ?? _configuration["App:BaseUrl"]
+            ?? $"{Request.Scheme}://{Request.Host}";
 
         // Get all published chapters with their published pages
         var chapters = await _context.Chapters
