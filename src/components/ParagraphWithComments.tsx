@@ -1,8 +1,7 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { MessageSquare, Link2, ExternalLink, Upload, Maximize2, FileText, Info, AlertTriangle, CheckCircle, AlertCircle } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { MessageSquare, Link2, ExternalLink, Maximize2, FileText, Info, AlertTriangle, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { authService } from "@/services/authService";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Footnote } from "@/components/Footnote";
 

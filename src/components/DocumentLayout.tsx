@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileText, LogOut, User, ChevronLeft, ChevronRight, Shield, Menu, MessageSquare } from "lucide-react";
+import { LogOut, User, ChevronLeft, ChevronRight, Shield, Menu, MessageSquare } from "lucide-react";
 import { authService } from "@/services/authService";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
