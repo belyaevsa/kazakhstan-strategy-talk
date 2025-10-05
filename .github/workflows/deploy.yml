@@ -28,6 +28,16 @@ jobs:
             alpine:latest \
             sh -c "rm -rf api/bin api/obj || true"
 
+          # Fix permissions on logs directory if it exists
+          if [ -d "api/logs" ]; then
+            echo "Fixing permissions on api/logs directory..."
+            docker run --rm \
+              -v $PWD:/workspace \
+              -w /workspace \
+              alpine:latest \
+              sh -c "chown -R $(id -u):$(id -g) api/logs || true"
+          fi
+
       - name: Build Docker image
         env:
           DOCKER_BUILDKIT: 1
@@ -151,7 +161,8 @@ jobs:
           fi
 
           # Create logs directory if it doesn't exist
-          mkdir -p $HOME/app-logs
+          sudo mkdir -p /var/log/nginx/app-logs
+          sudo chown -R $(whoami):$(whoami) /var/log/nginx/app-logs
 
           # Start new container
           echo "Starting new container: $NEW_CONTAINER"
@@ -159,7 +170,7 @@ jobs:
             --name $NEW_CONTAINER \
             --restart unless-stopped \
             -p ${{ env.PORT }}:8080 \
-            -v /var/logs/app-logs:/app/logs \
+            -v /var/log/nginx/app-logs:/app/logs \
             -e DB_HOST="$DB_HOST" \
             -e DB_PORT="$DB_PORT" \
             -e DB_NAME="$DB_NAME" \
@@ -232,7 +243,7 @@ jobs:
                 --name ${{ env.OLD_CONTAINER }} \
                 --restart unless-stopped \
                 -p ${{ env.PORT }}:8080 \
-                -v /var/logs/app-logs:/app-logs \
+                -v /var/log/nginx/app-logs:/app/logs \
                 -e DB_HOST="${{ secrets.DB_HOST }}" \
                 -e DB_PORT="${{ secrets.DB_PORT }}" \
                 -e DB_NAME="${{ secrets.DB_NAME }}" \
@@ -297,12 +308,22 @@ jobs:
         if: always()
         run: |
           echo "Running final cleanup..."
-          # Clean up any root-owned files
+          # Clean up any root-owned files (excluding logs)
           docker run --rm \
             -v $PWD:/workspace \
             -w /workspace \
             alpine:latest \
             sh -c "rm -rf api/bin api/obj || true"
+
+          # Fix permissions on logs directory so future runs can manage them
+          if [ -d "api/logs" ]; then
+            echo "Fixing permissions on api/logs directory..."
+            docker run --rm \
+              -v $PWD:/workspace \
+              -w /workspace \
+              alpine:latest \
+              sh -c "chown -R $(id -u):$(id -g) api/logs || true"
+          fi
 
           # Clean up migration runner image if it exists
           docker rmi migration-runner:latest 2>/dev/null || true
