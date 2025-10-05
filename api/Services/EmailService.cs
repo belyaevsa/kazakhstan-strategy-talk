@@ -48,7 +48,7 @@ public class EmailService
         var fromName = Environment.GetEnvironmentVariable("EMAIL_FROM_NAME")
             ?? _configuration["Email:FromName"]
             ?? "Kazakhstan IT Strategy";
-        var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL")
+        var apiBaseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL")
             ?? _configuration["Api:BaseUrl"]
             ?? "https://localhost:7001";
 
