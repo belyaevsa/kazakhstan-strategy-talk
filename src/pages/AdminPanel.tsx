@@ -12,13 +12,15 @@ import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
 import { authService } from "@/services/authService";
 import DocumentLayout from "@/components/DocumentLayout";
-import { Shield, Users, MessageSquare, ExternalLink, UserCircle } from "lucide-react";
+import { Shield, Users, MessageSquare, ExternalLink, UserCircle, Mail, MailCheck, Clock, MapPin, Award, Settings, Plus, Trash2, Save } from "lucide-react";
 
 const AdminPanel = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [emailFilter, setEmailFilter] = useState("");
   const [pageFilter, setPageFilter] = useState<string>("all");
+  const [newSetting, setNewSetting] = useState({ key: "", value: "", description: "" });
+  const [editingSettings, setEditingSettings] = useState<Record<string, { value: string; description: string }>>({});
 
   const isAdmin = authService.isAdmin();
 
@@ -40,6 +42,11 @@ const AdminPanel = () => {
   const { data: chapters } = useQuery({
     queryKey: ["chapters"],
     queryFn: () => chapterService.getAll(true),
+  });
+
+  const { data: settings, isLoading: settingsLoading } = useQuery({
+    queryKey: ["admin-settings"],
+    queryFn: () => adminService.getSettings(),
   });
 
   const freezeMutation = useMutation({
@@ -79,6 +86,57 @@ const AdminPanel = () => {
     onError: () => toast.error("Failed to unblock user"),
   });
 
+  const assignRoleMutation = useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
+      adminService.assignRole(userId, role),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success("Role assigned successfully");
+    },
+    onError: () => toast.error("Failed to assign role"),
+  });
+
+  const removeRoleMutation = useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
+      adminService.removeRole(userId, role),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success("Role removed successfully");
+    },
+    onError: () => toast.error("Failed to remove role"),
+  });
+
+  const updateSettingMutation = useMutation({
+    mutationFn: ({ key, value, description }: { key: string; value: string; description?: string }) =>
+      adminService.updateSetting(key, value, description),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
+      toast.success("Setting updated successfully");
+      setEditingSettings({});
+    },
+    onError: () => toast.error("Failed to update setting"),
+  });
+
+  const createSettingMutation = useMutation({
+    mutationFn: ({ key, value, description }: { key: string; value: string; description?: string }) =>
+      adminService.createSetting(key, value, description),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
+      toast.success("Setting created successfully");
+      setNewSetting({ key: "", value: "", description: "" });
+    },
+    onError: () => toast.error("Failed to create setting"),
+  });
+
+  const deleteSettingMutation = useMutation({
+    mutationFn: (key: string) => adminService.deleteSetting(key),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
+      toast.success("Setting deleted successfully");
+    },
+    onError: () => toast.error("Failed to delete setting"),
+  });
+
   const handleFreeze = (userId: string) => {
     const freezeUntil = new Date();
     freezeUntil.setHours(freezeUntil.getHours() + 24);
@@ -96,7 +154,7 @@ const AdminPanel = () => {
         </div>
 
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Users
@@ -104,6 +162,10 @@ const AdminPanel = () => {
             <TabsTrigger value="comments" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               Comments
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Settings
             </TabsTrigger>
           </TabsList>
 
@@ -120,104 +182,166 @@ const AdminPanel = () => {
             {usersLoading ? (
               <p>Loading users...</p>
             ) : (
-              <div className="border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Username</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Created At</TableHead>
-                      <TableHead>Last Comment</TableHead>
-                      <TableHead>Frozen Until</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Profile</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users?.map((user) => {
-                      const isFrozen = user.frozenUntil && new Date(user.frozenUntil) > new Date();
-                      return (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">{user.username}</TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
-                          <TableCell>
-                            {user.lastCommentAt
-                              ? new Date(user.lastCommentAt).toLocaleString()
-                              : "Never"}
-                          </TableCell>
-                          <TableCell>
-                            {isFrozen ? (
-                              <Badge variant="destructive">
-                                {new Date(user.frozenUntil!).toLocaleString()}
-                              </Badge>
-                            ) : (
-                              "-"
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {user.isBlocked ? (
-                              <Badge variant="destructive">Blocked</Badge>
-                            ) : (
-                              <Badge variant="secondary">Active</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>
+              <div className="space-y-4">
+                {users?.map((user) => {
+                  const isFrozen = user.frozenUntil && new Date(user.frozenUntil) > new Date();
+                  const availableRoles = ["Viewer", "Editor", "Admin"];
+
+                  return (
+                    <div key={user.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-3">
                             <Link to={`/profile/${user.id}`}>
-                              <Button variant="ghost" size="sm" className="gap-1">
-                                <UserCircle className="h-4 w-4" />
-                                View
+                              <Button variant="ghost" size="sm" className="gap-2 px-2">
+                                <UserCircle className="h-5 w-5" />
+                                <div className="text-left">
+                                  <div className="font-semibold">{user.username}</div>
+                                  {user.displayName && (
+                                    <div className="text-xs text-muted-foreground">{user.displayName}</div>
+                                  )}
+                                </div>
                               </Button>
                             </Link>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              {isFrozen ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => unfreezeMutation.mutate(user.id)}
-                                  disabled={unfreezeMutation.isPending}
-                                >
-                                  Unfreeze
-                                </Button>
+                            <div className="flex items-center gap-1.5">
+                              {user.emailVerified ? (
+                                <span title="Email verified">
+                                  <MailCheck className="h-4 w-4 text-green-600" />
+                                </span>
                               ) : (
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleFreeze(user.id)}
-                                  disabled={freezeMutation.isPending}
-                                >
-                                  Freeze 24h
-                                </Button>
+                                <span title="Email not verified">
+                                  <Mail className="h-4 w-4 text-muted-foreground" />
+                                </span>
                               )}
-                              {user.isBlocked ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => unblockMutation.mutate(user.id)}
-                                  disabled={unblockMutation.isPending}
-                                >
-                                  Unblock
-                                </Button>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => blockMutation.mutate(user.id)}
-                                  disabled={blockMutation.isPending}
-                                >
-                                  Block
-                                </Button>
-                              )}
+                              <span className="text-sm">{user.email}</span>
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                          </div>
+
+                          {user.bio && (
+                            <p className="text-sm text-muted-foreground line-clamp-2">{user.bio}</p>
+                          )}
+
+                          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              Joined {new Date(user.createdAt).toLocaleDateString()}
+                            </div>
+                            {user.lastSeenAt && (
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                Last seen {new Date(user.lastSeenAt).toLocaleString()}
+                              </div>
+                            )}
+                            {user.lastCommentAt && (
+                              <div className="flex items-center gap-1">
+                                <MessageSquare className="h-3 w-3" />
+                                Last comment {new Date(user.lastCommentAt).toLocaleString()}
+                              </div>
+                            )}
+                            {user.registrationIp && (
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {user.registrationIp}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              <Award className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm font-medium">Roles:</span>
+                            </div>
+                            {user.roles.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {user.roles.map((role) => (
+                                  <Badge key={role} variant="default" className="gap-1">
+                                    {role}
+                                    <button
+                                      onClick={() => removeRoleMutation.mutate({ userId: user.id, role })}
+                                      className="hover:text-destructive"
+                                      disabled={removeRoleMutation.isPending}
+                                    >
+                                      ×
+                                    </button>
+                                  </Badge>
+                                ))}
+                              </div>
+                            ) : (
+                              <Badge variant="outline">No roles</Badge>
+                            )}
+                            <Select
+                              onValueChange={(role) => assignRoleMutation.mutate({ userId: user.id, role })}
+                              disabled={assignRoleMutation.isPending}
+                            >
+                              <SelectTrigger className="w-[120px] h-7">
+                                <SelectValue placeholder="Add role" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableRoles
+                                  .filter((role) => !user.roles.includes(role))
+                                  .map((role) => (
+                                    <SelectItem key={role} value={role}>
+                                      {role}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2 ml-4">
+                          {isFrozen && (
+                            <Badge variant="destructive" className="whitespace-nowrap">
+                              Frozen until {new Date(user.frozenUntil!).toLocaleString()}
+                            </Badge>
+                          )}
+                          {user.isBlocked && <Badge variant="destructive">Blocked</Badge>}
+
+                          <div className="flex gap-2">
+                            {isFrozen ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => unfreezeMutation.mutate(user.id)}
+                                disabled={unfreezeMutation.isPending}
+                              >
+                                Unfreeze
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleFreeze(user.id)}
+                                disabled={freezeMutation.isPending}
+                              >
+                                Freeze 24h
+                              </Button>
+                            )}
+                            {user.isBlocked ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => unblockMutation.mutate(user.id)}
+                                disabled={unblockMutation.isPending}
+                              >
+                                Unblock
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => blockMutation.mutate(user.id)}
+                                disabled={blockMutation.isPending}
+                              >
+                                Block
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </TabsContent>
@@ -318,6 +442,157 @@ const AdminPanel = () => {
                     })}
                   </TableBody>
                 </Table>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-4">
+            <div className="border rounded-lg p-4 bg-muted/30">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Add New Setting
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Input
+                  placeholder="Key (e.g., site.name)"
+                  value={newSetting.key}
+                  onChange={(e) => setNewSetting({ ...newSetting, key: e.target.value })}
+                />
+                <Input
+                  placeholder="Value"
+                  value={newSetting.value}
+                  onChange={(e) => setNewSetting({ ...newSetting, value: e.target.value })}
+                />
+                <Input
+                  placeholder="Description (optional)"
+                  value={newSetting.description}
+                  onChange={(e) => setNewSetting({ ...newSetting, description: e.target.value })}
+                />
+              </div>
+              <Button
+                className="mt-3"
+                size="sm"
+                onClick={() => createSettingMutation.mutate(newSetting)}
+                disabled={!newSetting.key || !newSetting.value || createSettingMutation.isPending}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Create Setting
+              </Button>
+            </div>
+
+            {settingsLoading ? (
+              <p>Loading settings...</p>
+            ) : (
+              <div className="space-y-3">
+                {settings?.map((setting) => {
+                  const isEditing = editingSettings[setting.key];
+                  const displayValue = isEditing?.value ?? setting.value;
+                  const displayDescription = isEditing?.description ?? setting.description ?? "";
+
+                  return (
+                    <div key={setting.key} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-2">
+                          <div className="font-mono font-semibold text-sm">{setting.key}</div>
+                          {isEditing ? (
+                            <div className="space-y-2">
+                              <Input
+                                value={displayValue}
+                                onChange={(e) =>
+                                  setEditingSettings({
+                                    ...editingSettings,
+                                    [setting.key]: { value: e.target.value, description: displayDescription },
+                                  })
+                                }
+                                placeholder="Value"
+                              />
+                              <Input
+                                value={displayDescription}
+                                onChange={(e) =>
+                                  setEditingSettings({
+                                    ...editingSettings,
+                                    [setting.key]: { value: displayValue, description: e.target.value },
+                                  })
+                                }
+                                placeholder="Description (optional)"
+                              />
+                            </div>
+                          ) : (
+                            <>
+                              <div className="text-sm font-medium">{setting.value}</div>
+                              {setting.description && (
+                                <div className="text-xs text-muted-foreground">{setting.description}</div>
+                              )}
+                            </>
+                          )}
+                          <div className="text-xs text-muted-foreground">
+                            Updated: {new Date(setting.updatedAt).toLocaleString()}
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          {isEditing ? (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => {
+                                  updateSettingMutation.mutate({
+                                    key: setting.key,
+                                    value: displayValue,
+                                    description: displayDescription || undefined,
+                                  });
+                                }}
+                                disabled={updateSettingMutation.isPending}
+                              >
+                                <Save className="h-4 w-4 mr-1" />
+                                Save
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  const newEditingSettings = { ...editingSettings };
+                                  delete newEditingSettings[setting.key];
+                                  setEditingSettings(newEditingSettings);
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  setEditingSettings({
+                                    ...editingSettings,
+                                    [setting.key]: { value: setting.value, description: setting.description ?? "" },
+                                  })
+                                }
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => {
+                                  if (confirm(`Delete setting "${setting.key}"?`)) {
+                                    deleteSettingMutation.mutate(setting.key);
+                                  }
+                                }}
+                                disabled={deleteSettingMutation.isPending}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </TabsContent>

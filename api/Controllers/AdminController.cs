@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using KazakhstanStrategyApi.Data;
 using KazakhstanStrategyApi.DTOs;
 using KazakhstanStrategyApi.Models;
+using KazakhstanStrategyApi.Services;
 
 namespace KazakhstanStrategyApi.Controllers;
 
@@ -13,16 +14,20 @@ namespace KazakhstanStrategyApi.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly SettingsService _settingsService;
 
-    public AdminController(AppDbContext context)
+    public AdminController(AppDbContext context, SettingsService settingsService)
     {
         _context = context;
+        _settingsService = settingsService;
     }
 
     [HttpGet("users")]
     public async Task<ActionResult<IEnumerable<AdminUserDTO>>> GetUsers([FromQuery] string? email = null)
     {
-        var query = _context.Profiles.AsQueryable();
+        var query = _context.Profiles
+            .Include(p => p.ProfileRoles)
+            .AsQueryable();
 
         if (!string.IsNullOrEmpty(email))
         {
@@ -35,11 +40,17 @@ public class AdminController : ControllerBase
             {
                 Id = p.Id,
                 Username = p.Username,
+                DisplayName = p.DisplayName,
+                Bio = p.Bio,
                 Email = p.Email,
+                EmailVerified = p.EmailVerified,
                 CreatedAt = p.CreatedAt,
                 LastCommentAt = p.LastCommentAt,
+                LastSeenAt = p.LastSeenAt,
                 FrozenUntil = p.FrozenUntil,
-                IsBlocked = p.IsBlocked
+                IsBlocked = p.IsBlocked,
+                RegistrationIp = p.RegistrationIp,
+                Roles = p.ProfileRoles.Select(pr => pr.Role.ToString()).ToList()
             })
             .ToListAsync();
 
@@ -52,7 +63,7 @@ public class AdminController : ControllerBase
         var query = _context.Comments
             .Include(c => c.User)
             .Include(c => c.Page)
-            .Include(c => c.Paragraph)
+            .Include(c => c.Paragraph!)
                 .ThenInclude(p => p.Page)
             .AsQueryable();
 
@@ -126,6 +137,94 @@ public class AdminController : ControllerBase
         if (user == null) return NotFound();
 
         user.IsBlocked = false;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpPost("users/{userId}/roles/{role}")]
+    public async Task<IActionResult> AssignRole(Guid userId, UserRole role)
+    {
+        var user = await _context.Profiles
+            .Include(p => p.ProfileRoles)
+            .FirstOrDefaultAsync(p => p.Id == userId);
+
+        if (user == null) return NotFound();
+
+        // Check if user already has this role
+        if (user.ProfileRoles.Any(pr => pr.Role == role))
+        {
+            return BadRequest("User already has this role");
+        }
+
+        var profileRole = new ProfileRole
+        {
+            ProfileId = userId,
+            Role = role
+        };
+
+        _context.ProfileRoles.Add(profileRole);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpDelete("users/{userId}/roles/{role}")]
+    public async Task<IActionResult> RemoveRole(Guid userId, UserRole role)
+    {
+        var profileRole = await _context.ProfileRoles
+            .FirstOrDefaultAsync(pr => pr.ProfileId == userId && pr.Role == role);
+
+        if (profileRole == null) return NotFound();
+
+        _context.ProfileRoles.Remove(profileRole);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpGet("settings")]
+    public async Task<ActionResult<IEnumerable<AdminSettingDTO>>> GetSettings()
+    {
+        var settings = await _context.Settings
+            .OrderBy(s => s.Key)
+            .Select(s => new AdminSettingDTO
+            {
+                Key = s.Key,
+                Value = s.Value,
+                Description = s.Description,
+                UpdatedAt = s.UpdatedAt
+            })
+            .ToListAsync();
+
+        return Ok(settings);
+    }
+
+    [HttpPut("settings/{key}")]
+    public async Task<IActionResult> UpdateSetting(string key, [FromBody] UpdateSettingRequest request)
+    {
+        await _settingsService.SetSettingAsync(key, request.Value, request.Description);
+        return NoContent();
+    }
+
+    [HttpPost("settings")]
+    public async Task<IActionResult> CreateSetting([FromBody] AdminSettingDTO request)
+    {
+        var exists = await _context.Settings.AnyAsync(s => s.Key == request.Key);
+        if (exists)
+            return BadRequest("Setting with this key already exists");
+
+        await _settingsService.SetSettingAsync(request.Key, request.Value, request.Description);
+        return CreatedAtAction(nameof(GetSettings), new { key = request.Key }, request);
+    }
+
+    [HttpDelete("settings/{key}")]
+    public async Task<IActionResult> DeleteSetting(string key)
+    {
+        var setting = await _context.Settings.FindAsync(key);
+        if (setting == null) return NotFound();
+
+        _context.Settings.Remove(setting);
         await _context.SaveChangesAsync();
 
         return NoContent();
