@@ -250,8 +250,9 @@
     "pageCount": "{count} page",
     "pageCount_plural": "{count} pages",
     "aboutTitle": "About This Document",
-    "aboutPara1": "This open letter presents a detailed analysis of IT development strategy in Kazakhstan. The document is designed to foster discussion and collaboration among stakeholders, experts, and interested parties.",
-    "aboutPara2": "Each paragraph is open for commentary, allowing readers to provide targeted feedback, share expertise, and engage in constructive dialogue. Your participation helps refine and strengthen the strategic vision outlined in this document.",
+    "aboutPara1": "This is an open analysis and proposal for Kazakhstan's IT Development Strategy. This resource is not an official government publication; it is developed and maintained by Kazakhstan's IT community. The letter contains an analysis of the current state, review, and evaluation of proposals to improve the IT sector's development. The document is comprehensive and covers multiple aspects of the sector: economic proposals, development of institutions and human capital, business, and regulation.",
+    "aboutPara2": "The document is primarily addressed to the Government of the Republic of Kazakhstan and the expert community. The document is open for comments, suggestions, and discussion.",
+    "aboutPara3": "This letter is being written in stages, so we recommend you subscribe and follow the updates.",
     "readyToParticipate": "You're signed in and ready to participate!",
     "joinDiscussion": "Sign in to join the discussion and share your insights."
   },

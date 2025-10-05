@@ -139,6 +139,9 @@ const Index = () => {
             <p>
               {t("home.aboutPara2")}
             </p>
+            <p>
+              {t("home.aboutPara3")}
+            </p>
             <p className="font-semibold text-primary">
               {isAuthenticated ? t("home.readyToParticipate") : t("home.joinDiscussion")}
             </p>
