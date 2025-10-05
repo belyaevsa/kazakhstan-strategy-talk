@@ -1,12 +1,13 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileText, LogOut, User, ChevronLeft, ChevronRight, Shield } from "lucide-react";
+import { FileText, LogOut, User, ChevronLeft, ChevronRight, Shield, Menu, MessageSquare } from "lucide-react";
 import { authService } from "@/services/authService";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import LanguageSelector from "@/components/LanguageSelector";
 import { useTranslation } from "@/hooks/useTranslation";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 interface DocumentLayoutProps {
   children: ReactNode;
@@ -19,6 +20,8 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
   const { t } = useTranslation();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [userState, setUserState] = useState(authService.getUser());
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [mobileCommentsOpen, setMobileCommentsOpen] = useState(false);
 
   const isAuthenticated = authService.isAuthenticated();
 
@@ -65,43 +68,85 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 font-semibold text-lg hover:text-primary transition-colors">
-            <img src="/main-icon.webp" alt="IT Strategy" className="h-6 w-6" />
-          <span>{t('app.title')}</span>
-          </Link>
-
           <div className="flex items-center gap-2">
+            {/* Mobile Navigation Toggle */}
+            {sidebar && (
+              <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="md:hidden">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[280px] sm:w-[350px] overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle>{t('nav.documentStructure')}</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-4">
+                    {sidebar}
+                  </div>
+                </SheetContent>
+              </Sheet>
+            )}
+
+            <Link to="/" className="flex items-center gap-2 font-semibold text-lg hover:text-primary transition-colors">
+              <img src="/main-icon.webp" alt="IT Strategy" className="h-6 w-6" />
+              <span className="hidden sm:inline">{t('app.title')}</span>
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-1 sm:gap-2">
             {isAuthenticated ? (
               <>
                 {isFrozen && !isEditorOrAdmin && user?.frozenUntil && (
-                  <div className="flex items-center gap-2 px-3 py-1 bg-red-100 dark:bg-red-950/30 text-red-800 dark:text-red-200 rounded-md text-xs font-medium border border-red-200 dark:border-red-800">
+                  <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-red-100 dark:bg-red-950/30 text-red-800 dark:text-red-200 rounded-md text-xs font-medium border border-red-200 dark:border-red-800">
                     <span>🔒 {t('comments.accountFrozen')} {new Date(user.frozenUntil).toLocaleString()}</span>
                   </div>
                 )}
+
+                {/* Mobile Comments Toggle */}
+                {comments && (
+                  <Sheet open={mobileCommentsOpen} onOpenChange={setMobileCommentsOpen}>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="icon" className="xl:hidden">
+                        <MessageSquare className="h-5 w-5" />
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="w-[320px] sm:w-[380px] overflow-y-auto">
+                      <SheetHeader>
+                        <SheetTitle>{t('comments.paragraphComments')}</SheetTitle>
+                      </SheetHeader>
+                      <div className="mt-4">
+                        {comments}
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                )}
+
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
                   onClick={() => navigate(`/profile/${user?.id}`)}
                   className="flex items-center gap-2"
                 >
                   <User className="h-4 w-4" />
-                  <span className="hidden sm:inline">{user?.username}</span>
                 </Button>
                 {isAdmin && (
-                  <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
-                    <Shield className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">{t('nav.admin')}</span>
+                  <Button variant="outline" size="icon" onClick={() => navigate("/admin")} className="hidden sm:flex">
+                    <Shield className="h-4 w-4" />
                   </Button>
                 )}
-                <LanguageSelector />
-                <Button variant="ghost" size="sm" onClick={handleLogout}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">{t('nav.logout')}</span>
+                <div className="hidden sm:block">
+                  <LanguageSelector />
+                </div>
+                <Button variant="ghost" size="icon" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4" />
                 </Button>
               </>
             ) : (
               <>
-                <LanguageSelector />
+                <div className="hidden sm:block">
+                  <LanguageSelector />
+                </div>
                 <Button variant="default" size="sm" onClick={() => navigate("/auth")}>
                   {t('nav.signIn')}
                 </Button>
@@ -112,9 +157,9 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 container mx-auto px-4 py-8 overflow-x-hidden">
+      <div className="flex-1 container mx-auto px-2 sm:px-4 py-4 sm:py-8 overflow-x-hidden">
         <div className="relative">
-          <div className="flex gap-6">
+          <div className="flex gap-2 md:gap-6">
             {/* Left Sidebar - Document Structure */}
             {sidebar && (
               <>

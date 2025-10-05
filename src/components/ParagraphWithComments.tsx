@@ -417,7 +417,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
       ref={paragraphRef}
       className={cn(
         "relative group transition-all cursor-pointer",
-        isDivider ? "py-2 px-6 pr-20" : "py-4 px-6 pr-20 rounded-lg",
+        isDivider ? "py-2 px-2 sm:px-6 pr-12 sm:pr-20" : "py-3 sm:py-4 px-2 sm:px-6 pr-12 sm:pr-20 rounded-lg",
         isActive && "bg-accent/50 shadow-sm",
         isHovered && !isActive && "bg-muted/50",
         isHighlighted && "bg-primary/20 shadow-lg ring-2 ring-primary/50"
@@ -434,7 +434,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
           onClick={handleCopyLink}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          className="absolute -left-10 top-4 p-1.5 rounded-md bg-background/80 hover:bg-background border border-border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+          className="hidden sm:block absolute -left-10 top-4 p-1.5 rounded-md bg-background/80 hover:bg-background border border-border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
           title="Copy paragraph link"
         >
           <Link2 className="h-3.5 w-3.5 text-muted-foreground" />
@@ -443,15 +443,15 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
 
       {/* Comment indicator */}
       {!isDivider && paragraph.commentCount > 0 && (
-        <div className="absolute right-4 top-4 flex items-center gap-1 bg-primary text-primary-foreground px-2 py-1 rounded-full text-xs font-medium shadow-md">
+        <div className="absolute right-1 sm:right-4 top-2 sm:top-4 flex items-center gap-1 bg-primary text-primary-foreground px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium shadow-md">
           <MessageSquare className="h-3 w-3" />
-          {paragraph.commentCount}
+          <span className="hidden sm:inline">{paragraph.commentCount}</span>
         </div>
       )}
 
       {/* Hover indicator */}
       {!isDivider && (isHovered || isActive) && paragraph.commentCount === 0 && (
-        <div className="absolute right-4 top-4 flex items-center gap-1 bg-muted-foreground/20 text-foreground px-2 py-1 rounded-full text-xs">
+        <div className="absolute right-1 sm:right-4 top-2 sm:top-4 flex items-center gap-1 bg-muted-foreground/20 text-foreground px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs">
           <MessageSquare className="h-3 w-3" />
         </div>
       )}
