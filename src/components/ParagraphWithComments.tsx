@@ -91,17 +91,19 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
     }, 2000);
   };
 
-  // Parse Markdown-style links [text](url) and footnotes [[term|definition]] or [[term|definition|url]] or [[term|definition|url|label]]
+  // Parse Markdown-style links [text](url), footnotes [[term|definition]], bold **text**, and italic *text*
   const parseMarkdownLinks = (text: string) => {
     const parts: (string | JSX.Element)[] = [];
 
-    // Combined regex for both links and footnotes
+    // Combined regex for links, footnotes, bold, and italic
     const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
     const footnoteRegex = /\[\[([^\|]+)\|([^\]]+?)(?:\|([^\]]+?))?(?:\|([^\]]+?))?\]\]/g;
+    const boldRegex = /\*\*([^*]+)\*\*/g;
+    const italicRegex = /\*([^*]+)\*/g;
 
     // Combine all matches
     const allMatches: Array<{ index: number; length: number; element: JSX.Element }> = [];
-    let match;
+    let match: RegExpExecArray | null;
 
     // Find all footnotes
     while ((match = footnoteRegex.exec(text)) !== null) {
@@ -142,6 +144,36 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
           </a>
         )
       });
+    }
+
+    // Find all bold text
+    while ((match = boldRegex.exec(text)) !== null) {
+      allMatches.push({
+        index: match.index,
+        length: match[0].length,
+        element: (
+          <strong key={match.index} className="font-bold">
+            {match[1]}
+          </strong>
+        )
+      });
+    }
+
+    // Find all italic text (but skip if it's part of bold)
+    while ((match = italicRegex.exec(text)) !== null) {
+      // Check if this is part of a bold marker (**)
+      const isBoldMarker = text[match.index - 1] === '*' || text[match.index + match[0].length] === '*';
+      if (!isBoldMarker) {
+        allMatches.push({
+          index: match.index,
+          length: match[0].length,
+          element: (
+            <em key={match.index} className="italic">
+              {match[1]}
+            </em>
+          )
+        });
+      }
     }
 
     // Sort by index
@@ -226,7 +258,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
       case 'List':
         const items = paragraph.content.split('\n').filter(line => line.trim());
         return (
-          <ul className="list-disc list-inside space-y-1 text-foreground">
+          <ul className="list-disc pl-6 space-y-2 text-foreground" style={{ fontFamily: 'Georgia, "Times New Roman", serif', lineHeight: 1.8 }}>
             {items.map((item, i) => (
               <li key={i} className="leading-relaxed">{parseMarkdownLinks(item)}</li>
             ))}

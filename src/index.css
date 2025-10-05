@@ -74,6 +74,38 @@ All colors MUST be HSL.
     line-height: 1.8;
   }
 
+  /* List bullet styling for textarea - each line gets a bullet */
+  .list-style-bullet {
+    padding-left: 1.5rem;
+    line-height: 1.75;
+    background-image:
+      repeating-linear-gradient(
+        transparent 0,
+        transparent 0.25em,
+        transparent 0.25em,
+        transparent 1.75em
+      );
+    background-position: 0 0.35em;
+    position: relative;
+  }
+
+  /* Add bullet points before each line */
+  .list-style-bullet {
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent 0,
+        transparent calc(1.75em * 0.5 - 0.125em),
+        currentColor calc(1.75em * 0.5 - 0.125em),
+        currentColor calc(1.75em * 0.5 + 0.125em),
+        transparent calc(1.75em * 0.5 + 0.125em),
+        transparent 1.75em
+      );
+    background-size: 0.25em 1.75em;
+    background-position: 0.375em 0.35em;
+    background-repeat: repeat-y;
+  }
+
   /* Smooth scrolling */
   html {
     scroll-behavior: smooth;

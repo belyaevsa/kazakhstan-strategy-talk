@@ -216,19 +216,21 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
             rows={3}
             disabled={(isFrozen && !isEditorOrAdmin) || addCommentMutation.isPending}
           />
-          <Button
-            type="submit"
-            size="sm"
-            disabled={
-              !newComment.trim() ||
-              addCommentMutation.isPending ||
-              (countdown > 0 && !isEditorOrAdmin) ||
-              (isFrozen && !isEditorOrAdmin)
-            }
-          >
-            <Send className="h-3 w-3 mr-2" />
-            {addCommentMutation.isPending ? t("document.posting") : countdown > 0 && !isEditorOrAdmin ? t("document.waitBeforePosting", { seconds: countdown.toString() }) : t("document.postComment")}
-          </Button>
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              size="sm"
+              disabled={
+                !newComment.trim() ||
+                addCommentMutation.isPending ||
+                (countdown > 0 && !isEditorOrAdmin) ||
+                (isFrozen && !isEditorOrAdmin)
+              }
+              title={t("comments.submit")}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </form>
       ) : (
         <div className="p-4 border-t text-center text-sm text-muted-foreground">

@@ -28,7 +28,9 @@ import ParagraphWithComments from "@/components/ParagraphWithComments";
 import CommentPanel from "@/components/CommentPanel";
 import ChapterDialog from "@/components/ChapterDialog";
 import PageDialog from "@/components/PageDialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import AutoResizeTextarea from "@/components/AutoResizeTextarea";
+import RichTextEditor from "@/components/RichTextEditor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +41,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Pencil, Save, X, Plus, Trash2, Type, Image, Quote, Code, Share2, GripVertical, List, Link2, Eye, Table, Minus, Info, AlertTriangle, CheckCircle, AlertCircle } from "lucide-react";
+import { Pencil, Save, X, Plus, Trash2, Type, Image, Quote, Code, Share2, GripVertical, List, Link2, Eye, Table, Minus, Info, AlertTriangle, CheckCircle, AlertCircle, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ru, enUS, kk } from "date-fns/locale";
@@ -56,11 +58,12 @@ interface SortableParagraphProps {
   onDelete: () => void;
   onEnterKey: () => void;
   onTypeChange: (type: string) => void;
+  onPasteMultipleParagraphs?: (paragraphs: string[]) => void;
   chapters?: Chapter[];
 }
 
-const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps>(
-  ({ paragraph, index, onContentChange, onCaptionChange, onLinkedPageChange, onDelete, onEnterKey, onTypeChange, chapters }, ref) => {
+const SortableParagraph = forwardRef<HTMLTextAreaElement | HTMLDivElement, SortableParagraphProps>(
+  ({ paragraph, index, onContentChange, onCaptionChange, onLinkedPageChange, onDelete, onEnterKey, onTypeChange, onPasteMultipleParagraphs, chapters }, ref) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const {
     attributes,
@@ -218,6 +221,7 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps
             ref={ref}
             value={paragraph.content}
             onChange={(e) => onContentChange(e.target.value)}
+            onPasteMultipleParagraphs={onPasteMultipleParagraphs}
             placeholder={t("paragraph.tablePlaceholder")}
             className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors font-mono text-sm"
           />
@@ -280,22 +284,68 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement, SortableParagraphProps
                 value={paragraph.content}
                 onChange={(e) => onContentChange(e.target.value)}
                 onEnterKey={onEnterKey}
+                onPasteMultipleParagraphs={onPasteMultipleParagraphs}
                 placeholder="Enter callout content..."
                 className="w-full border-0 bg-transparent px-0 py-0 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 flex-1"
               />
             </div>
           </div>
-        ) : (
-          <AutoResizeTextarea
+        ) : paragraph.type === "Header" ? (
+          <RichTextEditor
             ref={ref}
             value={paragraph.content}
             onChange={(e) => onContentChange(e.target.value)}
-            onEnterKey={paragraph.type === "List" || paragraph.type === "Code" || paragraph.type === "Table" ? undefined : onEnterKey}
-            placeholder={
-              paragraph.type === "List"
-                ? t("paragraph.listPlaceholder")
-                : t("paragraph.contentPlaceholder")
-            }
+            onEnterKey={onEnterKey}
+            onPasteMultipleParagraphs={onPasteMultipleParagraphs}
+            placeholder={t("paragraph.headerPlaceholder")}
+            className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-2xl font-bold text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors min-h-[3rem]"
+          />
+        ) : paragraph.type === "List" ? (
+          <AutoResizeTextarea
+            ref={ref as any}
+            value={paragraph.content}
+            onChange={(e) => onContentChange(e.target.value)}
+            onPasteMultipleParagraphs={onPasteMultipleParagraphs}
+            placeholder={t("paragraph.listPlaceholder")}
+            className="document-content list-style-bullet w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors"
+          />
+        ) : paragraph.type === "Text" ? (
+          <RichTextEditor
+            ref={ref}
+            value={paragraph.content}
+            onChange={(e) => onContentChange(e.target.value)}
+            onEnterKey={onEnterKey}
+            onPasteMultipleParagraphs={onPasteMultipleParagraphs}
+            placeholder={t("paragraph.contentPlaceholder")}
+            className="document-content w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors min-h-[2.5rem]"
+          />
+        ) : paragraph.type === "Code" ? (
+          <AutoResizeTextarea
+            ref={ref as any}
+            value={paragraph.content}
+            onChange={(e) => onContentChange(e.target.value)}
+            onPasteMultipleParagraphs={onPasteMultipleParagraphs}
+            placeholder={t("paragraph.contentPlaceholder")}
+            className="w-full bg-muted p-4 rounded-md overflow-x-auto whitespace-pre-wrap break-words text-sm font-mono text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary transition-colors"
+          />
+        ) : paragraph.type === "Quote" ? (
+          <AutoResizeTextarea
+            ref={ref as any}
+            value={paragraph.content}
+            onChange={(e) => onContentChange(e.target.value)}
+            onEnterKey={onEnterKey}
+            onPasteMultipleParagraphs={onPasteMultipleParagraphs}
+            placeholder={t("paragraph.contentPlaceholder")}
+            className="document-content w-full border-0 border-l-4 border-primary pl-4 bg-transparent py-4 italic text-muted-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors"
+          />
+        ) : (
+          <AutoResizeTextarea
+            ref={ref as any}
+            value={paragraph.content}
+            onChange={(e) => onContentChange(e.target.value)}
+            onEnterKey={onEnterKey}
+            onPasteMultipleParagraphs={onPasteMultipleParagraphs}
+            placeholder={t("paragraph.contentPlaceholder")}
             className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors"
           />
         )}
@@ -331,7 +381,9 @@ const DocumentPage = () => {
   const [editingChapter, setEditingChapter] = useState<Chapter | undefined>();
   const [editingPage, setEditingPage] = useState<Page | undefined>();
   const [newPageChapterId, setNewPageChapterId] = useState<string | undefined>();
-  const paragraphRefs = useRef<Map<string, React.RefObject<HTMLTextAreaElement>>>(new Map());
+  const [pasteDialogOpen, setPasteDialogOpen] = useState(false);
+  const [pasteText, setPasteText] = useState("");
+  const paragraphRefs = useRef<Map<string, React.RefObject<HTMLTextAreaElement | HTMLDivElement>>>(new Map());
   const isEditor = authService.isEditor();
 
   // Set language from URL parameter or default to 'ru'
@@ -547,6 +599,63 @@ const DocumentPage = () => {
       toast.error("Failed to add paragraph: " + error.message);
     },
   });
+
+  const handlePasteText = async () => {
+    if (!pasteText.trim() || !currentPage) return;
+
+    try {
+      // Split text into paragraphs by blank lines
+      const lines = pasteText.split('\n');
+      const paragraphTexts: string[] = [];
+      let currentParagraph: string[] = [];
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed === '') {
+          if (currentParagraph.length > 0) {
+            paragraphTexts.push(currentParagraph.join('\n'));
+            currentParagraph = [];
+          }
+        } else {
+          currentParagraph.push(line);
+        }
+      }
+
+      // Add last paragraph if exists
+      if (currentParagraph.length > 0) {
+        paragraphTexts.push(currentParagraph.join('\n'));
+      }
+
+      // Get starting order index
+      const maxOrder = paragraphs?.reduce((max, p) => Math.max(max, p.orderIndex), -1) ?? -1;
+
+      // Create all paragraphs
+      for (let i = 0; i < paragraphTexts.length; i++) {
+        const newParagraph = await paragraphService.create({
+          pageId: currentPage.id,
+          content: paragraphTexts[i],
+          orderIndex: maxOrder + 1 + i,
+          type: "Text",
+        });
+
+        if (isEditMode && newParagraph) {
+          setEditedParagraphs(prev => [...prev, {
+            id: newParagraph.id,
+            content: newParagraph.content,
+            orderIndex: newParagraph.orderIndex,
+            type: newParagraph.type,
+          }]);
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["paragraphs", currentPage.id] });
+      toast.success(`${paragraphTexts.length} paragraph${paragraphTexts.length > 1 ? 's' : ''} added!`);
+      setPasteDialogOpen(false);
+      setPasteText("");
+    } catch (error: any) {
+      toast.error("Failed to paste paragraphs: " + error.message);
+    }
+  };
 
   const saveChapterMutation = useMutation({
     mutationFn: async (data: { id?: string; title: string; description: string }) => {
@@ -1036,18 +1145,55 @@ const DocumentPage = () => {
                           }
                           setEditedParagraphs(updated);
                         }}
+                        onPasteMultipleParagraphs={async (paragraphs) => {
+                          if (!currentPage) return;
+
+                          try {
+                            // Update the current paragraph with the first pasted paragraph
+                            const updated = [...editedParagraphs];
+                            updated[index].content = paragraphs[0];
+                            setEditedParagraphs(updated);
+
+                            // Create additional paragraphs for the rest
+                            for (let i = 1; i < paragraphs.length; i++) {
+                              const newPara = await paragraphService.create({
+                                pageId: currentPage.id,
+                                content: paragraphs[i],
+                                orderIndex: paragraph.orderIndex + i,
+                                type: "Text",
+                              });
+
+                              updated.splice(index + i, 0, {
+                                id: newPara.id,
+                                content: newPara.content,
+                                orderIndex: newPara.orderIndex,
+                                type: "Text"
+                              });
+                            }
+
+                            // Update order indices for all paragraphs
+                            updated.forEach((p, i) => p.orderIndex = i);
+                            setEditedParagraphs(updated);
+
+                            queryClient.invalidateQueries({ queryKey: ["paragraphs", currentPage.id] });
+                            toast.success(`Pasted ${paragraphs.length} paragraph${paragraphs.length > 1 ? 's' : ''}!`);
+                          } catch (error: any) {
+                            toast.error("Failed to paste paragraphs: " + error.message);
+                          }
+                        }}
                       />
                     );
                   })}
                 </SortableContext>
               </DndContext>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full" disabled={addParagraphMutation.isPending}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Paragraph
-                  </Button>
-                </DropdownMenuTrigger>
+              <div className="flex gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="flex-1" disabled={addParagraphMutation.isPending}>
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Paragraph
+                    </Button>
+                  </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
                   <DropdownMenuItem onClick={() => addParagraphMutation.mutate("Text")}>
                     <Type className="h-4 w-4 mr-2" />
@@ -1091,6 +1237,15 @@ const DocumentPage = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setPasteDialogOpen(true)}
+              >
+                <FileText className="h-4 w-4 mr-1" />
+                Paste Text
+              </Button>
+              </div>
             </>
           ) : (
             paragraphs && paragraphs.length > 0 ? (
@@ -1147,6 +1302,43 @@ const DocumentPage = () => {
         onSave={handleSavePage}
         isSaving={savePageMutation2.isPending}
       />
+
+      {/* Paste Text Dialog */}
+      <Dialog open={pasteDialogOpen} onOpenChange={setPasteDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Paste Text as Paragraphs</DialogTitle>
+            <DialogDescription>
+              Paste your text below. It will be automatically split into paragraphs by blank lines.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              value={pasteText}
+              onChange={(e) => setPasteText(e.target.value)}
+              placeholder="Paste your text here...&#10;&#10;Separate paragraphs with blank lines.&#10;&#10;Each paragraph will be created as a separate text block."
+              className="min-h-[300px] font-mono text-sm"
+            />
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-muted-foreground">
+                {pasteText.trim() ? `Will create ${pasteText.split('\n\n').filter(p => p.trim()).length} paragraph(s)` : 'Enter text to see count'}
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => {
+                  setPasteDialogOpen(false);
+                  setPasteText("");
+                }}>
+                  Cancel
+                </Button>
+                <Button onClick={handlePasteText} disabled={!pasteText.trim()}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Create Paragraphs
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

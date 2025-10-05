@@ -145,15 +145,7 @@ const CommentItem = ({
                 rows={2}
                 autoFocus
               />
-              <div className="flex gap-2">
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={!replyContent.trim() || isReplying}
-                >
-                  <Send className="h-3 w-3 mr-1" />
-                  {isReplying ? t("comments.posting") : t("comments.postReply")}
-                </Button>
+              <div className="flex justify-end gap-2">
                 <Button
                   type="button"
                   size="sm"
@@ -164,6 +156,14 @@ const CommentItem = ({
                   }}
                 >
                   {t("comments.cancel")}
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={!replyContent.trim() || isReplying}
+                  title={t("comments.submit")}
+                >
+                  <Send className="h-4 w-4" />
                 </Button>
               </div>
             </form>
