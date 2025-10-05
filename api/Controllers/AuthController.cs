@@ -88,15 +88,7 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Email already exists" });
         }
 
-        // 3. Username uniqueness check
-        if (await _context.Profiles.AnyAsync(u => u.Username.ToLower() == request.Username.ToLower()))
-        {
-            _logger.LogWarning("Registration validation failed - Username already taken: {Username}, IP: {IpAddress}",
-                request.Username, clientIp);
-            return BadRequest(new { message = "Username already taken" });
-        }
-
-        // 4. Disposable email check
+        // 3. Disposable email check
         var disposableEmailDomains = await _settingsService.GetListSettingAsync("DisposableEmailDomains");
         var emailDomain = request.Email.Split('@').LastOrDefault()?.ToLower();
         if (disposableEmailDomains.Contains(emailDomain ?? ""))
