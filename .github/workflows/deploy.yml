@@ -115,6 +115,13 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_FROM_NAME: ${{ secrets.EMAIL_FROM_NAME }}
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
         run: |
           set -e
 
@@ -140,12 +147,16 @@ jobs:
             echo "No currently running container found (first deployment)"
           fi
 
+          # Create logs directory if it doesn't exist
+          mkdir -p $HOME/app-logs
+
           # Start new container
           echo "Starting new container: $NEW_CONTAINER"
           docker run -d \
             --name $NEW_CONTAINER \
             --restart unless-stopped \
             -p ${{ env.PORT }}:8080 \
+            -v $HOME/app-logs:/app/logs \
             -e DB_HOST="$DB_HOST" \
             -e DB_PORT="$DB_PORT" \
             -e DB_NAME="$DB_NAME" \
@@ -158,7 +169,13 @@ jobs:
             -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
             -e AWS_REGION="$AWS_REGION" \
             -e AWS_S3_BUCKET="$AWS_S3_BUCKET" \
-            -e App__BaseUrl="https://itstrategy.kz" \
+            -e SMTP_HOST="$SMTP_HOST" \
+            -e SMTP_PORT="$SMTP_PORT" \
+            -e SMTP_USER="$SMTP_USER" \
+            -e SMTP_PASSWORD="$SMTP_PASSWORD" \
+            -e EMAIL_FROM="$EMAIL_FROM" \
+            -e EMAIL_FROM_NAME="$EMAIL_FROM_NAME" \
+            -e APP_BASE_URL="$APP_BASE_URL" \
             -e ASPNETCORE_ENVIRONMENT=Production \
             -e ASPNETCORE_URLS=http://+:8080 \
             ${{ env.IMAGE_TAG }}
@@ -211,6 +228,7 @@ jobs:
                 --name ${{ env.OLD_CONTAINER }} \
                 --restart unless-stopped \
                 -p ${{ env.PORT }}:8080 \
+                -v $HOME/app-logs:/app/logs \
                 -e DB_HOST="${{ secrets.DB_HOST }}" \
                 -e DB_PORT="${{ secrets.DB_PORT }}" \
                 -e DB_NAME="${{ secrets.DB_NAME }}" \
@@ -223,7 +241,13 @@ jobs:
                 -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
                 -e AWS_REGION="${{ secrets.AWS_REGION }}" \
                 -e AWS_S3_BUCKET="${{ secrets.AWS_S3_BUCKET }}" \
-                -e App__BaseUrl="https://itstrategy.kz" \
+                -e SMTP_HOST="${{ secrets.SMTP_HOST }}" \
+                -e SMTP_PORT="${{ secrets.SMTP_PORT }}" \
+                -e SMTP_USER="${{ secrets.SMTP_USER }}" \
+                -e SMTP_PASSWORD="${{ secrets.SMTP_PASSWORD }}" \
+                -e EMAIL_FROM="${{ secrets.EMAIL_FROM }}" \
+                -e EMAIL_FROM_NAME="${{ secrets.EMAIL_FROM_NAME }}" \
+                -e APP_BASE_URL="${{ secrets.APP_BASE_URL }}" \
                 -e ASPNETCORE_ENVIRONMENT=Production \
                 -e ASPNETCORE_URLS=http://+:8080 \
                 ${{ env.OLD_IMAGE }}

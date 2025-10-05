@@ -82,6 +82,10 @@ class AuthService {
     await apiClient.put('/auth/language', { language });
   }
 
+  async resendVerification(email: string): Promise<{ message: string }> {
+    return await apiClient.post<{ message: string }>('/auth/resend-verification', { email });
+  }
+
   private setSession(response: AuthResponse): void {
     localStorage.setItem('auth_token', response.token);
     localStorage.setItem('auth_user', JSON.stringify(response.user));

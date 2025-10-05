@@ -58,3 +58,10 @@ public class UpdateLanguageRequest
     [RegularExpression("^(ru|en|kk)$", ErrorMessage = "Language must be ru, en, or kk")]
     public string Language { get; set; } = string.Empty;
 }
+
+public class ResendVerificationRequest
+{
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; } = string.Empty;
+}

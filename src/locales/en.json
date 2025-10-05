@@ -33,7 +33,31 @@
     "dontHaveAccountSignUp": "Don't have an account? Sign up",
     "alreadyHaveAccountSignIn": "Already have an account? Sign in",
     "successLogin": "Successfully logged in!",
-    "successRegister": "Account created! Logging you in..."
+    "successRegister": "Registration successful! Please check your email to verify your account.",
+    "errorOccurred": "An error occurred. Please try again.",
+    "checkEmailVerification": "📧 Please check your email inbox (and spam folder) for a verification link.",
+    "emailVerificationSteps": "1. Check your email inbox\n2. Look for email from Kazakhstan IT Strategy\n3. Click the verification link\n4. Return here to log in",
+    "resendQuestion": "Would you like to resend the verification email?",
+    "resendVerification": "Resend Verification Email",
+    "resendSuccess": "Verification email has been resent! Please check your inbox.",
+    "sending": "Sending..."
+  },
+  "emailVerified": {
+    "title": "Email Verified!",
+    "description": "Your email has been successfully verified",
+    "errorTitle": "Verification Failed",
+    "errorDescription": "We couldn't verify your email",
+    "verifying": "Verifying Email...",
+    "successMessage": "Your email has been verified successfully! You can now log in and participate in discussions.",
+    "errorMessage": "Email verification failed. Please try again or contact support.",
+    "invalidAccess": "Invalid verification link. Please check your email for the correct link.",
+    "nextSteps": "What's next?",
+    "step1": "Click the button below to go to the login page",
+    "step2": "Sign in with your email and password",
+    "step3": "Start commenting and engaging with the document",
+    "goToLogin": "Go to Login",
+    "backToAuth": "Back to Authentication",
+    "errorHelp": "If you continue to have issues, please try registering again or contact support."
   },
   "comments": {
     "generalDiscussion": "General Discussion",

@@ -28,9 +28,19 @@ class ApiClient {
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+
+      // Handle validation errors (ASP.NET returns { errors: { ... } })
+      let errorMessage = errorData.message || response.statusText;
+
+      if (errorData.errors) {
+        // Extract validation error messages
+        const validationErrors = Object.values(errorData.errors).flat();
+        errorMessage = validationErrors.join(', ');
+      }
+
       throw new ApiError(
         response.status,
-        errorData.message || response.statusText,
+        errorMessage,
         errorData
       );
     }
