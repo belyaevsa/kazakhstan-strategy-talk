@@ -62,15 +62,15 @@ public class SitemapController : ControllerBase
 
     private string GenerateSitemap(string baseUrl, List<Models.Chapter> chapters, string[] languages)
     {
-        var sb = new StringBuilder();
+        using var memoryStream = new MemoryStream();
         var settings = new XmlWriterSettings
         {
             Indent = true,
-            Encoding = Encoding.UTF8,
+            Encoding = new UTF8Encoding(false), // UTF-8 without BOM
             OmitXmlDeclaration = false
         };
 
-        using (var writer = XmlWriter.Create(sb, settings))
+        using (var writer = XmlWriter.Create(memoryStream, settings))
         {
             writer.WriteStartDocument();
             writer.WriteStartElement("urlset", "http://www.sitemaps.org/schemas/sitemap/0.9");
@@ -105,7 +105,9 @@ public class SitemapController : ControllerBase
             writer.WriteEndDocument();
         }
 
-        return sb.ToString();
+        memoryStream.Position = 0;
+        using var reader = new StreamReader(memoryStream, Encoding.UTF8);
+        return reader.ReadToEnd();
     }
 
     private void WriteUrl(XmlWriter writer, string loc, string priority, string changefreq, DateTime lastmod, string baseUrl, string currentLang, string[] allLanguages)
