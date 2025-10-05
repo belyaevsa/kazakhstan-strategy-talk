@@ -20,7 +20,20 @@
     "alreadyHaveAccount": "Тіркелгі бар ма?",
     "dontHaveAccount": "Тіркелгі жоқ па?",
     "signInHere": "Осында кіріңіз",
-    "registerHere": "Осында тіркеліңіз"
+    "registerHere": "Осында тіркеліңіз",
+    "welcomeBack": "Қош келдіңіз",
+    "createAccount": "Тіркелгі жасау",
+    "signInDescription": "Құжатқа түсініктеме қалдыру және қатысу үшін кіріңіз",
+    "registerDescription": "Қазақстандағы АТ дамуы туралы талқылауға қосылыңыз",
+    "yourUsername": "Сіздің пайдаланушы атыңыз",
+    "yourEmail": "сіздің@email.com",
+    "passwordPlaceholder": "••••••••",
+    "loading": "Жүктелуде...",
+    "signIn": "Кіру",
+    "dontHaveAccountSignUp": "Тіркелгі жоқ па? Тіркеліңіз",
+    "alreadyHaveAccountSignIn": "Тіркелгі бар ма? Кіріңіз",
+    "successLogin": "Кіру сәтті орындалды!",
+    "successRegister": "Тіркелгі жасалды! Кіру орындалуда..."
   },
   "comments": {
     "generalDiscussion": "Жалпы талқылау",

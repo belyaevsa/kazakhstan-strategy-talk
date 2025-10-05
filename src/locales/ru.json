@@ -20,7 +20,20 @@
     "alreadyHaveAccount": "Уже есть аккаунт?",
     "dontHaveAccount": "Нет аккаунта?",
     "signInHere": "Войдите здесь",
-    "registerHere": "Зарегистрируйтесь здесь"
+    "registerHere": "Зарегистрируйтесь здесь",
+    "welcomeBack": "Добро пожаловать",
+    "createAccount": "Создать аккаунт",
+    "signInDescription": "Войдите, чтобы комментировать и взаимодействовать с документом",
+    "registerDescription": "Присоединяйтесь к обсуждению развития IT в Казахстане",
+    "yourUsername": "Ваше имя пользователя",
+    "yourEmail": "ваш@email.com",
+    "passwordPlaceholder": "••••••••",
+    "loading": "Загрузка...",
+    "signIn": "Войти",
+    "dontHaveAccountSignUp": "Нет аккаунта? Зарегистрируйтесь",
+    "alreadyHaveAccountSignIn": "Уже есть аккаунт? Войдите",
+    "successLogin": "Вход выполнен успешно!",
+    "successRegister": "Аккаунт создан! Выполняется вход..."
   },
   "comments": {
     "generalDiscussion": "Общее обсуждение",

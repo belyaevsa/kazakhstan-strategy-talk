@@ -38,6 +38,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Services
 builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<SettingsService>();
 builder.Services.AddSingleton<ICacheService, CacheService>();
 
 // Yandex Object Storage Configuration (S3-compatible)

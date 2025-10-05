@@ -5,6 +5,7 @@ export interface RegisterData {
   email: string;
   password: string;
   username: string;
+  website?: string; // Honeypot field
 }
 
 export interface LoginData {

@@ -9,13 +9,18 @@ public class RegisterRequest
     public string Email { get; set; } = string.Empty;
 
     [Required]
-    [MinLength(6)]
+    [MinLength(8, ErrorMessage = "Password must be at least 8 characters")]
+    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$",
+        ErrorMessage = "Password must contain uppercase, lowercase, and number")]
     public string Password { get; set; } = string.Empty;
 
     [Required]
     [MinLength(3)]
     [MaxLength(100)]
     public string Username { get; set; } = string.Empty;
+
+    // Honeypot field - should be empty
+    public string? Website { get; set; }
 }
 
 public class LoginRequest

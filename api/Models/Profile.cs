@@ -30,6 +30,16 @@ public class Profile
     [MaxLength(10)]
     public string Language { get; set; } = "ru"; // Default: Russian (ru), also supports: en (English), kk (Kazakh)
 
+    // Email verification
+    public bool EmailVerified { get; set; } = false;
+    [MaxLength(100)]
+    public string? EmailVerificationToken { get; set; }
+    public DateTime? EmailVerificationTokenExpiry { get; set; }
+
+    // IP tracking for rate limiting
+    [MaxLength(45)] // IPv6 max length
+    public string? RegistrationIp { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties

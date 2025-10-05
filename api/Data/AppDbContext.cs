@@ -21,6 +21,7 @@ public class AppDbContext : DbContext
     public DbSet<ChapterTranslation> ChapterTranslations { get; set; }
     public DbSet<PageTranslation> PageTranslations { get; set; }
     public DbSet<ParagraphTranslation> ParagraphTranslations { get; set; }
+    public DbSet<Setting> Settings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
