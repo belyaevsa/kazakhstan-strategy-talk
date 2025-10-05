@@ -282,6 +282,7 @@ public class AuthController : ControllerBase
                 IsBlocked = user.IsBlocked,
                 FrozenUntil = user.FrozenUntil,
                 LastCommentAt = user.LastCommentAt,
+                LastSeenAt = user.LastSeenAt,
                 Language = user.Language
             }
         });
@@ -312,6 +313,10 @@ public class AuthController : ControllerBase
             return NotFound();
         }
 
+        // Update last seen timestamp
+        user.LastSeenAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
         var roles = await _context.ProfileRoles
             .Where(pr => pr.ProfileId == user.Id)
             .Select(pr => pr.Role.ToString())
@@ -330,6 +335,7 @@ public class AuthController : ControllerBase
             IsBlocked = user.IsBlocked,
             FrozenUntil = user.FrozenUntil,
             LastCommentAt = user.LastCommentAt,
+            LastSeenAt = user.LastSeenAt,
             Language = user.Language
         });
     }

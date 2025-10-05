@@ -20,7 +20,7 @@ public class ParagraphDTO
 
 public class CreateParagraphRequest
 {
-    [Required]
+    // Content can be empty for Image, Divider, and Callout types
     public string Content { get; set; } = string.Empty;
 
     [Required]

@@ -49,6 +49,7 @@ public class UserDTO
     public bool IsBlocked { get; set; }
     public DateTime? FrozenUntil { get; set; }
     public DateTime? LastCommentAt { get; set; }
+    public DateTime? LastSeenAt { get; set; }
     public string Language { get; set; } = "ru";
 }
 
