@@ -184,6 +184,8 @@
     "updateInfo": "Обновить информацию о главе",
     "createNew": "Создать новую главу для организации страниц",
     "title": "Название",
+    "slug": "Слаг",
+    "slugPlaceholder": "slug-glavy-v-url",
     "description": "Описание",
     "chapterTitle": "Название главы",
     "chapterDescPlaceholder": "Краткое описание главы (опционально)",

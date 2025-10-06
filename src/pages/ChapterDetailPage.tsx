@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { chapterService } from "@/services/chapterService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,11 +10,16 @@ import DocumentStructure from "@/components/DocumentStructure";
 import { getCurrentLanguage, setLanguage, type Language, t } from "@/lib/i18n";
 import { authService } from "@/services/authService";
 import { Skeleton } from "@/components/ui/skeleton";
+import ChapterDialog from "@/components/ChapterDialog";
+import type { Chapter } from "@/lib/api/types";
 
 const ChapterDetailPage = () => {
   const { chapterSlug, lang } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const isEditor = authService.isEditor();
+  const [chapterDialogOpen, setChapterDialogOpen] = useState(false);
+  const [editingChapter, setEditingChapter] = useState<Chapter | undefined>();
 
   // Set language from URL
   useEffect(() => {
@@ -32,10 +37,34 @@ const ChapterDetailPage = () => {
     queryFn: () => chapterService.getAll(isEditor),
   });
 
+  const addChapterMutation = useMutation({
+    mutationFn: async (data: { title: string; description: string; slug: string; icon: string }) => {
+      const maxOrder = chapters?.reduce((max, c) => Math.max(max, c.orderIndex), -1) || 0;
+      return chapterService.create({
+        ...data,
+        orderIndex: maxOrder + 1,
+        isDraft: true,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chapters"] });
+      setChapterDialogOpen(false);
+    },
+  });
+
   const chapter = chapters?.find(c => c.slug === chapterSlug);
   const visiblePages = chapter?.pages.filter(p => isEditor || !p.isDraft) || [];
 
   const currentLang = lang || getCurrentLanguage();
+
+  const handleAddChapter = () => {
+    setEditingChapter(undefined);
+    setChapterDialogOpen(true);
+  };
+
+  const handleSaveChapter = (data: { title: string; description: string; slug: string; icon: string }) => {
+    addChapterMutation.mutate(data);
+  };
 
   if (isLoading) {
     return (
@@ -62,8 +91,9 @@ const ChapterDetailPage = () => {
   }
 
   return (
-    <DocumentLayout sidebar={chapters && <DocumentStructure chapters={chapters} />}>
-      <article className="bg-card rounded-lg shadow-sm border p-8 lg:p-12">
+    <>
+      <DocumentLayout sidebar={chapters && <DocumentStructure chapters={chapters} onAddChapter={handleAddChapter} />}>
+        <article className="bg-card rounded-lg shadow-sm border p-8 lg:p-12">
         <header className="mb-8 pb-6 border-b">
           <div className="flex items-center gap-3 mb-3">
             <h1 className="text-3xl lg:text-4xl font-bold">{chapter.title}</h1>
@@ -120,6 +150,15 @@ const ChapterDetailPage = () => {
         </div>
       </article>
     </DocumentLayout>
+
+    <ChapterDialog
+      open={chapterDialogOpen}
+      onOpenChange={setChapterDialogOpen}
+      chapter={editingChapter}
+      onSave={handleSaveChapter}
+      isSaving={addChapterMutation.isPending}
+    />
+    </>
   );
 };
 

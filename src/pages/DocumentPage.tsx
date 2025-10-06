@@ -606,11 +606,12 @@ const DocumentPage = () => {
   });
 
   const saveChapterMutation = useMutation({
-    mutationFn: async (data: { id?: string; title: string; description: string }) => {
+    mutationFn: async (data: { id?: string; title: string; description: string; slug: string; icon: string }) => {
       if (data.id) {
-        return chapterService.update(data.id, { title: data.title, description: data.description });
+        return chapterService.update(data.id, { title: data.title, description: data.description, slug: data.slug, icon: data.icon });
       } else {
-        return chapterService.create({ title: data.title, description: data.description });
+        const maxOrder = chapters?.reduce((max, c) => Math.max(max, c.orderIndex), -1) || 0;
+        return chapterService.create({ title: data.title, description: data.description, slug: data.slug, icon: data.icon, orderIndex: maxOrder + 1, isDraft: true });
       }
     },
     onSuccess: () => {
@@ -811,7 +812,7 @@ const DocumentPage = () => {
     }
   };
 
-  const handleSaveChapter = (data: { title: string; description: string }) => {
+  const handleSaveChapter = (data: { title: string; description: string; slug: string; icon: string }) => {
     saveChapterMutation.mutate({
       id: editingChapter?.id,
       ...data,

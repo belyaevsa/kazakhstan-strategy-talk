@@ -18,7 +18,7 @@ interface ChapterDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   chapter?: Chapter;
-  onSave: (data: { title: string; description: string; icon: string }) => void;
+  onSave: (data: { title: string; description: string; icon: string; slug: string }) => void;
   isSaving: boolean;
 }
 
@@ -26,22 +26,25 @@ const ChapterDialog = ({ open, onOpenChange, chapter, onSave, isSaving }: Chapte
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [icon, setIcon] = useState("");
+  const [slug, setSlug] = useState("");
 
   useEffect(() => {
     if (chapter) {
       setTitle(chapter.title);
       setDescription(chapter.description || "");
       setIcon(chapter.icon || "");
+      setSlug(chapter.slug);
     } else {
       setTitle("");
       setDescription("");
       setIcon("");
+      setSlug("");
     }
   }, [chapter, open]);
 
   const handleSave = () => {
-    if (!title.trim()) return;
-    onSave({ title, description, icon });
+    if (!title.trim() || !slug.trim()) return;
+    onSave({ title, description, icon, slug });
   };
 
   return (
@@ -61,6 +64,15 @@ const ChapterDialog = ({ open, onOpenChange, chapter, onSave, isSaving }: Chapte
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t("chapter.chapterTitle")}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="slug">{t("chapter.slug")}</Label>
+            <Input
+              id="slug"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              placeholder={t("chapter.slugPlaceholder")}
             />
           </div>
           <div className="space-y-2">
@@ -97,7 +109,7 @@ const ChapterDialog = ({ open, onOpenChange, chapter, onSave, isSaving }: Chapte
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t("comments.cancel")}
           </Button>
-          <Button onClick={handleSave} disabled={!title.trim() || isSaving}>
+          <Button onClick={handleSave} disabled={!title.trim() || !slug.trim() || isSaving}>
             {isSaving ? t("chapter.saving") : t("comments.save")}
           </Button>
         </DialogFooter>

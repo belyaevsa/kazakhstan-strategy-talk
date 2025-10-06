@@ -184,6 +184,8 @@
     "updateInfo": "Тарау туралы ақпаратты жаңарту",
     "createNew": "Беттерді ұйымдастыру үшін жаңа тарау жасау",
     "title": "Атауы",
+    "slug": "Слаг",
+    "slugPlaceholder": "tarau-url-slug",
     "description": "Сипаттама",
     "chapterTitle": "Тарау атауы",
     "chapterDescPlaceholder": "Тарау туралы қысқаша сипаттама (міндетті емес)",

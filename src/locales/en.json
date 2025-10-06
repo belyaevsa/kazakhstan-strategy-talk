@@ -184,6 +184,8 @@
     "updateInfo": "Update chapter information",
     "createNew": "Create a new chapter for organizing pages",
     "title": "Title",
+    "slug": "Slug",
+    "slugPlaceholder": "chapter-url-slug",
     "description": "Description",
     "chapterTitle": "Chapter title",
     "chapterDescPlaceholder": "Brief description of the chapter (optional)",
