@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import EmailVerified from "./pages/EmailVerified";
 import DocumentPage from "./pages/DocumentPage";
 import ChapterPage from "./pages/ChapterPage";
+import ChapterDetailPage from "./pages/ChapterDetailPage";
 import AdminPanel from "./pages/AdminPanel";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -32,20 +33,11 @@ const App = () => (
           <Route path="/profile/:userId" element={<Profile />} />
           {/* Language-based routes */}
           <Route path="/:lang" element={<Index />} />
-          <Route path="/:lang/chapter/:chapterId" element={<ChapterPage />} />
-          {/* Exclude static assets - only match slugs without file extensions */}
-          <Route
-            path="/:lang/:slug"
-            element={<DocumentPage />}
-            loader={({ params }) => {
-              // Don't match if slug has a file extension
-              if (params.slug?.includes('.')) {
-                throw new Response('Not Found', { status: 404 });
-              }
-              return null;
-            }}
-          />
+          <Route path="/:lang/:chapterSlug/:pageSlug" element={<DocumentPage />} />
+          <Route path="/:lang/:chapterSlug" element={<ChapterDetailPage />} />
           {/* Legacy routes for backwards compatibility */}
+          <Route path="/:lang/chapter/:chapterId" element={<ChapterPage />} />
+          <Route path="/:lang/:slug" element={<DocumentPage />} />
           <Route path="/chapter/:chapterId" element={<ChapterPage />} />
           <Route path="/document/:slug" element={<DocumentPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

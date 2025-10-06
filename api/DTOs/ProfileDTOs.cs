@@ -37,6 +37,7 @@ public class CommentWithContextDTO
     public Guid PageId { get; set; }
     public string PageTitle { get; set; } = string.Empty;
     public string PageSlug { get; set; } = string.Empty;
+    public string ChapterSlug { get; set; } = string.Empty;
     public Guid? ParagraphId { get; set; }
 }
 
@@ -45,6 +46,7 @@ public class ActiveDiscussionDTO
     public Guid PageId { get; set; }
     public string PageTitle { get; set; } = string.Empty;
     public string PageSlug { get; set; } = string.Empty;
+    public string ChapterSlug { get; set; } = string.Empty;
     public int CommentCount { get; set; }
     public DateTime LastCommentAt { get; set; }
 }

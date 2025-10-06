@@ -36,6 +36,7 @@ export interface CommentWithContext {
   pageId: string;
   pageTitle: string;
   pageSlug: string;
+  chapterSlug: string;
   paragraphId?: string;
 }
 
@@ -43,6 +44,7 @@ export interface ActiveDiscussion {
   pageId: string;
   pageTitle: string;
   pageSlug: string;
+  chapterSlug: string;
   commentCount: number;
   lastCommentAt: string;
 }
@@ -70,6 +72,7 @@ export interface Chapter {
   id: string;
   title: string;
   description?: string;
+  slug: string;
   icon?: string;
   orderIndex: number;
   isDraft: boolean;
@@ -123,6 +126,7 @@ export interface Comment {
 export interface CreateChapterRequest {
   title: string;
   description?: string;
+  slug: string;
   icon?: string;
   orderIndex: number;
   isDraft?: boolean;
@@ -131,6 +135,7 @@ export interface CreateChapterRequest {
 export interface UpdateChapterRequest {
   title?: string;
   description?: string;
+  slug?: string;
   icon?: string;
   orderIndex?: number;
   isDraft?: boolean;
@@ -147,7 +152,10 @@ export interface CreatePageRequest {
 export interface UpdatePageRequest {
   title?: string;
   description?: string;
+  slug?: string;
   orderIndex?: number;
+  isDraft?: boolean;
+  chapterId?: string;
 }
 
 export interface CreateParagraphRequest {

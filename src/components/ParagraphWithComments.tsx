@@ -270,11 +270,12 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
         if (!linkedPage) {
           return <p className="text-muted-foreground italic">Link not configured</p>;
         }
+        const linkedChapter = chapters?.find(c => c.id === linkedPage.chapterId);
         const currentLang = window.location.pathname.split('/')[1] || 'ru';
         return (
           <div className="my-4 p-4 border rounded-lg bg-accent/20 hover:bg-accent/30 transition-colors">
             <a
-              href={`/${currentLang}/${linkedPage.slug}`}
+              href={linkedChapter ? `/${currentLang}/${linkedChapter.slug}/${linkedPage.slug}` : `/${currentLang}/${linkedPage.slug}`}
               className="block"
               onClick={(e) => {
                 e.stopPropagation();

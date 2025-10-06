@@ -63,8 +63,10 @@ public class AdminController : ControllerBase
         var query = _context.Comments
             .Include(c => c.User)
             .Include(c => c.Page)
+                .ThenInclude(p => p.Chapter)
             .Include(c => c.Paragraph!)
                 .ThenInclude(p => p.Page)
+                    .ThenInclude(pg => pg.Chapter)
             .AsQueryable();
 
         if (pageId.HasValue)
@@ -84,6 +86,7 @@ public class AdminController : ControllerBase
                 CreatedAt = c.CreatedAt,
                 PageTitle = c.Page != null ? c.Page.Title : (c.Paragraph != null && c.Paragraph.Page != null ? c.Paragraph.Page.Title : null),
                 PageSlug = c.Page != null ? c.Page.Slug : (c.Paragraph != null && c.Paragraph.Page != null ? c.Paragraph.Page.Slug : null),
+                ChapterSlug = c.Page != null && c.Page.Chapter != null ? c.Page.Chapter.Slug : (c.Paragraph != null && c.Paragraph.Page != null && c.Paragraph.Page.Chapter != null ? c.Paragraph.Page.Chapter.Slug : null),
                 PageId = c.PageId ?? (c.Paragraph != null ? c.Paragraph.PageId : null),
                 ParagraphId = c.ParagraphId,
                 IpAddress = c.IpAddress,

@@ -365,9 +365,12 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement | HTMLDivElement, Sorta
 SortableParagraph.displayName = "SortableParagraph";
 
 const DocumentPage = () => {
-  const { slug, lang } = useParams();
+  const { slug, chapterSlug, pageSlug, lang } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  // Use either new route params (chapterSlug/pageSlug) or legacy (slug)
+  const actualPageSlug = pageSlug || slug;
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(null);
   const [paragraphPosition, setParagraphPosition] = useState(0);
   const [scrollOffset, setScrollOffset] = useState(0);
@@ -381,8 +384,6 @@ const DocumentPage = () => {
   const [editingChapter, setEditingChapter] = useState<Chapter | undefined>();
   const [editingPage, setEditingPage] = useState<Page | undefined>();
   const [newPageChapterId, setNewPageChapterId] = useState<string | undefined>();
-  const [pasteDialogOpen, setPasteDialogOpen] = useState(false);
-  const [pasteText, setPasteText] = useState("");
   const paragraphRefs = useRef<Map<string, React.RefObject<HTMLTextAreaElement | HTMLDivElement>>>(new Map());
   const isEditor = authService.isEditor();
 
@@ -394,9 +395,13 @@ const DocumentPage = () => {
     } else if (!lang) {
       // If no language in URL, redirect to language-specific URL
       const currentLang = getCurrentLanguage();
-      navigate(`/${currentLang}/${slug}`, { replace: true });
+      if (chapterSlug && pageSlug) {
+        navigate(`/${currentLang}/${chapterSlug}/${pageSlug}`, { replace: true });
+      } else if (actualPageSlug) {
+        navigate(`/${currentLang}/${actualPageSlug}`, { replace: true });
+      }
     }
-  }, [lang, slug, navigate]);
+  }, [lang, chapterSlug, pageSlug, actualPageSlug, navigate]);
 
   // Strip Markdown-style links [text](url) and return just the text for TOC
   const stripMarkdownLinks = (text: string) => {
@@ -417,9 +422,9 @@ const DocumentPage = () => {
   });
 
   const { data: currentPage, isLoading: pageLoading } = useQuery({
-    queryKey: ["page", slug],
-    queryFn: () => pageService.getBySlug(slug!),
-    enabled: !!slug,
+    queryKey: ["page", actualPageSlug],
+    queryFn: () => pageService.getBySlug(actualPageSlug!),
+    enabled: !!actualPageSlug,
   });
 
   // Update document title and meta tags for SEO
@@ -599,63 +604,6 @@ const DocumentPage = () => {
       toast.error("Failed to add paragraph: " + error.message);
     },
   });
-
-  const handlePasteText = async () => {
-    if (!pasteText.trim() || !currentPage) return;
-
-    try {
-      // Split text into paragraphs by blank lines
-      const lines = pasteText.split('\n');
-      const paragraphTexts: string[] = [];
-      let currentParagraph: string[] = [];
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed === '') {
-          if (currentParagraph.length > 0) {
-            paragraphTexts.push(currentParagraph.join('\n'));
-            currentParagraph = [];
-          }
-        } else {
-          currentParagraph.push(line);
-        }
-      }
-
-      // Add last paragraph if exists
-      if (currentParagraph.length > 0) {
-        paragraphTexts.push(currentParagraph.join('\n'));
-      }
-
-      // Get starting order index
-      const maxOrder = paragraphs?.reduce((max, p) => Math.max(max, p.orderIndex), -1) ?? -1;
-
-      // Create all paragraphs
-      for (let i = 0; i < paragraphTexts.length; i++) {
-        const newParagraph = await paragraphService.create({
-          pageId: currentPage.id,
-          content: paragraphTexts[i],
-          orderIndex: maxOrder + 1 + i,
-          type: "Text",
-        });
-
-        if (isEditMode && newParagraph) {
-          setEditedParagraphs(prev => [...prev, {
-            id: newParagraph.id,
-            content: newParagraph.content,
-            orderIndex: newParagraph.orderIndex,
-            type: newParagraph.type,
-          }]);
-        }
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["paragraphs", currentPage.id] });
-      toast.success(`${paragraphTexts.length} paragraph${paragraphTexts.length > 1 ? 's' : ''} added!`);
-      setPasteDialogOpen(false);
-      setPasteText("");
-    } catch (error: any) {
-      toast.error("Failed to paste paragraphs: " + error.message);
-    }
-  };
 
   const saveChapterMutation = useMutation({
     mutationFn: async (data: { id?: string; title: string; description: string }) => {
@@ -1237,14 +1185,6 @@ const DocumentPage = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setPasteDialogOpen(true)}
-              >
-                <FileText className="h-4 w-4 mr-1" />
-                Paste Text
-              </Button>
               </div>
             </>
           ) : (
@@ -1303,42 +1243,6 @@ const DocumentPage = () => {
         isSaving={savePageMutation2.isPending}
       />
 
-      {/* Paste Text Dialog */}
-      <Dialog open={pasteDialogOpen} onOpenChange={setPasteDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Paste Text as Paragraphs</DialogTitle>
-            <DialogDescription>
-              Paste your text below. It will be automatically split into paragraphs by blank lines.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Textarea
-              value={pasteText}
-              onChange={(e) => setPasteText(e.target.value)}
-              placeholder="Paste your text here...&#10;&#10;Separate paragraphs with blank lines.&#10;&#10;Each paragraph will be created as a separate text block."
-              className="min-h-[300px] font-mono text-sm"
-            />
-            <div className="flex justify-between items-center">
-              <p className="text-sm text-muted-foreground">
-                {pasteText.trim() ? `Will create ${pasteText.split('\n\n').filter(p => p.trim()).length} paragraph(s)` : 'Enter text to see count'}
-              </p>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => {
-                  setPasteDialogOpen(false);
-                  setPasteText("");
-                }}>
-                  Cancel
-                </Button>
-                <Button onClick={handlePasteText} disabled={!pasteText.trim()}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Create Paragraphs
-                </Button>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };

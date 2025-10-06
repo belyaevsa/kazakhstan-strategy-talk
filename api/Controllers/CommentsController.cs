@@ -419,6 +419,12 @@ public class CommentsController : ControllerBase
         var remoteIp = HttpContext.Connection.RemoteIpAddress;
         if (remoteIp != null)
         {
+            // Convert IPv6 loopback to IPv4
+            if (remoteIp.ToString() == "::1")
+            {
+                return "127.0.0.1";
+            }
+
             // If it's IPv6 mapped to IPv4, extract the IPv4 address
             if (remoteIp.IsIPv4MappedToIPv6)
             {
@@ -429,10 +435,14 @@ public class CommentsController : ControllerBase
             {
                 return remoteIp.ToString();
             }
+
+            // For any other IPv6 address, return the string representation
+            // (better to have IPv6 than nothing)
+            return remoteIp.ToString();
         }
 
-        // Return null if no valid IPv4 address found
-        return null;
+        // Return "unknown" as fallback
+        return "unknown";
     }
 
     private async Task<List<CommentDTO>> MapCommentsWithReplies(List<Comment> comments)

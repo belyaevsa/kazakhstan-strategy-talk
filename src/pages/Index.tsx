@@ -38,7 +38,7 @@ const Index = () => {
   const handleGetStarted = () => {
     if (chapters && chapters.length > 0 && chapters[0].pages.length > 0) {
       const currentLang = lang || getCurrentLanguage();
-      navigate(`/${currentLang}/${chapters[0].pages[0].slug}`);
+      navigate(`/${currentLang}/${chapters[0].slug}/${chapters[0].pages[0].slug}`);
     }
   };
 
@@ -97,7 +97,7 @@ const Index = () => {
                   <Card key={chapter.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => {
                     if (chapter.pages.length > 0) {
                       const currentLang = lang || getCurrentLanguage();
-                      navigate(`/${currentLang}/${chapter.pages[0].slug}`);
+                      navigate(`/${currentLang}/${chapter.slug}/${chapter.pages[0].slug}`);
                     }
                   }}>
                     <CardHeader>

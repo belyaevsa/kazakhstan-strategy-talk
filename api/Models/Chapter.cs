@@ -12,6 +12,10 @@ public class Chapter
 
     public string? Description { get; set; }
 
+    [Required]
+    [MaxLength(255)]
+    public string Slug { get; set; } = string.Empty;
+
     public string? Icon { get; set; }
 
     public int OrderIndex { get; set; }

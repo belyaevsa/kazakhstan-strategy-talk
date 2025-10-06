@@ -27,6 +27,7 @@ public class AdminCommentDTO
     public DateTime CreatedAt { get; set; }
     public string? PageTitle { get; set; }
     public string? PageSlug { get; set; }
+    public string? ChapterSlug { get; set; }
     public Guid? PageId { get; set; }
     public Guid? ParagraphId { get; set; }
     public string? IpAddress { get; set; }

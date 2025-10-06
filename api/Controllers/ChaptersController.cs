@@ -52,6 +52,7 @@ public class ChaptersController : ControllerBase
             Id = c.Id,
             Title = c.Title,
             Description = c.Description,
+            Slug = c.Slug,
             Icon = c.Icon,
             OrderIndex = c.OrderIndex,
             IsDraft = c.IsDraft,
@@ -97,6 +98,49 @@ public class ChaptersController : ControllerBase
             Id = chapter.Id,
             Title = chapter.Title,
             Description = chapter.Description,
+            Slug = chapter.Slug,
+            Icon = chapter.Icon,
+            OrderIndex = chapter.OrderIndex,
+            IsDraft = chapter.IsDraft,
+            CreatedAt = chapter.CreatedAt,
+            UpdatedAt = chapter.UpdatedAt,
+            Pages = chapter.Pages.OrderBy(p => p.OrderIndex).Select(p => new PageDTO
+            {
+                Id = p.Id,
+                Title = p.Title,
+                Description = p.Description,
+                Slug = p.Slug,
+                OrderIndex = p.OrderIndex,
+                IsDraft = p.IsDraft,
+                ChapterId = p.ChapterId,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+                UpdatedByUsername = p.UpdatedByProfile != null ? p.UpdatedByProfile.Username : null
+            }).ToList()
+        };
+
+        return Ok(chapterDTO);
+    }
+
+    [HttpGet("by-slug/{slug}")]
+    public async Task<ActionResult<ChapterDTO>> GetChapterBySlug(string slug)
+    {
+        var chapter = await _context.Chapters
+            .Include(c => c.Pages)
+                .ThenInclude(p => p.UpdatedByProfile)
+            .FirstOrDefaultAsync(c => c.Slug == slug);
+
+        if (chapter == null)
+        {
+            return NotFound();
+        }
+
+        var chapterDTO = new ChapterDTO
+        {
+            Id = chapter.Id,
+            Title = chapter.Title,
+            Description = chapter.Description,
+            Slug = chapter.Slug,
             Icon = chapter.Icon,
             OrderIndex = chapter.OrderIndex,
             IsDraft = chapter.IsDraft,
@@ -128,6 +172,7 @@ public class ChaptersController : ControllerBase
         {
             Title = request.Title,
             Description = request.Description,
+            Slug = request.Slug,
             Icon = request.Icon,
             OrderIndex = request.OrderIndex,
             IsDraft = request.IsDraft
@@ -144,6 +189,7 @@ public class ChaptersController : ControllerBase
             Id = chapter.Id,
             Title = chapter.Title,
             Description = chapter.Description,
+            Slug = chapter.Slug,
             Icon = chapter.Icon,
             OrderIndex = chapter.OrderIndex,
             IsDraft = chapter.IsDraft,
@@ -168,6 +214,7 @@ public class ChaptersController : ControllerBase
 
         if (request.Title != null) chapter.Title = request.Title;
         if (request.Description != null) chapter.Description = request.Description;
+        if (request.Slug != null) chapter.Slug = request.Slug;
         if (request.Icon != null) chapter.Icon = request.Icon;
         if (request.OrderIndex.HasValue) chapter.OrderIndex = request.OrderIndex.Value;
         if (request.IsDraft.HasValue) chapter.IsDraft = request.IsDraft.Value;

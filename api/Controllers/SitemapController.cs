@@ -94,7 +94,7 @@ public class SitemapController : ControllerBase
                 {
                     foreach (var lang in languages)
                     {
-                        var url = $"{baseUrl}/{lang}/{page.Slug}";
+                        var url = $"{baseUrl}/{lang}/{chapter.Slug}/{page.Slug}";
                         var lastMod = page.UpdatedAt ?? page.CreatedAt;
                         WriteUrl(writer, url, "0.8", "weekly", lastMod, baseUrl, lang, languages);
                     }

@@ -103,13 +103,21 @@ const DocumentStructure = ({ chapters, onAddChapter, onNavigate }: DocumentStruc
               onOpenChange={() => toggleChapter(chapter.id)}
             >
               <div className="flex items-center gap-1">
-                <CollapsibleTrigger className="flex-1 group">
-                  <div className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted transition-colors text-left">
+                <CollapsibleTrigger className="shrink-0">
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
                     {openChapters[chapter.id] ?? true ? (
-                      <ChevronDown className="h-4 w-4 shrink-0" />
+                      <ChevronDown className="h-4 w-4" />
                     ) : (
-                      <ChevronRight className="h-4 w-4 shrink-0" />
+                      <ChevronRight className="h-4 w-4" />
                     )}
+                  </Button>
+                </CollapsibleTrigger>
+                <Link
+                  to={`/${currentLang}/${chapter.slug}`}
+                  onClick={(e) => handleLinkClick(e, `/${currentLang}/${chapter.slug}`)}
+                  className="flex-1 group"
+                >
+                  <div className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted transition-colors text-left">
                     {(() => {
                       const ChapterIcon = getChapterIcon(chapter.icon);
                       return <ChapterIcon className="h-4 w-4 shrink-0" />;
@@ -121,7 +129,7 @@ const DocumentStructure = ({ chapters, onAddChapter, onNavigate }: DocumentStruc
                       </span>
                     )}
                   </div>
-                </CollapsibleTrigger>
+                </Link>
                 {isEditor && (
                   <Link
                     to={`/${currentLang}/chapter/${chapter.id}`}
@@ -141,8 +149,8 @@ const DocumentStructure = ({ chapters, onAddChapter, onNavigate }: DocumentStruc
               <CollapsibleContent>
                 <div className="ml-4 mt-1 space-y-0.5">
                   {visiblePages.map((page) => {
-                    const isActive = location.pathname === `/${currentLang}/${page.slug}` || location.pathname === `/document/${page.slug}`;
-                    const pagePath = `/${currentLang}/${page.slug}`;
+                    const pagePath = `/${currentLang}/${chapter.slug}/${page.slug}`;
+                    const isActive = location.pathname === pagePath || location.pathname === `/${currentLang}/${page.slug}` || location.pathname === `/document/${page.slug}`;
                     return (
                       <Link
                         key={page.id}

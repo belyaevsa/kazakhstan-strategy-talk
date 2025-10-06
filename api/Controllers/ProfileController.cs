@@ -84,6 +84,7 @@ public class ProfileController : ControllerBase
         var latestCommentsQuery = await _context.Comments
             .Where(c => c.UserId == userId && !c.IsDeleted && c.PageId != null)
             .Include(c => c.Page)
+                .ThenInclude(p => p.Chapter)
             .OrderByDescending(c => c.CreatedAt)
             .Take(10)
             .ToListAsync();
@@ -108,6 +109,7 @@ public class ProfileController : ControllerBase
                 PageId = c.PageId!.Value,
                 PageTitle = c.Page?.Title ?? "",
                 PageSlug = c.Page?.Slug ?? "",
+                ChapterSlug = c.Page?.Chapter?.Slug ?? "",
                 ParagraphId = c.ParagraphId
             });
         }
@@ -116,6 +118,7 @@ public class ProfileController : ControllerBase
         var allComments = await _context.Comments
             .Where(c => c.UserId == userId && !c.IsDeleted && c.PageId != null)
             .Include(c => c.Page)
+                .ThenInclude(p => p.Chapter)
             .ToListAsync();
 
         CommentWithContextDTO? popularComment = null;
@@ -152,6 +155,7 @@ public class ProfileController : ControllerBase
                     PageId = mostPopular.PageId!.Value,
                     PageTitle = mostPopular.Page?.Title ?? "",
                     PageSlug = mostPopular.Page?.Slug ?? "",
+                    ChapterSlug = mostPopular.Page?.Chapter?.Slug ?? "",
                     ParagraphId = mostPopular.ParagraphId
                 };
             }
@@ -174,7 +178,7 @@ public class ProfileController : ControllerBase
         var discussions = new List<ActiveDiscussionDTO>();
         foreach (var disc in activeDiscussions)
         {
-            var page = await _context.Pages.FindAsync(disc.PageId);
+            var page = await _context.Pages.Include(p => p.Chapter).FirstOrDefaultAsync(p => p.Id == disc.PageId);
             if (page != null)
             {
                 discussions.Add(new ActiveDiscussionDTO
@@ -182,6 +186,7 @@ public class ProfileController : ControllerBase
                     PageId = disc.PageId,
                     PageTitle = page.Title,
                     PageSlug = page.Slug,
+                    ChapterSlug = page.Chapter?.Slug ?? "",
                     CommentCount = disc.CommentCount,
                     LastCommentAt = disc.LastCommentAt
                 });

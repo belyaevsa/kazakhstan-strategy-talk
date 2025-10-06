@@ -297,6 +297,13 @@
     "activeDiscussionsDesc": "Pages where you have recent comments"
   },
   "common": {
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "notFound": "Not Found",
+    "chapterNotFound": "The requested chapter could not be found"
+  },
+  "chapter": {
+    "pages": "Pages in this Chapter",
+    "readPage": "Read Page",
+    "noPages": "No pages available in this chapter"
   }
 }

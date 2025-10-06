@@ -285,7 +285,7 @@ const Profile = () => {
                   stats.latestComments.map((comment) => (
                     <Link
                       key={comment.id}
-                      to={`/${getCurrentLanguage()}/${comment.pageSlug}`}
+                      to={`/${getCurrentLanguage()}/${comment.chapterSlug}/${comment.pageSlug}`}
                       className="block p-3 rounded border hover:bg-accent/50 transition-colors"
                     >
                       <p className="mb-2 line-clamp-2">{comment.content}</p>
@@ -330,7 +330,7 @@ const Profile = () => {
                   stats.activeDiscussions.map((discussion) => (
                     <Link
                       key={discussion.pageId}
-                      to={`/${getCurrentLanguage()}/${discussion.pageSlug}`}
+                      to={`/${getCurrentLanguage()}/${discussion.chapterSlug}/${discussion.pageSlug}`}
                       className="block p-4 rounded border hover:bg-accent/50 transition-colors"
                     >
                       <div className="flex items-center justify-between">

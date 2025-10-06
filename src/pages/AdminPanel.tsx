@@ -13,6 +13,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { authService } from "@/services/authService";
 import DocumentLayout from "@/components/DocumentLayout";
 import { Shield, Users, MessageSquare, ExternalLink, UserCircle, Mail, MailCheck, Clock, MapPin, Award, Settings, Plus, Trash2, Save } from "lucide-react";
+import { getCurrentLanguage } from "@/lib/i18n";
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -380,9 +381,14 @@ const AdminPanel = () => {
                   </TableHeader>
                   <TableBody>
                     {comments?.map((comment) => {
-                      const pageUrl = comment.pageSlug ? `/document/${comment.pageSlug}` : null;
-                      const paragraphUrl = comment.pageSlug && comment.paragraphId
-                        ? `/document/${comment.pageSlug}#paragraph-${comment.paragraphId}`
+                      const currentLang = getCurrentLanguage();
+                      const pageUrl = comment.chapterSlug && comment.pageSlug
+                        ? `/${currentLang}/${comment.chapterSlug}/${comment.pageSlug}`
+                        : comment.pageSlug
+                        ? `/${currentLang}/${comment.pageSlug}`
+                        : null;
+                      const paragraphUrl = pageUrl && comment.paragraphId
+                        ? `${pageUrl}#paragraph-${comment.paragraphId}`
                         : null;
 
                       return (

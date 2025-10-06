@@ -25,6 +25,7 @@ export interface AdminComment {
   createdAt: string;
   pageTitle?: string;
   pageSlug?: string;
+  chapterSlug?: string;
   pageId?: string;
   paragraphId?: string;
   ipAddress?: string;
