@@ -12,6 +12,7 @@ import { authService } from "@/services/authService";
 import { Skeleton } from "@/components/ui/skeleton";
 import ChapterDialog from "@/components/ChapterDialog";
 import type { Chapter } from "@/lib/api/types";
+import { toast } from "sonner";
 
 const ChapterDetailPage = () => {
   const { chapterSlug, lang } = useParams();
@@ -49,6 +50,10 @@ const ChapterDetailPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chapters"] });
       setChapterDialogOpen(false);
+      toast.success(t("chapter.chapterCreated"));
+    },
+    onError: (error: any) => {
+      toast.error(t("chapter.chapterCreateFailed") + ": " + error.message);
     },
   });
 

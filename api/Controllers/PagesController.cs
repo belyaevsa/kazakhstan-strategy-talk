@@ -124,6 +124,15 @@ public class PagesController : ControllerBase
     [Authorize(Policy = "EditorPolicy")]
     public async Task<ActionResult<PageDTO>> CreatePage(CreatePageRequest request)
     {
+        // Validate slug uniqueness within the chapter
+        var existingPage = await _context.Pages
+            .FirstOrDefaultAsync(p => p.Slug == request.Slug && p.ChapterId == request.ChapterId);
+
+        if (existingPage != null)
+        {
+            return BadRequest(new { error = "A page with this slug already exists in this chapter." });
+        }
+
         var page = new Page
         {
             Title = request.Title,
@@ -232,6 +241,22 @@ public class PagesController : ControllerBase
         };
 
         _context.PageVersions.Add(newVersion);
+
+        // Validate slug uniqueness within the chapter if slug or chapter is being updated
+        var targetChapterId = request.ChapterId ?? page.ChapterId;
+        var targetSlug = request.Slug ?? page.Slug;
+
+        if ((request.Slug != null && request.Slug != page.Slug) ||
+            (request.ChapterId.HasValue && request.ChapterId.Value != page.ChapterId))
+        {
+            var existingPage = await _context.Pages
+                .FirstOrDefaultAsync(p => p.Slug == targetSlug && p.ChapterId == targetChapterId && p.Id != id);
+
+            if (existingPage != null)
+            {
+                return BadRequest(new { error = "A page with this slug already exists in this chapter." });
+            }
+        }
 
         // Update page
         if (request.Title != null) page.Title = request.Title;

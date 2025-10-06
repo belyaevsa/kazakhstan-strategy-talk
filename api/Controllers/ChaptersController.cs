@@ -168,6 +168,15 @@ public class ChaptersController : ControllerBase
     [Authorize(Policy = "EditorPolicy")]
     public async Task<ActionResult<ChapterDTO>> CreateChapter(CreateChapterRequest request)
     {
+        // Validate slug uniqueness
+        var existingChapter = await _context.Chapters
+            .FirstOrDefaultAsync(c => c.Slug == request.Slug);
+
+        if (existingChapter != null)
+        {
+            return BadRequest(new { error = "A chapter with this slug already exists." });
+        }
+
         var chapter = new Chapter
         {
             Title = request.Title,
@@ -210,6 +219,18 @@ public class ChaptersController : ControllerBase
         if (chapter == null)
         {
             return NotFound();
+        }
+
+        // Validate slug uniqueness if slug is being updated
+        if (request.Slug != null && request.Slug != chapter.Slug)
+        {
+            var existingChapter = await _context.Chapters
+                .FirstOrDefaultAsync(c => c.Slug == request.Slug && c.Id != id);
+
+            if (existingChapter != null)
+            {
+                return BadRequest(new { error = "A chapter with this slug already exists." });
+            }
         }
 
         if (request.Title != null) chapter.Title = request.Title;

@@ -32,7 +32,12 @@ class ApiClient {
       // Handle validation errors (ASP.NET returns { errors: { ... } })
       let errorMessage = errorData.message || response.statusText;
 
-      if (errorData.errors) {
+      // Handle our custom error format { error: "message" }
+      if (errorData.error) {
+        errorMessage = errorData.error;
+      }
+      // Handle ASP.NET validation errors
+      else if (errorData.errors) {
         // Extract validation error messages
         const validationErrors = Object.values(errorData.errors).flat();
         errorMessage = validationErrors.join(', ');
