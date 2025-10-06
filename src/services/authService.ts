@@ -53,6 +53,12 @@ class AuthService {
   }
 
   getUser(): User | null {
+    // If no token, clear any stale user data
+    if (!this.getToken()) {
+      localStorage.removeItem('auth_user');
+      return null;
+    }
+
     const userJson = localStorage.getItem('auth_user');
     if (!userJson || userJson === 'undefined') return null;
     try {
@@ -67,6 +73,8 @@ class AuthService {
   }
 
   hasRole(role: string): boolean {
+    // Must be authenticated to have any role
+    if (!this.isAuthenticated()) return false;
     const user = this.getUser();
     return user?.roles?.includes(role) ?? false;
   }
