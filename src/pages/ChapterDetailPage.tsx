@@ -63,52 +63,62 @@ const ChapterDetailPage = () => {
 
   return (
     <DocumentLayout sidebar={chapters && <DocumentStructure chapters={chapters} />}>
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4">{chapter.title}</h1>
+      <article className="bg-card rounded-lg shadow-sm border p-8 lg:p-12">
+        <header className="mb-8 pb-6 border-b">
+          <div className="flex items-center gap-3 mb-3">
+            <h1 className="text-3xl lg:text-4xl font-bold">{chapter.title}</h1>
+            {chapter.isDraft && (
+              <span className="text-sm px-3 py-1 rounded bg-yellow-100 text-yellow-800">
+                {t("editor.draft")}
+              </span>
+            )}
+          </div>
           {chapter.description && (
-            <p className="text-xl text-muted-foreground">{chapter.description}</p>
+            <p className="text-lg text-muted-foreground">{chapter.description}</p>
+          )}
+        </header>
+
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">{t("chapter.pagesInChapter")}</h2>
+
+          {visiblePages.length > 0 ? (
+            <div className="space-y-3">
+              {visiblePages.map((page) => (
+                <Card
+                  key={page.id}
+                  className="hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => navigate(`/${currentLang}/${chapter.slug}/${page.slug}`)}
+                >
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <FileText className="h-5 w-5 text-primary" />
+                      <span>{page.title}</span>
+                      {isEditor && page.isDraft && (
+                        <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded font-normal">
+                          {t("editor.draft")}
+                        </span>
+                      )}
+                    </CardTitle>
+                    {page.description && (
+                      <CardDescription>{page.description}</CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <Button variant="ghost" size="sm" className="gap-2">
+                      {t("chapter.readPage")}
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground py-8">
+              {t("chapter.noPages")}
+            </p>
           )}
         </div>
-
-        {visiblePages.length > 0 ? (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-semibold mb-6">{t("chapter.pages")}</h2>
-            {visiblePages.map((page) => (
-              <Card
-                key={page.id}
-                className="hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => navigate(`/${currentLang}/${chapter.slug}/${page.slug}`)}
-              >
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-primary" />
-                    <span>{page.title}</span>
-                    {isEditor && page.isDraft && (
-                      <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded font-normal">
-                        {t("editor.draft")}
-                      </span>
-                    )}
-                  </CardTitle>
-                  {page.description && (
-                    <CardDescription>{page.description}</CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    {t("chapter.readPage")}
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 text-muted-foreground">
-            <p>{t("chapter.noPages")}</p>
-          </div>
-        )}
-      </div>
+      </article>
     </DocumentLayout>
   );
 };
