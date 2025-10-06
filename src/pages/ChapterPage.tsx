@@ -37,11 +37,12 @@ import type { Chapter, Page } from "@/lib/api/types";
 interface SortablePageItemProps {
   page: Page;
   index: number;
+  chapterSlug: string;
   onToggleDraft: () => void;
   onDelete: () => void;
 }
 
-const SortablePageItem = ({ page, index, onToggleDraft, onDelete }: SortablePageItemProps) => {
+const SortablePageItem = ({ page, index, chapterSlug, onToggleDraft, onDelete }: SortablePageItemProps) => {
   const {
     attributes,
     listeners,
@@ -89,7 +90,7 @@ const SortablePageItem = ({ page, index, onToggleDraft, onDelete }: SortablePage
       </div>
 
       <div className="flex items-center gap-2">
-        <Link to={`/${currentLang}/${page.slug}`} target="_blank">
+        <Link to={`/${currentLang}/${chapterSlug}/${page.slug}`} target="_blank">
           <Button
             size="sm"
             variant="ghost"
@@ -131,7 +132,7 @@ const SortablePageItem = ({ page, index, onToggleDraft, onDelete }: SortablePage
 };
 
 const ChapterPage = () => {
-  const { chapterId, lang } = useParams();
+  const { chapterIdOrSlug, lang } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -143,9 +144,9 @@ const ChapterPage = () => {
     } else if (!lang) {
       // If no language in URL, redirect to language-specific URL
       const currentLang = getCurrentLanguage();
-      navigate(`/${currentLang}/chapter/${chapterId}`, { replace: true });
+      navigate(`/${currentLang}/chapter/${chapterIdOrSlug}`, { replace: true });
     }
-  }, [lang, chapterId, navigate]);
+  }, [lang, chapterIdOrSlug, navigate]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
@@ -168,7 +169,7 @@ const ChapterPage = () => {
     queryFn: () => chapterService.getAll(isEditor),
   });
 
-  const currentChapter = chapters?.find(c => c.id === chapterId);
+  const currentChapter = chapters?.find(c => c.id === chapterIdOrSlug || c.slug === chapterIdOrSlug);
 
   const saveChapterMutation = useMutation({
     mutationFn: async () => {
@@ -243,7 +244,7 @@ const ChapterPage = () => {
   });
 
   const addChapterMutation = useMutation({
-    mutationFn: async (data: { title: string; description: string; icon: string }) => {
+    mutationFn: async (data: { title: string; description: string; slug: string; icon: string }) => {
       const maxOrder = chapters?.reduce((max, c) => Math.max(max, c.orderIndex), -1) || 0;
       return chapterService.create({
         ...data,
@@ -329,7 +330,7 @@ const ChapterPage = () => {
     addPageMutation.mutate(data);
   };
 
-  const handleSaveChapter = (data: { title: string; description: string; icon: string }) => {
+  const handleSaveChapter = (data: { title: string; description: string; slug: string; icon: string }) => {
     addChapterMutation.mutate(data);
   };
 
@@ -455,6 +456,7 @@ const ChapterPage = () => {
                         key={page.id}
                         page={page}
                         index={index}
+                        chapterSlug={currentChapter?.slug || ''}
                         onToggleDraft={() => handleTogglePageDraft(page.id, !page.isDraft)}
                         onDelete={() => handleDeletePage(page.id)}
                       />
@@ -485,7 +487,7 @@ const ChapterPage = () => {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Link to={`/document/${page.slug}`}>
+                      <Link to={`/${getCurrentLanguage()}/${currentChapter.slug}/${page.slug}`}>
                         <Button size="sm" variant="outline">
                           <ExternalLink className="h-4 w-4 mr-1" />
                           {t("chapter.view")}
@@ -509,7 +511,7 @@ const ChapterPage = () => {
       <PageDialog
         open={pageDialogOpen}
         onOpenChange={setPageDialogOpen}
-        chapterId={chapterId}
+        chapterId={currentChapter?.id}
         onSave={handleSavePage}
         isSaving={addPageMutation.isPending}
       />

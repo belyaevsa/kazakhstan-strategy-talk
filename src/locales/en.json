@@ -214,7 +214,10 @@
     "pageCreated": "Page created!",
     "pageCreateFailed": "Failed to create page",
     "chapterCreated": "Chapter created!",
-    "chapterCreateFailed": "Failed to create chapter"
+    "chapterCreateFailed": "Failed to create chapter",
+    "pages": "Pages in this Chapter",
+    "readPage": "Read Page",
+    "noPages": "No pages available in this chapter"
   },
   "document": {
     "selectParagraph": "Select a paragraph to view comments",
@@ -300,10 +303,5 @@
     "loading": "Loading...",
     "notFound": "Not Found",
     "chapterNotFound": "The requested chapter could not be found"
-  },
-  "chapter": {
-    "pages": "Pages in this Chapter",
-    "readPage": "Read Page",
-    "noPages": "No pages available in this chapter"
   }
 }

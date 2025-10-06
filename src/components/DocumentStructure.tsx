@@ -132,8 +132,8 @@ const DocumentStructure = ({ chapters, onAddChapter, onNavigate }: DocumentStruc
                 </Link>
                 {isEditor && (
                   <Link
-                    to={`/${currentLang}/chapter/${chapter.id}`}
-                    onClick={(e) => handleLinkClick(e, `/${currentLang}/chapter/${chapter.id}`)}
+                    to={`/${currentLang}/chapter/${chapter.slug}`}
+                    onClick={(e) => handleLinkClick(e, `/${currentLang}/chapter/${chapter.slug}`)}
                   >
                     <Button
                       size="sm"

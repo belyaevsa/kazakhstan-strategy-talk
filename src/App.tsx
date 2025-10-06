@@ -36,9 +36,9 @@ const App = () => (
           <Route path="/:lang/:chapterSlug/:pageSlug" element={<DocumentPage />} />
           <Route path="/:lang/:chapterSlug" element={<ChapterDetailPage />} />
           {/* Legacy routes for backwards compatibility */}
-          <Route path="/:lang/chapter/:chapterId" element={<ChapterPage />} />
+          <Route path="/:lang/chapter/:chapterIdOrSlug" element={<ChapterPage />} />
           <Route path="/:lang/:slug" element={<DocumentPage />} />
-          <Route path="/chapter/:chapterId" element={<ChapterPage />} />
+          <Route path="/chapter/:chapterIdOrSlug" element={<ChapterPage />} />
           <Route path="/document/:slug" element={<DocumentPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
