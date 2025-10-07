@@ -81,7 +81,7 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
                   <SheetHeader>
                     <SheetTitle>{t('nav.documentStructure')}</SheetTitle>
                   </SheetHeader>
-                  <div className="mt-4">
+                  <div className="mt-4" onClick={() => setMobileNavOpen(false)}>
                     {sidebar}
                   </div>
                 </SheetContent>
@@ -135,18 +135,14 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
                     <Shield className="h-4 w-4" />
                   </Button>
                 )}
-                <div className="hidden sm:block">
-                  <LanguageSelector />
-                </div>
+                <LanguageSelector />
                 <Button variant="ghost" size="icon" onClick={handleLogout}>
                   <LogOut className="h-4 w-4" />
                 </Button>
               </>
             ) : (
               <>
-                <div className="hidden sm:block">
-                  <LanguageSelector />
-                </div>
+                <LanguageSelector />
                 <Button variant="default" size="sm" onClick={() => navigate("/auth")}>
                   {t('nav.signIn')}
                 </Button>

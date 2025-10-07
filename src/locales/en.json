@@ -218,6 +218,7 @@
     "chapterCreated": "Chapter created!",
     "chapterCreateFailed": "Failed to create chapter",
     "pages": "Pages in this Chapter",
+    "pagesInThisChapter": "Pages in this chapter",
     "readPage": "Read Page",
     "noPages": "No pages available in this chapter"
   },

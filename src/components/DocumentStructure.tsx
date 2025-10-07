@@ -103,14 +103,14 @@ const DocumentStructure = ({ chapters, onAddChapter, onNavigate }: DocumentStruc
               onOpenChange={() => toggleChapter(chapter.id)}
             >
               <div className="flex items-center gap-1">
-                <CollapsibleTrigger className="shrink-0">
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                <CollapsibleTrigger asChild>
+                  <button className="shrink-0 inline-flex items-center justify-center h-7 w-7 p-0 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors">
                     {openChapters[chapter.id] ?? true ? (
                       <ChevronDown className="h-4 w-4" />
                     ) : (
                       <ChevronRight className="h-4 w-4" />
                     )}
-                  </Button>
+                  </button>
                 </CollapsibleTrigger>
                 <Link
                   to={`/${currentLang}/${chapter.slug}`}

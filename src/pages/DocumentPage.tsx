@@ -28,6 +28,7 @@ import ParagraphWithComments from "@/components/ParagraphWithComments";
 import CommentPanel from "@/components/CommentPanel";
 import ChapterDialog from "@/components/ChapterDialog";
 import PageDialog from "@/components/PageDialog";
+import ChapterPagesList from "@/components/ChapterPagesList";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import AutoResizeTextarea from "@/components/AutoResizeTextarea";
 import RichTextEditor from "@/components/RichTextEditor";
@@ -919,6 +920,15 @@ const DocumentPage = () => {
         }
       >
       <article className="bg-card rounded-lg shadow-sm border p-8 lg:p-12">
+        {/* Chapter Pages List - Mobile Only */}
+        {!isEditMode && chapterSlug && chapters && (
+          <ChapterPagesList
+            pages={chapters.find(c => c.slug === chapterSlug)?.pages || []}
+            chapterSlug={chapterSlug}
+            currentPageSlug={actualPageSlug}
+          />
+        )}
+
         {isEditMode && (
           <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
             <p className="text-sm text-blue-800 dark:text-blue-200 flex items-center gap-2">

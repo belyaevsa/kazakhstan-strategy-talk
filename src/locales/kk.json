@@ -218,6 +218,7 @@
     "chapterCreated": "Тарау жасалды!",
     "chapterCreateFailed": "Тарау жасау мүмкін болмады",
     "pages": "Осы тарауда беттер",
+    "pagesInThisChapter": "Осы тарауда беттер",
     "readPage": "Бетті оқу",
     "noPages": "Бұл тарауда қол жетімді беттер жоқ"
   },
