@@ -16,7 +16,9 @@ public class RobotsController : ControllerBase
     [Produces("text/plain")]
     public IActionResult GetRobots()
     {
-        var baseUrl = _configuration["App:BaseUrl"] ?? $"{Request.Scheme}://{Request.Host}";
+        var baseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL")
+            ?? _configuration["App:BaseUrl"]
+            ?? $"{Request.Scheme}://{Request.Host}";
 
         var robotsTxt = @$"User-agent: Googlebot
 Allow: /

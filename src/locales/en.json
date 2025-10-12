@@ -178,6 +178,21 @@
     "english": "English",
     "kazakh": "Қазақша"
   },
+  "page": {
+    "edit": "Edit Page",
+    "new": "New Page",
+    "updateInfo": "Update page information",
+    "createNew": "Create a new page in this chapter",
+    "title": "Title",
+    "slug": "Slug",
+    "slugPlaceholder": "page-slug",
+    "description": "Description",
+    "pageTitle": "Page title",
+    "pageDescPlaceholder": "Brief description of the page (optional)",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving..."
+  },
   "chapter": {
     "edit": "Edit Chapter",
     "new": "New Chapter",
@@ -220,7 +235,8 @@
     "pages": "Pages in this Chapter",
     "pagesInThisChapter": "Pages in this chapter",
     "readPage": "Read Page",
-    "noPages": "No pages available in this chapter"
+    "noPages": "No pages available in this chapter",
+    "dragToReorder": "Drag to reorder pages"
   },
   "document": {
     "selectParagraph": "Select a paragraph to view comments",

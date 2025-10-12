@@ -258,7 +258,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
         // Split by newlines and filter empty lines
         const items = paragraph.content.split('\n').filter(line => line.trim());
         return (
-          <ul className="list-disc pl-6 space-y-2 text-foreground document-content">
+          <ul className="list-disc pl-6 space-y-1 text-foreground document-content -mt-2">
             {items.map((item, i) => {
               // Remove bullet if present (content has •, but we use CSS bullets in view mode)
               const cleanItem = item.trim().replace(/^•\s*/, '');
@@ -422,7 +422,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
       ref={paragraphRef}
       className={cn(
         "relative group transition-all cursor-pointer",
-        isDivider ? "py-2 px-2 sm:px-6 pr-12 sm:pr-20" : "py-3 sm:py-4 px-2 sm:px-6 pr-12 sm:pr-20 rounded-lg",
+        isDivider ? "py-2 px-2 sm:px-6 pr-12 sm:pr-20" : paragraph.type === 'List' ? "py-2 sm:py-2 px-2 sm:px-6 pr-12 sm:pr-20 rounded-lg" : "py-3 sm:py-4 px-2 sm:px-6 pr-12 sm:pr-20 rounded-lg",
         isActive && "bg-accent/50 shadow-sm",
         isHovered && !isActive && "bg-muted/50",
         isHighlighted && "bg-primary/20 shadow-lg ring-2 ring-primary/50"

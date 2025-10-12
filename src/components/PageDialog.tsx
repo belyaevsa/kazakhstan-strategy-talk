@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import RichTextEditor from "@/components/RichTextEditor";
+import { t } from "@/lib/i18n";
 import type { Page } from "@/lib/api/types";
 
 interface PageDialogProps {
@@ -65,50 +66,50 @@ const PageDialog = ({ open, onOpenChange, page, chapterId, onSave, isSaving }: P
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="flex flex-col max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle>{page ? "Edit Page" : "New Page"}</DialogTitle>
+          <DialogTitle>{page ? t("page.edit") : t("page.new")}</DialogTitle>
           <DialogDescription>
-            {page ? "Update page information" : "Create a new page in this chapter"}
+            {page ? t("page.updateInfo") : t("page.createNew")}
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 flex flex-col flex-1 overflow-hidden">
           <div className="space-y-2">
-            <Label htmlFor="page-title">Title</Label>
+            <Label htmlFor="page-title">{t("page.title")}</Label>
             <Input
               id="page-title"
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="Page title"
+              placeholder={t("page.pageTitle")}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="page-slug">Slug</Label>
+            <Label htmlFor="page-slug">{t("page.slug")}</Label>
             <Input
               id="page-slug"
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
-              placeholder="page-slug"
+              placeholder={t("page.slugPlaceholder")}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="page-description">Description</Label>
-            <div className="border rounded-md p-3 min-h-[100px]">
+          <div className="space-y-2 flex-1 flex flex-col">
+            <Label htmlFor="page-description">{t("page.description")}</Label>
+            <div className="border rounded-md p-3 flex-1 flex flex-col">
               <RichTextEditor
                 value={description}
                 onChange={(value) => setDescription(value)}
-                placeholder="Brief description of the page (optional)"
-                className="document-content w-full border-0 bg-transparent px-0 py-0 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
+                placeholder={t("page.pageDescPlaceholder")}
+                className="document-content w-full border-0 bg-transparent px-0 py-0 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none flex-1"
               />
             </div>
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("page.cancel")}
           </Button>
           <Button onClick={handleSave} disabled={!title.trim() || !slug.trim() || isSaving}>
-            {isSaving ? "Saving..." : "Save"}
+            {isSaving ? t("page.saving") : t("page.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

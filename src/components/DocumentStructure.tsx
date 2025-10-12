@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useParams, useNavigate } from "react-router-dom";
-import { FileText, ChevronRight, ChevronDown, BookOpen, Settings, Plus } from "lucide-react";
+import { FileText, ChevronRight, ChevronDown, BookOpen, Settings, Plus, EyeOff } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -122,11 +122,11 @@ const DocumentStructure = ({ chapters, onAddChapter, onNavigate }: DocumentStruc
                       const ChapterIcon = getChapterIcon(chapter.icon);
                       return <ChapterIcon className="h-4 w-4 shrink-0 mt-0.5" />;
                     })()}
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 flex items-center gap-1.5">
                       <span className="text-sm font-medium break-words">{stripMarkdownLinks(chapter.title)}</span>
                       {isEditor && chapter.isDraft && (
-                        <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded ml-2 inline-block mt-1">
-                          {t("editor.draft")}
+                        <span className="inline-flex items-center justify-center bg-yellow-100 rounded p-0.5 shrink-0" title={t("editor.draft")}>
+                          <EyeOff className="h-3 w-3 text-yellow-800" />
                         </span>
                       )}
                     </div>
@@ -169,8 +169,8 @@ const DocumentStructure = ({ chapters, onAddChapter, onNavigate }: DocumentStruc
                         <FileText className="h-3.5 w-3.5 shrink-0" />
                         <span className="flex-1 truncate">{stripMarkdownLinks(page.title)}</span>
                         {isEditor && page.isDraft && (
-                          <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded shrink-0">
-                            {t("editor.draft")}
+                          <span className="inline-flex items-center justify-center bg-yellow-100 rounded p-0.5 shrink-0" title={t("editor.draft")}>
+                            <EyeOff className="h-3 w-3 text-yellow-800" />
                           </span>
                         )}
                       </Link>

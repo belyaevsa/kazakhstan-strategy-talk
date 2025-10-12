@@ -223,7 +223,7 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement | HTMLDivElement, Sorta
             onChange={(e) => onContentChange(e.target.value)}
             onPasteMultipleParagraphs={onPasteMultipleParagraphs}
             placeholder={t("paragraph.tablePlaceholder")}
-            className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors font-mono text-sm"
+            className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none transition-colors font-mono text-sm"
           />
         ) : paragraph.type === "Link" ? (
           <div className="space-y-3">
@@ -279,14 +279,14 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement | HTMLDivElement, Sorta
               ) : (
                 <Info className="h-5 w-5 text-gray-600 dark:text-gray-400 flex-shrink-0 mt-0.5" />
               )}
-              <RichTextEditor
+            <RichTextEditor
                 ref={ref as any}
                 value={paragraph.content}
                 onChange={(value) => onContentChange(value)}
                 onEnterKey={onEnterKey}
                 onPasteMultipleParagraphs={onPasteMultipleParagraphs}
                 placeholder="Enter callout content..."
-                className="document-content w-full border-0 bg-transparent px-0 py-0 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 flex-1"
+                className="document-content w-full border-0 bg-transparent px-0 py-0 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none flex-1"
               />
             </div>
           </div>
@@ -298,7 +298,7 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement | HTMLDivElement, Sorta
             onEnterKey={onEnterKey}
             onPasteMultipleParagraphs={onPasteMultipleParagraphs}
             placeholder={t("paragraph.headerPlaceholder")}
-            className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-2xl font-bold text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors min-h-[3rem]"
+            className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-2xl font-bold text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none transition-colors min-h-[3rem]"
           />
         ) : paragraph.type === "List" ? (
           <RichTextEditor
@@ -308,7 +308,7 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement | HTMLDivElement, Sorta
             onEnterKey={onEnterKey}
             onPasteMultipleParagraphs={onPasteMultipleParagraphs}
             placeholder={t("paragraph.listPlaceholder")}
-            className="document-content list-editor w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors min-h-[2.5rem]"
+            className="document-content list-editor w-full border-0 border-b border-border bg-transparent px-0 py-2 text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none transition-colors min-h-[2.5rem]"
             isListMode={true}
           />
         ) : paragraph.type === "Text" ? (
@@ -319,7 +319,7 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement | HTMLDivElement, Sorta
             onEnterKey={onEnterKey}
             onPasteMultipleParagraphs={onPasteMultipleParagraphs}
             placeholder={t("paragraph.contentPlaceholder")}
-            className="document-content w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors min-h-[2.5rem]"
+            className="document-content w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none transition-colors min-h-[2.5rem]"
           />
         ) : paragraph.type === "Code" ? (
           <AutoResizeTextarea
@@ -328,7 +328,7 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement | HTMLDivElement, Sorta
             onChange={(e) => onContentChange(e.target.value)}
             onPasteMultipleParagraphs={onPasteMultipleParagraphs}
             placeholder={t("paragraph.contentPlaceholder")}
-            className="w-full bg-muted p-4 rounded-md overflow-x-auto whitespace-pre-wrap break-words text-sm font-mono text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary transition-colors"
+            className="w-full bg-muted p-4 rounded-md overflow-x-auto whitespace-pre-wrap break-words text-sm font-mono text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:outline-none transition-colors"
           />
         ) : paragraph.type === "Quote" ? (
           <AutoResizeTextarea
@@ -338,7 +338,7 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement | HTMLDivElement, Sorta
             onEnterKey={onEnterKey}
             onPasteMultipleParagraphs={onPasteMultipleParagraphs}
             placeholder={t("paragraph.contentPlaceholder")}
-            className="document-content w-full border-0 border-l-4 border-primary pl-4 bg-transparent py-4 italic text-muted-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors"
+            className="document-content w-full border-0 border-l-4 border-primary pl-4 bg-transparent py-4 italic text-muted-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none transition-colors"
           />
         ) : (
           <AutoResizeTextarea
@@ -348,7 +348,7 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement | HTMLDivElement, Sorta
             onEnterKey={onEnterKey}
             onPasteMultipleParagraphs={onPasteMultipleParagraphs}
             placeholder={t("paragraph.contentPlaceholder")}
-            className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors"
+            className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none transition-colors"
           />
         )}
       </div>
@@ -1039,7 +1039,7 @@ const DocumentPage = () => {
                     value={editedDescription}
                     onChange={(value) => setEditedDescription(value)}
                     placeholder="Page description (optional)"
-                    className="document-content w-full border-0 bg-transparent px-0 py-0 text-lg text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
+                    className="document-content w-full border-0 bg-transparent px-0 py-0 text-lg text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
                   />
                 </div>
               </div>
@@ -1319,6 +1319,7 @@ const DocumentPage = () => {
         onOpenChange={setChapterDialogOpen}
         chapter={editingChapter}
         onSave={handleSaveChapter}
+        onReorderPages={handleReorderPages}
         isSaving={saveChapterMutation.isPending}
       />
 
