@@ -102,9 +102,9 @@ const DocumentStructure = ({ chapters, onAddChapter, onNavigate }: DocumentStruc
               open={openChapters[chapter.id] ?? true}
               onOpenChange={() => toggleChapter(chapter.id)}
             >
-              <div className="flex items-center gap-1">
+              <div className="flex items-start gap-1">
                 <CollapsibleTrigger asChild>
-                  <button className="shrink-0 inline-flex items-center justify-center h-7 w-7 p-0 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors">
+                  <button className="shrink-0 inline-flex items-center justify-center h-7 w-7 p-0 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors mt-0.5">
                     {openChapters[chapter.id] ?? true ? (
                       <ChevronDown className="h-4 w-4" />
                     ) : (
@@ -115,30 +115,33 @@ const DocumentStructure = ({ chapters, onAddChapter, onNavigate }: DocumentStruc
                 <Link
                   to={`/${currentLang}/${chapter.slug}`}
                   onClick={(e) => handleLinkClick(e, `/${currentLang}/${chapter.slug}`)}
-                  className="flex-1 group"
+                  className="flex-1 group min-w-0"
                 >
-                  <div className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted transition-colors text-left">
+                  <div className="flex items-start gap-2 px-2 py-1.5 rounded-md hover:bg-muted transition-colors text-left">
                     {(() => {
                       const ChapterIcon = getChapterIcon(chapter.icon);
-                      return <ChapterIcon className="h-4 w-4 shrink-0" />;
+                      return <ChapterIcon className="h-4 w-4 shrink-0 mt-0.5" />;
                     })()}
-                    <span className="text-sm font-medium truncate">{stripMarkdownLinks(chapter.title)}</span>
-                    {isEditor && chapter.isDraft && (
-                      <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded ml-auto">
-                        {t("editor.draft")}
-                      </span>
-                    )}
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium break-words">{stripMarkdownLinks(chapter.title)}</span>
+                      {isEditor && chapter.isDraft && (
+                        <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded ml-2 inline-block mt-1">
+                          {t("editor.draft")}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </Link>
                 {isEditor && (
                   <Link
                     to={`/${currentLang}/chapter/${chapter.slug}`}
                     onClick={(e) => handleLinkClick(e, `/${currentLang}/chapter/${chapter.slug}`)}
+                    className="shrink-0"
                   >
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-7 w-7 p-0"
+                      className="h-7 w-7 p-0 mt-0.5"
                       title={t("editor.manageChapter")}
                     >
                       <Settings className="h-3 w-3" />
