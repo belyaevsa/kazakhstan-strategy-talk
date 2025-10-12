@@ -88,6 +88,34 @@ const Notifications = () => {
     return date.toLocaleDateString();
   };
 
+  const getLocalizedTitle = (notification: Notification): string => {
+    // If titleKey and parameters exist, use localized version
+    if (notification.titleKey && notification.parameters) {
+      try {
+        const params = JSON.parse(notification.parameters);
+        return t(notification.titleKey, params);
+      } catch (error) {
+        console.error("Failed to parse notification parameters:", error);
+      }
+    }
+    // Fallback to original title
+    return notification.title;
+  };
+
+  const getLocalizedMessage = (notification: Notification): string => {
+    // If messageKey and parameters exist, use localized version
+    if (notification.messageKey && notification.parameters) {
+      try {
+        const params = JSON.parse(notification.parameters);
+        return t(notification.messageKey, params);
+      } catch (error) {
+        console.error("Failed to parse notification parameters:", error);
+      }
+    }
+    // Fallback to original message
+    return notification.message;
+  };
+
   return (
     <DocumentLayout>
       <div className="max-w-4xl mx-auto space-y-6">
@@ -146,12 +174,12 @@ const Notifications = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2 mb-2">
-                            <h3 className="font-semibold text-sm">{notification.title}</h3>
+                            <h3 className="font-semibold text-sm">{getLocalizedTitle(notification)}</h3>
                             {!notification.isRead && (
                               <span className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-1" />
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground mb-2">{notification.message}</p>
+                          <p className="text-sm text-muted-foreground mb-2">{getLocalizedMessage(notification)}</p>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span>{formatDate(notification.createdAt)}</span>
                             {notification.page && (

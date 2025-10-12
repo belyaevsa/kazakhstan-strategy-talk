@@ -372,5 +372,19 @@
     "unfollowed": "Бұл бетті бақылауды тоқтаттыңыз",
     "signInRequired": "Беттерді бақылау үшін кіріңіз",
     "error": "Бақылау күйін жаңарту мүмкін болмады"
+  },
+  "notification": {
+    "commentReply": {
+      "title": "Түсініктемеңізге жаңа жауап",
+      "message": "{{username}} '{{pageName}}' бетінде түсініктемеңізге жауап берді: {{preview}}"
+    },
+    "newComment": {
+      "title": "Бақыланатын бетте жаңа түсініктеме",
+      "message": "{{username}} '{{pageName}}' бетіне түсініктеме қалдырды: {{preview}}"
+    },
+    "pageUpdate": {
+      "title": "Бет жаңартылды",
+      "message": "{{username}} '{{pageName}}' бетін жаңартты"
+    }
   }
 }

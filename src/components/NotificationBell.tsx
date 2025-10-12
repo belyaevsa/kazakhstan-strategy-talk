@@ -129,6 +129,34 @@ const NotificationBell = () => {
     return date.toLocaleDateString();
   };
 
+  const getLocalizedTitle = (notification: Notification): string => {
+    // If titleKey and parameters exist, use localized version
+    if (notification.titleKey && notification.parameters) {
+      try {
+        const params = JSON.parse(notification.parameters);
+        return t(notification.titleKey, params);
+      } catch (error) {
+        console.error("Failed to parse notification parameters:", error);
+      }
+    }
+    // Fallback to original title
+    return notification.title;
+  };
+
+  const getLocalizedMessage = (notification: Notification): string => {
+    // If messageKey and parameters exist, use localized version
+    if (notification.messageKey && notification.parameters) {
+      try {
+        const params = JSON.parse(notification.parameters);
+        return t(notification.messageKey, params);
+      } catch (error) {
+        console.error("Failed to parse notification parameters:", error);
+      }
+    }
+    // Fallback to original message
+    return notification.message;
+  };
+
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
@@ -183,7 +211,7 @@ const NotificationBell = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <p className="font-medium text-sm leading-tight">
-                          {notification.title}
+                          {getLocalizedTitle(notification)}
                         </p>
                         {!notification.isRead && (
                           <button
@@ -194,7 +222,7 @@ const NotificationBell = () => {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
-                        {notification.message}
+                        {getLocalizedMessage(notification)}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {formatDate(notification.createdAt)}

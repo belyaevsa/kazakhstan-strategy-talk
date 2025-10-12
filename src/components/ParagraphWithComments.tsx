@@ -136,7 +136,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
             href={match[2]}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary hover:underline"
+            className="text-primary hover:underline break-words"
             onClick={(e) => e.stopPropagation()}
           >
             {match[1]}

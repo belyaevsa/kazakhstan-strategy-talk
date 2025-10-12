@@ -72,6 +72,16 @@ All colors MUST be HSL.
   .document-content {
     font-family: Georgia, 'Times New Roman', serif;
     line-height: 1.8;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+  }
+
+  /* Ensure links within document content also wrap */
+  .document-content a {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
   }
 
   /* List editor styling - keep it simple, bullets will be handled in the editor */

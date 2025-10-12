@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using KazakhstanStrategyApi.Data;
 using KazakhstanStrategyApi.Models;
+using System.Text.Json;
 
 namespace KazakhstanStrategyApi.Services;
 
@@ -59,12 +60,22 @@ public class NotificationService : INotificationService
                 var parentSettings = await GetNotificationSettings(parentAuthorId);
                 if (parentSettings.NotifyOnCommentReply)
                 {
+                    var parameters = new
+                    {
+                        username = commenterName,
+                        pageName = pageName,
+                        preview = commentPreview
+                    };
+
                     notifications.Add(new Notification
                     {
                         UserId = parentAuthorId,
                         Type = "CommentReply",
-                        Title = "New reply to your comment",
+                        Title = "New reply to your comment",  // Fallback for backward compatibility
                         Message = $"{commenterName} replied to your comment on '{pageName}': {commentPreview}",
+                        TitleKey = "notification.commentReply.title",
+                        MessageKey = "notification.commentReply.message",
+                        Parameters = JsonSerializer.Serialize(parameters),
                         PageId = commentWithData.PageId,
                         CommentId = commentWithData.Id,
                         RelatedUserId = commentWithData.UserId
@@ -101,12 +112,22 @@ public class NotificationService : INotificationService
                 var followerSettings = await GetNotificationSettings(followerId);
                 if (followerSettings.NotifyOnFollowedPageComment)
                 {
+                    var parameters = new
+                    {
+                        username = commenterName,
+                        pageName = pageName,
+                        preview = commentPreview
+                    };
+
                     notifications.Add(new Notification
                     {
                         UserId = followerId,
                         Type = "NewComment",
-                        Title = "New comment on followed page",
+                        Title = "New comment on followed page",  // Fallback for backward compatibility
                         Message = $"{commenterName} commented on '{pageName}': {commentPreview}",
+                        TitleKey = "notification.newComment.title",
+                        MessageKey = "notification.newComment.message",
+                        Parameters = JsonSerializer.Serialize(parameters),
                         PageId = commentWithData.PageId,
                         CommentId = commentWithData.Id,
                         RelatedUserId = commentWithData.UserId
@@ -167,12 +188,21 @@ public class NotificationService : INotificationService
             var followerSettings = await GetNotificationSettings(followerId);
             if (followerSettings.NotifyOnFollowedPageUpdate)
             {
+                var parameters = new
+                {
+                    username = updaterName,
+                    pageName = pageName
+                };
+
                 notifications.Add(new Notification
                 {
                     UserId = followerId,
                     Type = "PageUpdate",
-                    Title = "Page updated",
+                    Title = "Page updated",  // Fallback for backward compatibility
                     Message = $"{updaterName} updated the page '{pageName}'",
+                    TitleKey = "notification.pageUpdate.title",
+                    MessageKey = "notification.pageUpdate.message",
+                    Parameters = JsonSerializer.Serialize(parameters),
                     PageId = pageId,
                     RelatedUserId = updatedByUserId
                 });

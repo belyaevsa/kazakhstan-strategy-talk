@@ -200,6 +200,10 @@ export interface Notification {
   type: 'NewComment' | 'CommentReply' | 'PageUpdate';
   title: string;
   message: string;
+  // Localization fields
+  titleKey?: string;
+  messageKey?: string;
+  parameters?: string; // JSON string with interpolation values
   isRead: boolean;
   createdAt: string;
   readAt?: string;

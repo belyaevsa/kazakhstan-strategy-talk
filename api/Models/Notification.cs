@@ -19,6 +19,11 @@ public class Notification
     [Required]
     public required string Message { get; set; }
 
+    // Localization fields - translation keys and parameters
+    public string? TitleKey { get; set; }
+    public string? MessageKey { get; set; }
+    public string? Parameters { get; set; } // JSON string with interpolation values
+
     public Guid? PageId { get; set; }
     public Guid? CommentId { get; set; }
     public Guid? RelatedUserId { get; set; } // User who triggered the notification

@@ -372,5 +372,19 @@
     "unfollowed": "You have unfollowed this page",
     "signInRequired": "Please sign in to follow pages",
     "error": "Failed to update follow status"
+  },
+  "notification": {
+    "commentReply": {
+      "title": "New reply to your comment",
+      "message": "{{username}} replied to your comment on '{{pageName}}': {{preview}}"
+    },
+    "newComment": {
+      "title": "New comment on followed page",
+      "message": "{{username}} commented on '{{pageName}}': {{preview}}"
+    },
+    "pageUpdate": {
+      "title": "Page updated",
+      "message": "{{username}} updated the page '{{pageName}}'"
+    }
   }
 }
