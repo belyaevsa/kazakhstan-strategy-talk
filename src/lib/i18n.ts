@@ -35,9 +35,14 @@ export function t(key: string, params?: Record<string, string | number>, lang?: 
 
   // Replace parameters in the string
   if (params) {
-    return value.replace(/\{(\w+)\}/g, (match, paramKey) => {
-      return params[paramKey]?.toString() || match;
+    const result = value.replace(/\{\{(\w+)\}\}/g, (match, paramKey) => {
+      const replacement = params[paramKey];
+      if (replacement !== undefined && replacement !== null) {
+        return replacement.toString();
+      }
+      return match;
     });
+    return result;
   }
 
   return value;

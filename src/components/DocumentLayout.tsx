@@ -6,6 +6,7 @@ import { authService } from "@/services/authService";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import LanguageSelector from "@/components/LanguageSelector";
+import NotificationBell from "@/components/NotificationBell";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
@@ -121,6 +122,8 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
                     </SheetContent>
                   </Sheet>
                 )}
+
+                <NotificationBell />
 
                 <Button
                   variant="ghost"

@@ -161,4 +161,76 @@ public class EmailService
             await _context.SaveChangesAsync();
         }
     }
+
+    public async Task SendEmailAsync(string toEmail, string subject, string htmlBody)
+    {
+        _logger.LogInformation("Preparing to send email. To: {ToEmail}, Subject: {Subject}",
+            toEmail, subject);
+
+        var fromEmail = Environment.GetEnvironmentVariable("EMAIL_FROM")
+            ?? _configuration["Email:FromEmail"]
+            ?? "talk@itstrategy.kz";
+        var fromName = Environment.GetEnvironmentVariable("EMAIL_FROM_NAME")
+            ?? _configuration["Email:FromName"]
+            ?? "Kazakhstan IT Strategy";
+
+        var message = new MailMessage
+        {
+            From = new MailAddress(fromEmail, fromName),
+            Subject = subject,
+            Body = htmlBody,
+            IsBodyHtml = true
+        };
+        message.To.Add(toEmail);
+
+        // Create email log entry
+        var emailLog = new EmailLog
+        {
+            ToEmail = toEmail,
+            FromEmail = fromEmail,
+            FromName = fromName,
+            Subject = subject,
+            Body = htmlBody,
+            EmailType = "Notification",
+            IsSent = false,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        try
+        {
+            _logger.LogInformation("Sending email via SMTP. From: {FromEmail}, To: {ToEmail}, Subject: {Subject}",
+                fromEmail, toEmail, subject);
+
+            // Set 15 second timeout for email sending
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            try
+            {
+                await _smtpClient.SendMailAsync(message, cts.Token);
+
+                // Mark as sent
+                emailLog.IsSent = true;
+                emailLog.SentAt = DateTime.UtcNow;
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogError("Email sending timed out after 15 seconds. To: {ToEmail}", toEmail);
+                emailLog.ErrorMessage = "Email sending operation timed out after 15 seconds";
+                throw new TimeoutException("Email sending operation timed out after 15 seconds");
+            }
+
+            _logger.LogInformation("Email sent successfully. To: {ToEmail}", toEmail);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send email. To: {ToEmail}", toEmail);
+            emailLog.ErrorMessage = ex.Message;
+            throw;
+        }
+        finally
+        {
+            // Save email log to database
+            _context.EmailLogs.Add(emailLog);
+            await _context.SaveChangesAsync();
+        }
+    }
 }

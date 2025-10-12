@@ -3,12 +3,14 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { profileService } from "@/services/profileService";
 import { authService } from "@/services/authService";
+import { notificationService } from "@/services/notificationService";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
@@ -35,6 +37,13 @@ const Profile = () => {
     timeZone: "UTC"
   });
 
+  const [notificationSettings, setNotificationSettings] = useState({
+    emailFrequency: "none" as "immediate" | "hourly" | "daily" | "none",
+    notifyOnCommentReply: true,
+    notifyOnFollowedPageComment: true,
+    notifyOnFollowedPageUpdate: true
+  });
+
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["profile", userId],
     queryFn: () => profileService.getProfile(userId!),
@@ -45,6 +54,12 @@ const Profile = () => {
     queryKey: ["profileStats", userId],
     queryFn: () => profileService.getProfileStats(userId!),
     enabled: !!userId
+  });
+
+  const { data: notifSettings, isLoading: notifSettingsLoading } = useQuery({
+    queryKey: ["notificationSettings"],
+    queryFn: () => notificationService.getSettings(),
+    enabled: isOwner && authService.isAuthenticated()
   });
 
   useEffect(() => {
@@ -59,6 +74,17 @@ const Profile = () => {
     }
   }, [profile, isOwner]);
 
+  useEffect(() => {
+    if (notifSettings && isOwner) {
+      setNotificationSettings({
+        emailFrequency: notifSettings.emailFrequency,
+        notifyOnCommentReply: notifSettings.notifyOnCommentReply,
+        notifyOnFollowedPageComment: notifSettings.notifyOnFollowedPageComment,
+        notifyOnFollowedPageUpdate: notifSettings.notifyOnFollowedPageUpdate
+      });
+    }
+  }, [notifSettings, isOwner]);
+
   const updateProfileMutation = useMutation({
     mutationFn: (data: typeof editedProfile) => profileService.updateProfile(userId!, data),
     onSuccess: () => {
@@ -71,8 +97,23 @@ const Profile = () => {
     }
   });
 
+  const updateNotificationSettingsMutation = useMutation({
+    mutationFn: (data: typeof notificationSettings) => notificationService.updateSettings(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notificationSettings"] });
+      toast.success(t("notifications.settingsUpdated"));
+    },
+    onError: () => {
+      toast.error(t("notifications.settingsUpdateError"));
+    }
+  });
+
   const handleSave = () => {
     updateProfileMutation.mutate(editedProfile);
+  };
+
+  const handleSaveNotificationSettings = () => {
+    updateNotificationSettingsMutation.mutate(notificationSettings);
   };
 
   const handleCancel = () => {
@@ -376,20 +417,6 @@ const Profile = () => {
                       }
                     />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>{t("profile.emailNotifications")}</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {t("profile.emailNotificationsDesc")}
-                      </p>
-                    </div>
-                    <Switch
-                      checked={editedProfile.emailNotifications}
-                      onCheckedChange={(checked) =>
-                        setEditedProfile({ ...editedProfile, emailNotifications: checked })
-                      }
-                    />
-                  </div>
                   <div className="space-y-2">
                     <Label>{t("profile.timeZone")}</Label>
                     <Input
@@ -399,6 +426,91 @@ const Profile = () => {
                     />
                   </div>
                   <Button onClick={handleSave} disabled={updateProfileMutation.isPending} className="w-full">
+                    {t("profile.saveSettings")}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Notification Settings Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t("notifications.settings")}</CardTitle>
+                  <CardDescription>{t("notifications.settingsDesc")}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <Label>{t("notifications.emailFrequency")}</Label>
+                    <Select
+                      value={notificationSettings.emailFrequency}
+                      onValueChange={(value: "immediate" | "hourly" | "daily" | "none") =>
+                        setNotificationSettings({ ...notificationSettings, emailFrequency: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="immediate">{t("notifications.immediate")}</SelectItem>
+                        <SelectItem value="hourly">{t("notifications.hourly")}</SelectItem>
+                        <SelectItem value="daily">{t("notifications.daily")}</SelectItem>
+                        <SelectItem value="none">{t("notifications.none")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      {t("notifications.emailFrequencyDesc")}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>{t("notifications.notifyOnCommentReply")}</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {t("notifications.notifyOnCommentReplyDesc")}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={notificationSettings.notifyOnCommentReply}
+                      onCheckedChange={(checked) =>
+                        setNotificationSettings({ ...notificationSettings, notifyOnCommentReply: checked })
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>{t("notifications.notifyOnFollowedPageComment")}</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {t("notifications.notifyOnFollowedPageCommentDesc")}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={notificationSettings.notifyOnFollowedPageComment}
+                      onCheckedChange={(checked) =>
+                        setNotificationSettings({ ...notificationSettings, notifyOnFollowedPageComment: checked })
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>{t("notifications.notifyOnFollowedPageUpdate")}</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {t("notifications.notifyOnFollowedPageUpdateDesc")}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={notificationSettings.notifyOnFollowedPageUpdate}
+                      onCheckedChange={(checked) =>
+                        setNotificationSettings({ ...notificationSettings, notifyOnFollowedPageUpdate: checked })
+                      }
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleSaveNotificationSettings}
+                    disabled={updateNotificationSettingsMutation.isPending}
+                    className="w-full"
+                  >
                     {t("profile.saveSettings")}
                   </Button>
                 </CardContent>

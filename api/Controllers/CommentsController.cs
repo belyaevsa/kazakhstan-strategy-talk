@@ -15,12 +15,14 @@ public class CommentsController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ICacheService _cache;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<CommentsController> _logger;
 
-    public CommentsController(AppDbContext context, ICacheService cache, ILogger<CommentsController> logger)
+    public CommentsController(AppDbContext context, ICacheService cache, IServiceProvider serviceProvider, ILogger<CommentsController> logger)
     {
         _context = context;
         _cache = cache;
+        _serviceProvider = serviceProvider;
         _logger = logger;
     }
 
@@ -138,6 +140,34 @@ public class CommentsController : ControllerBase
                        request.PageId.HasValue ? $"Page {request.PageId.Value}" : "Unknown";
         _logger.LogInformation("Comment created. User: {Username} (ID: {UserId}), CommentId: {CommentId}, Location: {Location}, IPAddress: {IPAddress}, IsReply: {IsReply}",
             user.Username, user.Id, comment.Id, location, ipAddress ?? "Unknown", request.ParentId.HasValue);
+
+        // Create notifications for the comment (async, fire and forget with new scope)
+        var commentId = comment.Id;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+
+                // Re-load the comment with all necessary data in this new scope
+                var scopedContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var commentWithData = await scopedContext.Comments
+                    .Include(c => c.User)
+                    .Include(c => c.Page)
+                        .ThenInclude(p => p!.Chapter)
+                    .FirstOrDefaultAsync(c => c.Id == commentId);
+
+                if (commentWithData != null)
+                {
+                    await notificationService.CreateCommentNotificationAsync(commentWithData);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating notifications for comment {CommentId}", commentId);
+            }
+        });
 
         // Invalidate paragraph cache if this is a paragraph comment
         if (request.ParagraphId.HasValue)

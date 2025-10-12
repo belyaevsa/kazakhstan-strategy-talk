@@ -23,6 +23,9 @@ public class AppDbContext : DbContext
     public DbSet<ParagraphTranslation> ParagraphTranslations { get; set; }
     public DbSet<Setting> Settings { get; set; }
     public DbSet<EmailLog> EmailLogs { get; set; }
+    public DbSet<PageFollow> PageFollows { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
+    public DbSet<NotificationSettings> NotificationSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -199,6 +202,62 @@ public class AppDbContext : DbContext
             entity.HasIndex(e => e.EmailType);
             entity.HasIndex(e => e.CreatedAt);
             entity.HasIndex(e => e.IsSent);
+        });
+
+        // PageFollow configuration
+        modelBuilder.Entity<PageFollow>(entity =>
+        {
+            entity.HasOne(pf => pf.User)
+                .WithMany()
+                .HasForeignKey(pf => pf.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(pf => pf.Page)
+                .WithMany()
+                .HasForeignKey(pf => pf.PageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Ensure one follow per user per page
+            entity.HasIndex(e => new { e.UserId, e.PageId }).IsUnique();
+            entity.HasIndex(e => e.PageId);
+        });
+
+        // Notification configuration
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(n => n.Page)
+                .WithMany()
+                .HasForeignKey(n => n.PageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(n => n.Comment)
+                .WithMany()
+                .HasForeignKey(n => n.CommentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.PageId);
+            entity.HasIndex(e => e.Type);
+            entity.HasIndex(e => e.IsRead);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => new { e.UserId, e.IsRead });
+        });
+
+        // NotificationSettings configuration
+        modelBuilder.Entity<NotificationSettings>(entity =>
+        {
+            entity.HasOne(ns => ns.User)
+                .WithMany()
+                .HasForeignKey(ns => ns.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // One settings record per user
+            entity.HasIndex(e => e.UserId).IsUnique();
         });
     }
 }

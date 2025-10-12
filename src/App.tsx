@@ -13,6 +13,7 @@ import ChapterPage from "./pages/ChapterPage";
 import ChapterDetailPage from "./pages/ChapterDetailPage";
 import AdminPanel from "./pages/AdminPanel";
 import Profile from "./pages/Profile";
+import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,8 +32,10 @@ const App = () => (
           <Route path="/verify-email" element={<EmailVerified />} />
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/profile/:userId" element={<Profile />} />
+          <Route path="/notifications" element={<Notifications />} />
           {/* Language-based routes */}
           <Route path="/:lang" element={<Index />} />
+          <Route path="/:lang/notifications" element={<Notifications />} />
           <Route path="/:lang/:chapterSlug/:pageSlug" element={<DocumentPage />} />
           <Route path="/:lang/:chapterSlug" element={<ChapterDetailPage />} />
           {/* Legacy routes for backwards compatibility */}

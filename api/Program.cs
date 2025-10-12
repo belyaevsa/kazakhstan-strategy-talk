@@ -59,7 +59,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<SettingsService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddSingleton<ICacheService, CacheService>();
+
+// Background Services
+builder.Services.AddHostedService<EmailNotificationBackgroundService>();
 
 // Yandex Object Storage Configuration (S3-compatible)
 var awsAccessKey = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID");

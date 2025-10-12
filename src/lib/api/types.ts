@@ -193,3 +193,65 @@ export interface UpdateCommentRequest {
 export interface VoteRequest {
   voteType: 'agree' | 'disagree';
 }
+
+// Notification types
+export interface Notification {
+  id: string;
+  type: 'NewComment' | 'CommentReply' | 'PageUpdate';
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+  readAt?: string;
+  page?: {
+    id: string;
+    title: string;
+    slug: string;
+    chapterSlug: string;
+  };
+  commentId?: string;
+}
+
+export interface NotificationSettings {
+  emailFrequency: 'immediate' | 'hourly' | 'daily' | 'none';
+  notifyOnCommentReply: boolean;
+  notifyOnFollowedPageComment: boolean;
+  notifyOnFollowedPageUpdate: boolean;
+}
+
+export interface UpdateNotificationSettingsRequest {
+  emailFrequency?: 'immediate' | 'hourly' | 'daily' | 'none';
+  notifyOnCommentReply?: boolean;
+  notifyOnFollowedPageComment?: boolean;
+  notifyOnFollowedPageUpdate?: boolean;
+}
+
+export interface NotificationsResponse {
+  notifications: Notification[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  unreadCount: number;
+}
+
+export interface PageFollowStatus {
+  isFollowing: boolean;
+  pageId: string;
+}
+
+export interface FollowedPage {
+  followId: string;
+  followedAt: string;
+  page: {
+    id: string;
+    title: string;
+    slug: string;
+    description?: string;
+    chapterId: string;
+    chapterTitle: string;
+    chapterSlug: string;
+  };
+}

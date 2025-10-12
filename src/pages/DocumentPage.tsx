@@ -29,6 +29,7 @@ import CommentPanel from "@/components/CommentPanel";
 import ChapterDialog from "@/components/ChapterDialog";
 import PageDialog from "@/components/PageDialog";
 import ChapterPagesList from "@/components/ChapterPagesList";
+import FollowButton from "@/components/FollowButton";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import AutoResizeTextarea from "@/components/AutoResizeTextarea";
 import RichTextEditor from "@/components/RichTextEditor";
@@ -1074,6 +1075,7 @@ const DocumentPage = () => {
             )}
           </div>
           <div className="flex gap-2 ml-4">
+            {!isEditMode && <FollowButton pageId={currentPage.id} />}
             <Button onClick={handleShare} variant="ghost" size="sm" title="Share this page">
               <Share2 className="h-4 w-4" />
             </Button>
