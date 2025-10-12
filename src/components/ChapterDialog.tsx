@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -11,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import RichTextEditor from "@/components/RichTextEditor";
 import { t } from "@/lib/i18n";
 import type { Chapter } from "@/lib/api/types";
 
@@ -77,13 +77,14 @@ const ChapterDialog = ({ open, onOpenChange, chapter, onSave, isSaving }: Chapte
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">{t("chapter.description")}</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t("chapter.chapterDescPlaceholder")}
-              rows={3}
-            />
+            <div className="border rounded-md p-3 min-h-[100px]">
+              <RichTextEditor
+                value={description}
+                onChange={(value) => setDescription(value)}
+                placeholder={t("chapter.chapterDescPlaceholder")}
+                className="document-content w-full border-0 bg-transparent px-0 py-0 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">

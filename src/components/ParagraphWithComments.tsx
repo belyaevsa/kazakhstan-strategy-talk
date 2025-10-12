@@ -255,12 +255,17 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
           </div>
         );
       case 'List':
+        // Split by newlines and filter empty lines
         const items = paragraph.content.split('\n').filter(line => line.trim());
         return (
-          <ul className="list-disc pl-6 space-y-2 text-foreground" style={{ fontFamily: 'Georgia, "Times New Roman", serif', lineHeight: 1.8 }}>
-            {items.map((item, i) => (
-              <li key={i} className="leading-relaxed">{parseMarkdownLinks(item)}</li>
-            ))}
+          <ul className="list-disc pl-6 space-y-2 text-foreground document-content">
+            {items.map((item, i) => {
+              // Remove bullet if present (content has •, but we use CSS bullets in view mode)
+              const cleanItem = item.trim().replace(/^•\s*/, '');
+              return (
+                <li key={i} className="leading-relaxed">{parseMarkdownLinks(cleanItem)}</li>
+              );
+            })}
           </ul>
         );
       case 'Table':

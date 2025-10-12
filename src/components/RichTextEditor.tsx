@@ -9,10 +9,11 @@ interface RichTextEditorProps {
   placeholder?: string;
   className?: string;
   onKeyDown?: (e: React.KeyboardEvent) => void;
+  isListMode?: boolean;
 }
 
 const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
-  ({ value, onChange, onEnterKey, onPasteMultipleParagraphs, placeholder, className, onKeyDown }, ref) => {
+  ({ value, onChange, onEnterKey, onPasteMultipleParagraphs, placeholder, className, onKeyDown, isListMode }, ref) => {
     const editorRef = useRef<HTMLDivElement>(null);
     const isComposingRef = useRef(false);
 
@@ -29,7 +30,13 @@ const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
 
       // Line breaks
-      html = html.replace(/\n/g, '<br>');
+      if (isListMode) {
+        // In list mode, just convert newlines to <br> without adding bullets
+        // Bullets are managed manually by the user
+        html = html.replace(/\n/g, '<br>');
+      } else {
+        html = html.replace(/\n/g, '<br>');
+      }
 
       return html;
     };
@@ -60,19 +67,36 @@ const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       textarea.innerHTML = markdown;
       markdown = textarea.value;
 
+      // In list mode, bullets are part of the content and can be edited by the user
+      // Don't strip them automatically - let the user control bullets
+
       return markdown.trim();
     };
 
     // Update editor content when value changes externally
     useEffect(() => {
-      if (editorRef.current && !isComposingRef.current) {
+      if (editorRef.current) {
+        // Skip update during composition (IME input)
+        if (isComposingRef.current) {
+          return;
+        }
+
         const currentMarkdown = htmlToMarkdown(editorRef.current.innerHTML);
+
+        // Only update if value actually changed
         if (currentMarkdown !== value) {
           const selection = window.getSelection();
           const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
           const cursorPosition = range?.startOffset || 0;
 
-          editorRef.current.innerHTML = markdownToHtml(value);
+          let htmlContent = markdownToHtml(value);
+
+          // In list mode, ensure the first line has a bullet if content exists and doesn't start with one
+          if (isListMode && value.trim() && !value.trim().startsWith('•')) {
+            htmlContent = '• ' + htmlContent;
+          }
+
+          editorRef.current.innerHTML = htmlContent;
 
           // Restore cursor position
           if (range && editorRef.current.firstChild) {
@@ -90,12 +114,12 @@ const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           }
         }
       }
-    }, [value]);
+    }, [value, isListMode]);
 
     const handleInput = () => {
       if (editorRef.current && onChange) {
         const markdown = htmlToMarkdown(editorRef.current.innerHTML);
-        onChange({ target: { value: markdown } } as any);
+        onChange(markdown);
       }
     };
 
@@ -113,6 +137,24 @@ const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         e.preventDefault();
         document.execCommand('italic', false);
         handleInput(); // Update the markdown
+        return;
+      }
+
+      // Handle Shift+Enter in list mode - add bullet after line break
+      if (e.key === "Enter" && e.shiftKey && isListMode) {
+        e.preventDefault();
+        // Insert line break followed by bullet and space
+        document.execCommand('insertHTML', false, '<br>• ');
+        handleInput();
+        return;
+      }
+
+      // Handle regular Enter in list mode - add bullet for new line
+      if (e.key === "Enter" && !e.shiftKey && isListMode && !onEnterKey) {
+        e.preventDefault();
+        // Insert line break followed by bullet and space
+        document.execCommand('insertHTML', false, '<br>• ');
+        handleInput();
         return;
       }
 

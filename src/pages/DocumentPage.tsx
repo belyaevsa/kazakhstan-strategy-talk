@@ -35,7 +35,6 @@ import RichTextEditor from "@/components/RichTextEditor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -280,41 +279,43 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement | HTMLDivElement, Sorta
               ) : (
                 <Info className="h-5 w-5 text-gray-600 dark:text-gray-400 flex-shrink-0 mt-0.5" />
               )}
-              <AutoResizeTextarea
-                ref={ref}
+              <RichTextEditor
+                ref={ref as any}
                 value={paragraph.content}
-                onChange={(e) => onContentChange(e.target.value)}
+                onChange={(value) => onContentChange(value)}
                 onEnterKey={onEnterKey}
                 onPasteMultipleParagraphs={onPasteMultipleParagraphs}
                 placeholder="Enter callout content..."
-                className="w-full border-0 bg-transparent px-0 py-0 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 flex-1"
+                className="document-content w-full border-0 bg-transparent px-0 py-0 text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 flex-1"
               />
             </div>
           </div>
         ) : paragraph.type === "Header" ? (
           <RichTextEditor
-            ref={ref}
+            ref={ref as any}
             value={paragraph.content}
-            onChange={(e) => onContentChange(e.target.value)}
+            onChange={(value) => onContentChange(value)}
             onEnterKey={onEnterKey}
             onPasteMultipleParagraphs={onPasteMultipleParagraphs}
             placeholder={t("paragraph.headerPlaceholder")}
             className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-2xl font-bold text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors min-h-[3rem]"
           />
         ) : paragraph.type === "List" ? (
-          <AutoResizeTextarea
+          <RichTextEditor
             ref={ref as any}
             value={paragraph.content}
-            onChange={(e) => onContentChange(e.target.value)}
+            onChange={(value) => onContentChange(value)}
+            onEnterKey={onEnterKey}
             onPasteMultipleParagraphs={onPasteMultipleParagraphs}
             placeholder={t("paragraph.listPlaceholder")}
-            className="document-content list-style-bullet w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors"
+            className="document-content list-editor w-full border-0 border-b border-border bg-transparent px-0 py-4 text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary transition-colors min-h-[2.5rem]"
+            isListMode={true}
           />
         ) : paragraph.type === "Text" ? (
           <RichTextEditor
-            ref={ref}
+            ref={ref as any}
             value={paragraph.content}
-            onChange={(e) => onContentChange(e.target.value)}
+            onChange={(value) => onContentChange(value)}
             onEnterKey={onEnterKey}
             onPasteMultipleParagraphs={onPasteMultipleParagraphs}
             placeholder={t("paragraph.contentPlaceholder")}
@@ -408,6 +409,69 @@ const DocumentPage = () => {
   const stripMarkdownLinks = (text: string) => {
     // Replace [text](url) with just text
     return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
+  };
+
+  // Parse Markdown-style formatting (bold, italic) for description
+  const parseMarkdown = (text: string) => {
+    const parts: (string | JSX.Element)[] = [];
+    const boldRegex = /\*\*([^*]+)\*\*/g;
+    const italicRegex = /\*([^*]+)\*/g;
+
+    // Combine all matches
+    const allMatches: Array<{ index: number; length: number; element: JSX.Element }> = [];
+    let match: RegExpExecArray | null;
+
+    // Find all bold text
+    while ((match = boldRegex.exec(text)) !== null) {
+      allMatches.push({
+        index: match.index,
+        length: match[0].length,
+        element: (
+          <strong key={match.index} className="font-bold">
+            {match[1]}
+          </strong>
+        )
+      });
+    }
+
+    // Find all italic text (but skip if it's part of bold)
+    while ((match = italicRegex.exec(text)) !== null) {
+      // Check if this is part of a bold marker (**)
+      const isBoldMarker = text[match.index - 1] === '*' || text[match.index + match[0].length] === '*';
+      if (!isBoldMarker) {
+        allMatches.push({
+          index: match.index,
+          length: match[0].length,
+          element: (
+            <em key={match.index} className="italic">
+              {match[1]}
+            </em>
+          )
+        });
+      }
+    }
+
+    // Sort by index
+    allMatches.sort((a, b) => a.index - b.index);
+
+    // Build the parts array
+    let lastIndex = 0;
+    for (const match of allMatches) {
+      // Add text before the match
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      // Add the element
+      parts.push(match.element);
+      lastIndex = match.index + match.length;
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : text;
   };
 
   const sensors = useSensors(
@@ -554,8 +618,11 @@ const DocumentPage = () => {
         const storageKey = `edit_${currentPage.id}`;
         localStorage.removeItem(storageKey);
       }
-      queryClient.invalidateQueries({ queryKey: ["page", slug] });
+      // Invalidate all queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ["page", actualPageSlug] });
+      queryClient.invalidateQueries({ queryKey: ["page"] });
       queryClient.invalidateQueries({ queryKey: ["paragraphs", currentPage?.id] });
+      queryClient.invalidateQueries({ queryKey: ["chapters"] });
       setIsEditMode(false);
       toast.success("Changes saved successfully!");
     },
@@ -663,12 +730,22 @@ const DocumentPage = () => {
           chapterId: data.chapterId,
         });
       } else {
-        return pageService.create({
+        const newPage = await pageService.create({
           title: data.title,
           description: data.description,
           slug: data.slug,
           chapterId: data.chapterId,
         });
+
+        // Create a default empty text paragraph for the new page
+        await paragraphService.create({
+          pageId: newPage.id,
+          content: "",
+          orderIndex: 0,
+          type: "Text",
+        });
+
+        return newPage;
       }
     },
     onSuccess: (newPage) => {
@@ -957,13 +1034,14 @@ const DocumentPage = () => {
                     </span>
                   )}
                 </div>
-                <Textarea
-                  value={editedDescription}
-                  onChange={(e) => setEditedDescription(e.target.value)}
-                  className="text-lg"
-                  placeholder="Page description (optional)"
-                  rows={2}
-                />
+                <div className="border rounded-md p-3 min-h-[80px]">
+                  <RichTextEditor
+                    value={editedDescription}
+                    onChange={(value) => setEditedDescription(value)}
+                    placeholder="Page description (optional)"
+                    className="document-content w-full border-0 bg-transparent px-0 py-0 text-lg text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
+                  />
+                </div>
               </div>
             ) : (
               <>
@@ -976,7 +1054,7 @@ const DocumentPage = () => {
                   )}
                 </div>
                 {currentPage.description && (
-                  <p className="text-lg text-muted-foreground mb-2">{currentPage.description}</p>
+                  <p className="text-lg text-muted-foreground mb-2">{parseMarkdown(currentPage.description)}</p>
                 )}
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                   {currentPage.updatedAt && (
