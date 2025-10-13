@@ -34,16 +34,6 @@ public class CreateParagraphRequest
     public Guid? LinkedPageId { get; set; }
 }
 
-public class UpdateParagraphRequest
-{
-    public string? Content { get; set; }
-    public int? OrderIndex { get; set; }
-    public bool? IsHidden { get; set; }
-    public string? Type { get; set; }
-    public string? Caption { get; set; }
-    public Guid? LinkedPageId { get; set; }
-}
-
 public class BatchUpdateParagraphItem
 {
     [Required]

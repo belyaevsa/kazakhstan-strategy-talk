@@ -132,6 +132,9 @@
   "paragraph": {
     "text": "Text",
     "header": "Header",
+    "header1": "Header 1",
+    "header2": "Header 2",
+    "header3": "Header 3",
     "code": "Code",
     "quote": "Quote",
     "image": "Image",

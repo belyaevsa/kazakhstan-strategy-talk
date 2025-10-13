@@ -101,7 +101,7 @@ export interface Paragraph {
   orderIndex: number;
   commentCount: number;
   isHidden: boolean;
-  type: 'Text' | 'Header' | 'Image' | 'Quote' | 'Code' | 'List' | 'Table' | 'Link';
+  type: 'Text' | 'Header' | 'Header1' | 'Header2' | 'Header3' | 'Image' | 'Quote' | 'Code' | 'List' | 'Table' | 'Link' | 'Divider' | 'Callout';
   caption?: string;
   linkedPageId?: string;
   pageId: string;
@@ -164,15 +164,6 @@ export interface CreateParagraphRequest {
   pageId: string;
   type?: string;
   caption?: string;
-}
-
-export interface UpdateParagraphRequest {
-  content?: string;
-  orderIndex?: number;
-  isHidden?: boolean;
-  type?: string;
-  caption?: string;
-  linkedPageId?: string;
 }
 
 export interface ReorderRequest {

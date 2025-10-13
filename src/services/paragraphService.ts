@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api/client';
-import { Paragraph, CreateParagraphRequest, UpdateParagraphRequest, ReorderRequest } from '@/lib/api/types';
+import { Paragraph, CreateParagraphRequest, ReorderRequest } from '@/lib/api/types';
 
 export interface BatchUpdateParagraphItem {
   id: string;
@@ -26,10 +26,6 @@ class ParagraphService {
 
   async create(data: CreateParagraphRequest): Promise<Paragraph> {
     return apiClient.post<Paragraph>('/paragraphs', data);
-  }
-
-  async update(id: string, data: UpdateParagraphRequest): Promise<void> {
-    return apiClient.put<void>(`/paragraphs/${id}`, data);
   }
 
   async batchUpdate(data: BatchUpdateParagraphsRequest): Promise<void> {

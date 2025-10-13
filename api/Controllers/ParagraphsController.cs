@@ -258,69 +258,6 @@ public class ParagraphsController : ControllerBase
         }
     }
 
-    [HttpPut("{id}")]
-    [Authorize(Policy = "EditorPolicy")]
-    public async Task<IActionResult> UpdateParagraph(Guid id, UpdateParagraphRequest request)
-    {
-        var paragraph = await _context.Paragraphs
-            .Include(p => p.Page)
-            .FirstOrDefaultAsync(p => p.Id == id);
-
-        if (paragraph == null)
-        {
-            return NotFound();
-        }
-
-        var userId = GetCurrentUserId();
-        var now = DateTime.UtcNow;
-
-        // Create paragraph version before updating
-        var lastVersion = await _context.ParagraphVersions
-            .Where(pv => pv.ParagraphId == id)
-            .OrderByDescending(pv => pv.Version)
-            .FirstOrDefaultAsync();
-
-        var newVersion = new ParagraphVersion
-        {
-            ParagraphId = paragraph.Id,
-            Version = (lastVersion?.Version ?? 0) + 1,
-            Content = paragraph.Content,
-            Type = paragraph.Type,
-            UpdatedByProfileId = userId,
-            UpdatedAt = now
-        };
-
-        _context.ParagraphVersions.Add(newVersion);
-
-        // Update paragraph
-        if (request.Content != null) paragraph.Content = request.Content;
-        if (request.OrderIndex.HasValue) paragraph.OrderIndex = request.OrderIndex.Value;
-        if (request.IsHidden.HasValue) paragraph.IsHidden = request.IsHidden.Value;
-        if (request.Type != null && Enum.TryParse<ParagraphType>(request.Type, out var paragraphType))
-        {
-            paragraph.Type = paragraphType;
-        }
-        if (request.Caption != null) paragraph.Caption = request.Caption;
-        if (request.LinkedPageId.HasValue) paragraph.LinkedPageId = request.LinkedPageId;
-
-        paragraph.UpdatedAt = now;
-        paragraph.UpdatedByProfileId = userId;
-
-        // Update page's UpdatedAt and UpdatedByProfileId
-        paragraph.Page.UpdatedAt = now;
-        paragraph.Page.UpdatedByProfileId = userId;
-
-        await _context.SaveChangesAsync();
-
-        // Invalidate cache
-        _cache.RemoveByPattern(CacheKeys.ParagraphsByPage(paragraph.PageId));
-        _cache.RemoveByPattern(CacheKeys.AllChapters);
-        _cache.Remove(CacheKeys.PageById(paragraph.PageId));
-        _cache.Remove(CacheKeys.PageBySlug(paragraph.Page.Slug));
-
-        return NoContent();
-    }
-
     [HttpPost("{id}/reorder")]
     [Authorize(Policy = "EditorPolicy")]
     public async Task<IActionResult> ReorderParagraph(Guid id, ReorderRequest request)

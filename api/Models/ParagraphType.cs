@@ -3,7 +3,10 @@ namespace KazakhstanStrategyApi.Models;
 public enum ParagraphType
 {
     Text,       // Regular text paragraph
-    Header,     // Header/title
+    Header1,    // Main header (largest)
+    Header2,    // Sub-header (medium)
+    Header3,    // Sub-sub-header (smallest)
+    Header,     // Legacy header type (will be treated as Header1)
     Image,      // Image with optional caption
     Quote,      // Blockquote
     Code,       // Code block

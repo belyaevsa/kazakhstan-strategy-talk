@@ -216,8 +216,13 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
 
   const renderContent = () => {
     switch (paragraph.type) {
+      case 'Header1':
       case 'Header':
+        return <h1 className="text-3xl font-bold text-foreground mb-2">{parseMarkdownLinks(paragraph.content)}</h1>;
+      case 'Header2':
         return <h2 className="text-2xl font-bold text-foreground mb-2">{parseMarkdownLinks(paragraph.content)}</h2>;
+      case 'Header3':
+        return <h3 className="text-base font-bold text-foreground mb-2">{parseMarkdownLinks(paragraph.content)}</h3>;
       case 'Code':
         return (
           <pre className="bg-muted p-4 rounded-md overflow-x-auto whitespace-pre-wrap break-words">

@@ -108,9 +108,17 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement | HTMLDivElement, Sorta
               <Type className="h-4 w-4 mr-2" />
               Text Paragraph
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => { onTypeChange("Header"); setDropdownOpen(false); }}>
+            <DropdownMenuItem onClick={() => { onTypeChange("Header1"); setDropdownOpen(false); }}>
               <Type className="h-4 w-4 mr-2" />
-              Header
+              Header 1 (Largest)
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { onTypeChange("Header2"); setDropdownOpen(false); }}>
+              <Type className="h-4 w-4 mr-2" />
+              Header 2 (Medium)
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => { onTypeChange("Header3"); setDropdownOpen(false); }}>
+              <Type className="h-4 w-4 mr-2" />
+              Header 3 (Small)
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => { onTypeChange("Code"); setDropdownOpen(false); }}>
               <Code className="h-4 w-4 mr-2" />
@@ -291,7 +299,7 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement | HTMLDivElement, Sorta
               />
             </div>
           </div>
-        ) : paragraph.type === "Header" ? (
+        ) : paragraph.type === "Header1" || paragraph.type === "Header" ? (
           <RichTextEditor
             ref={ref as any}
             value={paragraph.content}
@@ -299,7 +307,27 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement | HTMLDivElement, Sorta
             onEnterKey={onEnterKey}
             onPasteMultipleParagraphs={onPasteMultipleParagraphs}
             placeholder={t("paragraph.headerPlaceholder")}
-            className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-2xl font-bold text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none transition-colors min-h-[3rem]"
+            className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-3xl font-bold text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none transition-colors min-h-[3rem]"
+          />
+        ) : paragraph.type === "Header2" ? (
+          <RichTextEditor
+            ref={ref as any}
+            value={paragraph.content}
+            onChange={(value) => onContentChange(value)}
+            onEnterKey={onEnterKey}
+            onPasteMultipleParagraphs={onPasteMultipleParagraphs}
+            placeholder="Header 2 (Medium)"
+            className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-2xl font-bold text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none transition-colors min-h-[2.5rem]"
+          />
+        ) : paragraph.type === "Header3" ? (
+          <RichTextEditor
+            ref={ref as any}
+            value={paragraph.content}
+            onChange={(value) => onContentChange(value)}
+            onEnterKey={onEnterKey}
+            onPasteMultipleParagraphs={onPasteMultipleParagraphs}
+            placeholder="Header 3 (Small)"
+            className="w-full border-0 border-b border-border bg-transparent px-0 py-4 text-base font-bold text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none transition-colors min-h-[2.5rem]"
           />
         ) : paragraph.type === "List" ? (
           <RichTextEditor
@@ -1014,20 +1042,28 @@ const DocumentPage = () => {
                 <div className="space-y-2">
                   {paragraphs && paragraphs.length > 0 ? (
                     paragraphs
-                      .filter(p => p.type === 'Header')
-                      .map((paragraph, index) => (
-                        <a
-                          key={paragraph.id}
-                          href={`#paragraph-${paragraph.id}`}
-                          className="block text-sm text-muted-foreground hover:text-foreground transition-colors pl-2 border-l-2 border-transparent hover:border-primary"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            document.getElementById(`paragraph-${paragraph.id}`)?.scrollIntoView({ behavior: 'smooth' });
-                          }}
-                        >
-                          {stripMarkdownLinks(paragraph.content)}
-                        </a>
-                      ))
+                      .filter(p => p.type === 'Header' || p.type === 'Header1' || p.type === 'Header2' || p.type === 'Header3')
+                      .map((paragraph, index) => {
+                        const headerLevel = paragraph.type === 'Header' || paragraph.type === 'Header1' ? 1
+                          : paragraph.type === 'Header2' ? 2
+                          : 3;
+                        const indentation = headerLevel === 1 ? 'pl-2' : headerLevel === 2 ? 'pl-6' : 'pl-10';
+                        const fontSize = headerLevel === 1 ? 'text-sm font-medium' : headerLevel === 2 ? 'text-sm' : 'text-xs';
+
+                        return (
+                          <a
+                            key={paragraph.id}
+                            href={`#paragraph-${paragraph.id}`}
+                            className={`block text-muted-foreground hover:text-foreground transition-colors ${indentation} ${fontSize} border-l-2 border-transparent hover:border-primary`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              document.getElementById(`paragraph-${paragraph.id}`)?.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                          >
+                            {stripMarkdownLinks(paragraph.content)}
+                          </a>
+                        );
+                      })
                   ) : (
                     <p className="text-sm text-muted-foreground italic">No headers found</p>
                   )}
@@ -1294,9 +1330,17 @@ const DocumentPage = () => {
                     <Type className="h-4 w-4 mr-2" />
                     Text Paragraph
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => addParagraphMutation.mutate("Header")}>
+                  <DropdownMenuItem onClick={() => addParagraphMutation.mutate("Header1")}>
                     <Type className="h-4 w-4 mr-2" />
-                    Header
+                    Header 1 (Largest)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => addParagraphMutation.mutate("Header2")}>
+                    <Type className="h-4 w-4 mr-2" />
+                    Header 2 (Medium)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => addParagraphMutation.mutate("Header3")}>
+                    <Type className="h-4 w-4 mr-2" />
+                    Header 3 (Small)
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => addParagraphMutation.mutate("Image")}>
                     <Image className="h-4 w-4 mr-2" />
