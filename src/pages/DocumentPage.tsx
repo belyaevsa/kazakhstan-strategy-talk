@@ -654,15 +654,18 @@ const DocumentPage = () => {
         isDraft: editedIsDraft,
       });
 
-      for (const para of editedParagraphs) {
-        await paragraphService.update(para.id, {
-          content: para.content,
-          orderIndex: para.orderIndex,
-          type: para.type,
-          caption: para.caption,
-          linkedPageId: para.linkedPageId
-        });
-      }
+      // Update all paragraphs in parallel for better performance
+      await Promise.all(
+        editedParagraphs.map(para =>
+          paragraphService.update(para.id, {
+            content: para.content,
+            orderIndex: para.orderIndex,
+            type: para.type,
+            caption: para.caption,
+            linkedPageId: para.linkedPageId
+          })
+        )
+      );
     },
     onSuccess: () => {
       // Clear localStorage on successful save
