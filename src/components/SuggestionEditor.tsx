@@ -108,9 +108,6 @@ export const SuggestionEditor = ({
                 className="min-h-[180px]"
               />
             </div>
-            <p className="text-xs text-muted-foreground">
-              {t('editor.tip')}
-            </p>
           </div>
 
           {/* Comment field */}

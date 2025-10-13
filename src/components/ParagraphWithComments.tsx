@@ -19,7 +19,7 @@ interface ParagraphWithCommentsProps {
     linkedPageId?: string;
   };
   isActive: boolean;
-  onClick: (position: number) => void;
+  onClick: () => void;
   chapters?: any[];
 }
 
@@ -76,13 +76,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
   }, []);
 
   const handleClick = () => {
-    if (paragraphRef.current) {
-      const rect = paragraphRef.current.getBoundingClientRect();
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      onClick(rect.top + scrollTop);
-    } else {
-      onClick(0);
-    }
+    onClick();
   };
 
   const handleCopyLink = async (e: React.MouseEvent) => {

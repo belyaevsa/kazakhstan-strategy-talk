@@ -219,7 +219,7 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement | HTMLDivElement, Sorta
           </>
         ) : paragraph.type === "Table" ? (
           <AutoResizeTextarea
-            ref={ref}
+            ref={ref as any}
             value={paragraph.content}
             onChange={(e) => onContentChange(e.target.value)}
             onPasteMultipleParagraphs={onPasteMultipleParagraphs}
@@ -375,8 +375,8 @@ const DocumentPage = () => {
   // Use either new route params (chapterSlug/pageSlug) or legacy (slug)
   const actualPageSlug = pageSlug || slug;
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(null);
-  const [paragraphPosition, setParagraphPosition] = useState(0);
-  const [scrollOffset, setScrollOffset] = useState(0);
+  const [commentPanelTop, setCommentPanelTop] = useState(100);
+  const [commentPanelRight, setCommentPanelRight] = useState('1rem');
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
@@ -546,25 +546,76 @@ const DocumentPage = () => {
     enabled: !!currentPage?.id,
   });
 
-  // Track scroll position and recalculate paragraph position to keep comment aligned
+  // Calculate comment panel position to avoid TOC overlap
   useEffect(() => {
-    const handleScroll = () => {
-      const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
-      setScrollOffset(currentScroll);
+    if (!activeParagraphId) return;
 
-      // Recalculate paragraph position if one is selected
-      if (activeParagraphId) {
-        const paragraphElement = document.getElementById(`paragraph-${activeParagraphId}`);
-        if (paragraphElement) {
-          const rect = paragraphElement.getBoundingClientRect();
-          const absolutePosition = rect.top + currentScroll;
-          setParagraphPosition(absolutePosition);
+    const calculatePosition = () => {
+      // Find the TOC element in the sidebar
+      const tocElement = document.querySelector('.bg-card.border.shadow-sm.rounded-lg');
+
+      // Get current scroll position
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+      // Calculate right position based on actual container width
+      const containerElement = document.querySelector('.container');
+      if (containerElement) {
+        const containerRect = containerElement.getBoundingClientRect();
+        const containerRight = containerRect.right;
+        const viewportWidth = window.innerWidth;
+        const rightOffset = viewportWidth - containerRight;
+        setCommentPanelRight(`max(1rem, ${rightOffset + 8}px)`); // 16px = 1rem default spacing
+      }
+
+      if (tocElement) {
+        const tocRect = tocElement.getBoundingClientRect();
+        const tocBottom = tocRect.bottom;
+        const tocTop = tocRect.top;
+
+        // When at the top of the page, use a higher position (50px)
+        // As you scroll down, transition to 100px
+        const preferredTop = scrollTop < 100 ? 50 : 100;
+
+        // Get viewport height
+        const viewportHeight = window.innerHeight;
+
+        // Only consider the VISIBLE portion of TOC (in viewport)
+        const visibleTocTop = Math.max(0, tocTop); // If TOC is scrolled above viewport, start from 0
+        const visibleTocBottom = Math.min(viewportHeight, tocBottom); // If TOC extends below viewport, cap at viewport height
+
+        // Estimate panel height
+        const estimatedPanelHeight = 700;
+        const preferredBottom = preferredTop + estimatedPanelHeight;
+
+        // Check if preferred position would overlap with VISIBLE TOC
+        // Overlap occurs if: panel bottom > TOC top AND panel top < TOC bottom
+        let newTop: number;
+
+        if (preferredBottom > visibleTocTop && preferredTop < visibleTocBottom) {
+          // Panel overlaps with visible TOC - push panel below visible TOC
+          newTop = visibleTocBottom + 20; // 20px gap below visible TOC
+        } else {
+          // No overlap with visible TOC - use preferred position
+          newTop = preferredTop;
         }
+
+        setCommentPanelTop(newTop);
+      } else {
+        // If no TOC found, use position based on scroll
+        const preferredTop = scrollTop < 100 ? 50 : 100;
+        setCommentPanelTop(preferredTop);
       }
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Calculate on mount and when scrolling
+    calculatePosition();
+    window.addEventListener('scroll', calculatePosition, { passive: true });
+    window.addEventListener('resize', calculatePosition, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', calculatePosition);
+      window.removeEventListener('resize', calculatePosition);
+    };
   }, [activeParagraphId]);
 
   // Save to localStorage when editing
@@ -982,9 +1033,10 @@ const DocumentPage = () => {
               {/* Paragraph Comments - Shows when paragraph selected */}
               {activeParagraphId && (
                 <div
-                  className="transition-all duration-300"
+                  className="fixed w-[320px] transition-all duration-300 z-10 hidden xl:block"
                   style={{
-                    transform: `translateY(${Math.max(0, paragraphPosition - scrollOffset - 84)}px)`
+                    top: `${commentPanelTop}px`,
+                    right: commentPanelRight,
                   }}
                 >
                   <CommentPanel
@@ -1286,12 +1338,11 @@ const DocumentPage = () => {
                   paragraph={paragraph}
                   chapters={chapters}
                   isActive={activeParagraphId === paragraph.id}
-                  onClick={(position) => {
+                  onClick={() => {
                     if (activeParagraphId === paragraph.id) {
                       setActiveParagraphId(null);
                     } else {
                       setActiveParagraphId(paragraph.id);
-                      setParagraphPosition(position);
                     }
                   }}
                 />

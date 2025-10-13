@@ -80,7 +80,8 @@
     "deletedByAdmin": "This comment was deleted by an admin",
     "edited": "edited",
     "postReply": "Post Reply",
-    "posting": "Posting..."
+    "posting": "Posting...",
+    "scrollToParagraph": "Go to paragraph"
   },
   "admin": {
     "panel": "Admin Panel",

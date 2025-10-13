@@ -162,12 +162,34 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
     );
   }
 
+  const handleScrollToParagraph = () => {
+    if (paragraphId) {
+      const paragraphElement = document.getElementById(`paragraph-${paragraphId}`);
+      if (paragraphElement) {
+        paragraphElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  };
+
   return (
     <div className="rounded-lg border bg-card shadow-sm">
       <div className="p-4 border-b">
         <h3 className="font-semibold flex items-center gap-2">
           <MessageSquare className="h-4 w-4" />
-          {mode === "paragraph" ? t("comments.paragraphComments") : t("comments.generalDiscussion")}
+          {mode === "paragraph" ? (
+            <span>
+              {t("comments.paragraphComments").split(" ")[0]}{" "}
+              <button
+                onClick={handleScrollToParagraph}
+                className="text-primary hover:underline cursor-pointer"
+                title={t("comments.scrollToParagraph")}
+              >
+                {t("comments.paragraphComments").split(" ").slice(1).join(" ")}
+              </button>
+            </span>
+          ) : (
+            t("comments.generalDiscussion")
+          )}
         </h3>
       </div>
 
