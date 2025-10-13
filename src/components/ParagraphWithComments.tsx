@@ -218,11 +218,11 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
     switch (paragraph.type) {
       case 'Header1':
       case 'Header':
-        return <h1 className="text-3xl font-bold text-foreground mb-2">{parseMarkdownLinks(paragraph.content)}</h1>;
+        return <h1 className="text-3xl font-bold text-foreground mb-1">{parseMarkdownLinks(paragraph.content)}</h1>;
       case 'Header2':
-        return <h2 className="text-2xl font-bold text-foreground mb-2">{parseMarkdownLinks(paragraph.content)}</h2>;
+        return <h2 className="text-2xl font-bold text-foreground mb-1">{parseMarkdownLinks(paragraph.content)}</h2>;
       case 'Header3':
-        return <h3 className="text-base font-bold text-foreground mb-2">{parseMarkdownLinks(paragraph.content)}</h3>;
+        return <h3 className="text-base font-bold text-foreground mb-0">{parseMarkdownLinks(paragraph.content)}</h3>;
       case 'Code':
         return (
           <pre className="bg-muted p-4 rounded-md overflow-x-auto whitespace-pre-wrap break-words">
@@ -443,7 +443,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
       ref={paragraphRef}
       className={cn(
         "relative group transition-all cursor-pointer",
-        isDivider ? "py-2 px-2 sm:px-6 pr-12 sm:pr-20" : paragraph.type === 'List' ? "py-2 sm:py-2 px-2 sm:px-6 pr-12 sm:pr-20 rounded-lg" : "py-3 sm:py-4 px-2 sm:px-6 pr-12 sm:pr-20 rounded-lg",
+        isDivider ? "py-1 px-2 sm:px-6 pr-12 sm:pr-20" : paragraph.type === 'List' ? "py-1 sm:py-1 px-2 sm:px-6 pr-12 sm:pr-20 rounded-lg" : "py-1 sm:py-2 px-2 sm:px-6 pr-12 sm:pr-20 rounded-lg",
         isActive && "bg-accent/50 shadow-sm",
         isHovered && !isActive && "bg-muted/50",
         isHighlighted && "bg-primary/20 shadow-lg ring-2 ring-primary/50"
