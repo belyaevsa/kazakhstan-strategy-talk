@@ -329,7 +329,7 @@ public class ParagraphSuggestionsController : ControllerBase
     /// Approve a suggestion (admin only) - updates the paragraph content
     /// </summary>
     [HttpPost("{id}/approve")]
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<object>> ApproveSuggestion(Guid id)
     {
         try
@@ -364,7 +364,7 @@ public class ParagraphSuggestionsController : ControllerBase
     /// Reject a suggestion (admin only)
     /// </summary>
     [HttpPost("{id}/reject")]
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<object>> RejectSuggestion(Guid id)
     {
         try

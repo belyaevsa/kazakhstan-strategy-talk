@@ -43,3 +43,24 @@ public class UpdateParagraphRequest
     public string? Caption { get; set; }
     public Guid? LinkedPageId { get; set; }
 }
+
+public class BatchUpdateParagraphItem
+{
+    [Required]
+    public Guid Id { get; set; }
+
+    public string? Content { get; set; }
+    public int? OrderIndex { get; set; }
+    public string? Type { get; set; }
+    public string? Caption { get; set; }
+    public Guid? LinkedPageId { get; set; }
+}
+
+public class BatchUpdateParagraphsRequest
+{
+    [Required]
+    public Guid PageId { get; set; }
+
+    [Required]
+    public List<BatchUpdateParagraphItem> Paragraphs { get; set; } = new();
+}

@@ -648,24 +648,25 @@ const DocumentPage = () => {
 
   const savePageMutation = useMutation({
     mutationFn: async () => {
+      // Update page metadata
       await pageService.update(currentPage!.id, {
         title: editedTitle,
         description: editedDescription,
         isDraft: editedIsDraft,
       });
 
-      // Update all paragraphs in parallel for better performance
-      await Promise.all(
-        editedParagraphs.map(para =>
-          paragraphService.update(para.id, {
-            content: para.content,
-            orderIndex: para.orderIndex,
-            type: para.type,
-            caption: para.caption,
-            linkedPageId: para.linkedPageId
-          })
-        )
-      );
+      // Batch update all paragraphs in a single request with transaction
+      await paragraphService.batchUpdate({
+        pageId: currentPage!.id,
+        paragraphs: editedParagraphs.map(para => ({
+          id: para.id,
+          content: para.content,
+          orderIndex: para.orderIndex,
+          type: para.type,
+          caption: para.caption,
+          linkedPageId: para.linkedPageId
+        }))
+      });
     },
     onSuccess: () => {
       // Clear localStorage on successful save

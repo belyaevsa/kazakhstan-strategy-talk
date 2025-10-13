@@ -158,6 +158,106 @@ public class ParagraphsController : ControllerBase
         return CreatedAtAction(nameof(GetParagraph), new { id = paragraph.Id }, paragraphDto);
     }
 
+    [HttpPut("batch")]
+    [Authorize(Policy = "EditorPolicy")]
+    public async Task<IActionResult> BatchUpdateParagraphs(BatchUpdateParagraphsRequest request)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            var userId = GetCurrentUserId();
+            var now = DateTime.UtcNow;
+
+            // Fetch all paragraphs and page in one query
+            var paragraphIds = request.Paragraphs.Select(p => p.Id).ToList();
+            var paragraphs = await _context.Paragraphs
+                .Include(p => p.Page)
+                .Where(p => paragraphIds.Contains(p.Id) && p.PageId == request.PageId)
+                .ToDictionaryAsync(p => p.Id);
+
+            if (paragraphs.Count != request.Paragraphs.Count)
+            {
+                return BadRequest("Some paragraphs were not found or don't belong to the specified page");
+            }
+
+            // Get all last versions in one query
+            var lastVersions = await _context.ParagraphVersions
+                .Where(pv => paragraphIds.Contains(pv.ParagraphId))
+                .GroupBy(pv => pv.ParagraphId)
+                .Select(g => new
+                {
+                    ParagraphId = g.Key,
+                    MaxVersion = g.Max(pv => pv.Version)
+                })
+                .ToDictionaryAsync(x => x.ParagraphId, x => x.MaxVersion);
+
+            var versionsToAdd = new List<ParagraphVersion>();
+
+            // Update all paragraphs
+            foreach (var updateItem in request.Paragraphs)
+            {
+                if (!paragraphs.TryGetValue(updateItem.Id, out var paragraph))
+                    continue;
+
+                // Create version before updating
+                var currentVersion = lastVersions.TryGetValue(paragraph.Id, out var ver) ? ver : 0;
+                versionsToAdd.Add(new ParagraphVersion
+                {
+                    ParagraphId = paragraph.Id,
+                    Version = currentVersion + 1,
+                    Content = paragraph.Content,
+                    Type = paragraph.Type,
+                    UpdatedByProfileId = userId,
+                    UpdatedAt = now
+                });
+
+                // Update paragraph fields
+                if (updateItem.Content != null) paragraph.Content = updateItem.Content;
+                if (updateItem.OrderIndex.HasValue) paragraph.OrderIndex = updateItem.OrderIndex.Value;
+                if (updateItem.Type != null && Enum.TryParse<ParagraphType>(updateItem.Type, out var paragraphType))
+                {
+                    paragraph.Type = paragraphType;
+                }
+                if (updateItem.Caption != null) paragraph.Caption = updateItem.Caption;
+                if (updateItem.LinkedPageId.HasValue) paragraph.LinkedPageId = updateItem.LinkedPageId;
+
+                paragraph.UpdatedAt = now;
+                paragraph.UpdatedByProfileId = userId;
+            }
+
+            // Add all versions at once
+            await _context.ParagraphVersions.AddRangeAsync(versionsToAdd);
+
+            // Update page once
+            var page = await _context.Pages.FindAsync(request.PageId);
+            if (page != null)
+            {
+                page.UpdatedAt = now;
+                page.UpdatedByProfileId = userId;
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            // Invalidate cache once
+            _cache.RemoveByPattern(CacheKeys.ParagraphsByPage(request.PageId));
+            _cache.RemoveByPattern(CacheKeys.AllChapters);
+            _cache.Remove(CacheKeys.PageById(request.PageId));
+            if (page != null)
+            {
+                _cache.Remove(CacheKeys.PageBySlug(page.Slug));
+            }
+
+            return NoContent();
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+
     [HttpPut("{id}")]
     [Authorize(Policy = "EditorPolicy")]
     public async Task<IActionResult> UpdateParagraph(Guid id, UpdateParagraphRequest request)
