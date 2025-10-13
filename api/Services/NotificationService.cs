@@ -9,6 +9,7 @@ public interface INotificationService
 {
     Task CreateCommentNotificationAsync(Comment comment);
     Task CreatePageUpdateNotificationAsync(Guid pageId, Guid updatedByUserId);
+    Task NotifySuggestionApprovedAsync(Guid userId, Guid pageId, string pageSlug, string pageTitle, Guid approvedByUserId);
 }
 
 public class NotificationService : INotificationService
@@ -247,6 +248,40 @@ public class NotificationService : INotificationService
         }
 
         return settings;
+    }
+
+    /// <summary>
+    /// Notify user when their suggestion is approved
+    /// </summary>
+    public async Task NotifySuggestionApprovedAsync(Guid userId, Guid pageId, string pageSlug, string pageTitle, Guid approvedByUserId)
+    {
+        // Get the admin who approved
+        var approver = await _context.Profiles.FindAsync(approvedByUserId);
+        var approverName = approver?.Username ?? "Admin";
+
+        var parameters = new
+        {
+            username = approverName,
+            pageName = pageTitle
+        };
+
+        var notification = new Notification
+        {
+            UserId = userId,
+            Type = "SuggestionApproved",
+            Title = "Your suggestion was approved",
+            Message = $"{approverName} approved your suggestion on '{pageTitle}'",
+            TitleKey = "notification.suggestionApproved.title",
+            MessageKey = "notification.suggestionApproved.message",
+            Parameters = JsonSerializer.Serialize(parameters),
+            PageId = pageId,
+            RelatedUserId = approvedByUserId
+        };
+
+        _context.Notifications.Add(notification);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Created suggestion approved notification for user {UserId}", userId);
     }
 
     /// <summary>

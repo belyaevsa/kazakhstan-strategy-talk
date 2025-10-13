@@ -36,6 +36,8 @@ public class Comment
 
     public Guid? ParentId { get; set; }
 
+    public Guid? SuggestionId { get; set; }
+
     // Navigation properties
     [ForeignKey(nameof(UserId))]
     public Profile User { get; set; } = null!;
@@ -48,6 +50,9 @@ public class Comment
 
     [ForeignKey(nameof(ParentId))]
     public Comment? Parent { get; set; }
+
+    [ForeignKey(nameof(SuggestionId))]
+    public ParagraphSuggestion? Suggestion { get; set; }
 
     public ICollection<Comment> Replies { get; set; } = new List<Comment>();
     public ICollection<CommentVote> Votes { get; set; } = new List<CommentVote>();

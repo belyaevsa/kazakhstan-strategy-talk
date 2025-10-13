@@ -259,3 +259,68 @@ export interface FollowedPage {
     chapterSlug: string;
   };
 }
+
+// Suggestion types
+export interface ParagraphSuggestion {
+  id: string;
+  paragraphId: string;
+  userId: string;
+  user: {
+    id: string;
+    username: string;
+    displayName?: string;
+    avatarUrl?: string;
+  };
+  suggestedContent: string;
+  comment: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  createdAt: string;
+  updatedAt: string;
+  upvotes: number;
+  downvotes: number;
+  userVote?: 'Upvote' | 'Downvote';
+  commentCount: number;
+}
+
+export interface SuggestionDetail extends ParagraphSuggestion {
+  paragraph?: {
+    id: string;
+    content: string;
+    page?: {
+      id: string;
+      title: string;
+      slug: string;
+    };
+  };
+  votes: Array<{
+    id: string;
+    userId: string;
+    username: string;
+    voteType: 'Upvote' | 'Downvote';
+    createdAt: string;
+  }>;
+  comments: Array<{
+    id: string;
+    userId: string;
+    username: string;
+    displayName?: string;
+    avatarUrl?: string;
+    content: string;
+    createdAt: string;
+  }>;
+}
+
+export interface CreateSuggestionRequest {
+  paragraphId: string;
+  suggestedContent: string;
+  comment: string;
+}
+
+export interface UpdateSuggestionRequest {
+  suggestedContent: string;
+  comment: string;
+}
+
+export interface SuggestionVoteRequest {
+  voteType: 'Upvote' | 'Downvote';
+}

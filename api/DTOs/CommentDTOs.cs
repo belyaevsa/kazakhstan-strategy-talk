@@ -24,6 +24,7 @@ public class CreateCommentRequest
     public Guid? PageId { get; set; }
     public Guid? ParagraphId { get; set; }
     public Guid? ParentId { get; set; }
+    public Guid? SuggestionId { get; set; }
 }
 
 public class UpdateCommentRequest

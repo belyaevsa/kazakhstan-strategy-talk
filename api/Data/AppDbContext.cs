@@ -26,6 +26,8 @@ public class AppDbContext : DbContext
     public DbSet<PageFollow> PageFollows { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<NotificationSettings> NotificationSettings { get; set; }
+    public DbSet<ParagraphSuggestion> ParagraphSuggestions { get; set; }
+    public DbSet<SuggestionVote> SuggestionVotes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -258,6 +260,54 @@ public class AppDbContext : DbContext
 
             // One settings record per user
             entity.HasIndex(e => e.UserId).IsUnique();
+        });
+
+        // ParagraphSuggestion configuration
+        modelBuilder.Entity<ParagraphSuggestion>(entity =>
+        {
+            entity.HasOne(ps => ps.Paragraph)
+                .WithMany()
+                .HasForeignKey(ps => ps.ParagraphId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(ps => ps.User)
+                .WithMany()
+                .HasForeignKey(ps => ps.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.ParagraphId);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => new { e.ParagraphId, e.Status });
+        });
+
+        // SuggestionVote configuration
+        modelBuilder.Entity<SuggestionVote>(entity =>
+        {
+            entity.HasOne(sv => sv.Suggestion)
+                .WithMany(s => s.Votes)
+                .HasForeignKey(sv => sv.SuggestionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(sv => sv.User)
+                .WithMany()
+                .HasForeignKey(sv => sv.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Ensure one vote per user per suggestion
+            entity.HasIndex(e => new { e.SuggestionId, e.UserId }).IsUnique();
+        });
+
+        // Comment configuration for Suggestions
+        modelBuilder.Entity<Comment>(entity =>
+        {
+            entity.HasOne(c => c.Suggestion)
+                .WithMany(s => s.Comments)
+                .HasForeignKey(c => c.SuggestionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.SuggestionId);
         });
     }
 }

@@ -60,6 +60,7 @@ builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<SettingsService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<SuggestionService>();
 builder.Services.AddSingleton<ICacheService, CacheService>();
 
 // Background Services

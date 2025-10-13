@@ -1,9 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageSquare, Link2, ExternalLink, Maximize2, FileText, Info, AlertTriangle, CheckCircle, AlertCircle } from "lucide-react";
+import { MessageSquare, Link2, ExternalLink, Maximize2, FileText, Info, AlertTriangle, CheckCircle, AlertCircle, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Footnote } from "@/components/Footnote";
+import { SuggestionEditor } from "@/components/SuggestionEditor";
+import { SuggestionsCarousel } from "@/components/SuggestionsCarousel";
+import { suggestionService } from "@/services/suggestionService";
+import { authService } from "@/services/authService";
 
 interface ParagraphWithCommentsProps {
   paragraph: {
@@ -23,8 +27,26 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
   const [isHovered, setIsHovered] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [tableZoomOpen, setTableZoomOpen] = useState(false);
+  const [suggestionEditorOpen, setSuggestionEditorOpen] = useState(false);
+  const [suggestionsCarouselOpen, setSuggestionsCarouselOpen] = useState(false);
+  const [suggestionCount, setSuggestionCount] = useState(0);
   const paragraphRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const isAuthenticated = authService.isAuthenticated();
+
+  // Load suggestion count
+  useEffect(() => {
+    const loadSuggestionCount = async () => {
+      try {
+        const suggestions = await suggestionService.getSuggestionsByParagraph(paragraph.id);
+        setSuggestionCount(suggestions.length);
+      } catch (error) {
+        console.error('Failed to load suggestions:', error);
+      }
+    };
+    loadSuggestionCount();
+  }, [paragraph.id]);
 
   // Check if this paragraph is in the URL hash on mount and when hash changes
   useEffect(() => {
@@ -455,11 +477,66 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
       )}
 
       {/* Hover indicator */}
-      {!isDivider && (isHovered || isActive) && paragraph.commentCount === 0 && (
+      {!isDivider && (isHovered || isActive) && paragraph.commentCount === 0 && suggestionCount === 0 && (
         <div className="absolute right-1 sm:right-4 top-2 sm:top-4 flex items-center gap-1 bg-muted-foreground/20 text-foreground px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs">
           <MessageSquare className="h-3 w-3" />
         </div>
       )}
+
+      {/* Suggestion indicator - below comment indicator */}
+      {!isDivider && suggestionCount > 0 && (
+        <div
+          className="absolute right-1 sm:right-4 top-12 sm:top-14 flex items-center gap-1 bg-yellow-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium shadow-md cursor-pointer hover:bg-yellow-600 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            setSuggestionsCarouselOpen(true);
+          }}
+        >
+          <Lightbulb className="h-3 w-3" />
+          <span className="hidden sm:inline">{suggestionCount}</span>
+        </div>
+      )}
+
+      {/* Suggest edit button - shown on hover for authenticated users */}
+      {!isDivider && isAuthenticated && isHovered && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setSuggestionEditorOpen(true);
+          }}
+          className={cn(
+            "hidden sm:flex absolute items-center gap-1 bg-background/80 hover:bg-background border border-border shadow-sm px-2 py-1 rounded-md text-xs opacity-0 group-hover:opacity-100 transition-opacity",
+            suggestionCount > 0
+              ? "right-1 sm:right-4 top-20 sm:top-22"
+              : "right-1 sm:right-4 top-12 sm:top-14"
+          )}
+          title="Suggest an edit"
+        >
+          <Lightbulb className="h-3 w-3" />
+          <span>Suggest Edit</span>
+        </button>
+      )}
+
+      {/* Suggestion Editor Modal */}
+      <SuggestionEditor
+        open={suggestionEditorOpen}
+        onOpenChange={setSuggestionEditorOpen}
+        paragraphId={paragraph.id}
+        originalContent={paragraph.content}
+        onSuccess={async () => {
+          // Reload suggestion count
+          const suggestions = await suggestionService.getSuggestionsByParagraph(paragraph.id);
+          setSuggestionCount(suggestions.length);
+        }}
+      />
+
+      {/* Suggestions Carousel Modal */}
+      <SuggestionsCarousel
+        open={suggestionsCarouselOpen}
+        onOpenChange={setSuggestionsCarouselOpen}
+        paragraphId={paragraph.id}
+        originalContent={paragraph.content}
+      />
     </div>
   );
 };

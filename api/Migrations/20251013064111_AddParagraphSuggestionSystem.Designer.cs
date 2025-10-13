@@ -3,6 +3,7 @@ using System;
 using KazakhstanStrategyApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace KazakhstanStrategyApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251013064111_AddParagraphSuggestionSystem")]
+    partial class AddParagraphSuggestionSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -561,12 +564,6 @@ namespace KazakhstanStrategyApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("ApprovedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ApprovedByUserId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Comment")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -575,30 +572,7 @@ namespace KazakhstanStrategyApi.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("CreatedIpAddress")
-                        .HasMaxLength(45)
-                        .HasColumnType("character varying(45)");
-
-                    b.Property<string>("CreatedUserAgent")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("DeletedByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
                     b.Property<Guid>("ParagraphId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("RejectedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("RejectedByUserId")
                         .HasColumnType("uuid");
 
                     b.Property<int>("Status")
@@ -611,28 +585,14 @@ namespace KazakhstanStrategyApi.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("UpdatedIpAddress")
-                        .HasMaxLength(45)
-                        .HasColumnType("character varying(45)");
-
-                    b.Property<string>("UpdatedUserAgent")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApprovedByUserId");
-
                     b.HasIndex("CreatedAt");
 
-                    b.HasIndex("DeletedByUserId");
-
                     b.HasIndex("ParagraphId");
-
-                    b.HasIndex("RejectedByUserId");
 
                     b.HasIndex("Status");
 
@@ -1063,23 +1023,11 @@ namespace KazakhstanStrategyApi.Migrations
 
             modelBuilder.Entity("KazakhstanStrategyApi.Models.ParagraphSuggestion", b =>
                 {
-                    b.HasOne("KazakhstanStrategyApi.Models.Profile", "ApprovedByUser")
-                        .WithMany()
-                        .HasForeignKey("ApprovedByUserId");
-
-                    b.HasOne("KazakhstanStrategyApi.Models.Profile", "DeletedByUser")
-                        .WithMany()
-                        .HasForeignKey("DeletedByUserId");
-
                     b.HasOne("KazakhstanStrategyApi.Models.Paragraph", "Paragraph")
                         .WithMany()
                         .HasForeignKey("ParagraphId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("KazakhstanStrategyApi.Models.Profile", "RejectedByUser")
-                        .WithMany()
-                        .HasForeignKey("RejectedByUserId");
 
                     b.HasOne("KazakhstanStrategyApi.Models.Profile", "User")
                         .WithMany()
@@ -1087,13 +1035,7 @@ namespace KazakhstanStrategyApi.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ApprovedByUser");
-
-                    b.Navigation("DeletedByUser");
-
                     b.Navigation("Paragraph");
-
-                    b.Navigation("RejectedByUser");
 
                     b.Navigation("User");
                 });

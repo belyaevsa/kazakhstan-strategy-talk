@@ -50,6 +50,18 @@ public class CommentsController : ControllerBase
         return Ok(await MapCommentsWithReplies(comments));
     }
 
+    [HttpGet("suggestion/{suggestionId}")]
+    public async Task<ActionResult<IEnumerable<CommentDTO>>> GetCommentsBySuggestion(Guid suggestionId)
+    {
+        var comments = await _context.Comments
+            .Include(c => c.User)
+            .Where(c => c.SuggestionId == suggestionId && c.ParentId == null)
+            .OrderBy(c => c.CreatedAt)
+            .ToListAsync();
+
+        return Ok(await MapCommentsWithReplies(comments));
+    }
+
     [HttpPost]
     [Authorize]
     public async Task<ActionResult<CommentDTO>> CreateComment(CreateCommentRequest request)
@@ -112,6 +124,7 @@ public class CommentsController : ControllerBase
             PageId = request.PageId,
             ParagraphId = request.ParagraphId,
             ParentId = request.ParentId,
+            SuggestionId = request.SuggestionId,
             IpAddress = ipAddress
         };
 
