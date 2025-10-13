@@ -8,6 +8,7 @@ import { SuggestionEditor } from "@/components/SuggestionEditor";
 import { SuggestionsCarousel } from "@/components/SuggestionsCarousel";
 import { suggestionService } from "@/services/suggestionService";
 import { authService } from "@/services/authService";
+import { t } from "@/lib/i18n";
 
 interface ParagraphWithCommentsProps {
   paragraph: {
@@ -27,6 +28,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
   const [isHovered, setIsHovered] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [tableZoomOpen, setTableZoomOpen] = useState(false);
+  const [imageZoomOpen, setImageZoomOpen] = useState(false);
   const [suggestionEditorOpen, setSuggestionEditorOpen] = useState(false);
   const [suggestionsCarouselOpen, setSuggestionsCarouselOpen] = useState(false);
   const [suggestionCount, setSuggestionCount] = useState(0);
@@ -237,43 +239,59 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
         );
       case 'Image':
         return (
-          <div className="my-6 space-y-3">
-            <div className="rounded-lg overflow-hidden border border-border bg-muted/30">
-              <a
-                href={paragraph.content}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block"
-                onClick={(e) => e.stopPropagation()}
+          <>
+            <div className="my-2 space-y-2">
+              <div
+                className="rounded-lg overflow-hidden border border-border bg-muted/30 cursor-pointer hover:opacity-90 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setImageZoomOpen(true);
+                }}
               >
                 <img
                   src={paragraph.content}
                   alt={paragraph.caption || "Image"}
-                  className="w-full h-auto max-h-[600px] object-contain hover:opacity-90 transition-opacity cursor-pointer"
+                  className="w-full h-auto max-h-[600px] object-contain"
                   onError={(e) => {
                     e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f0f0f0' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-size='16'%3EImage not available%3C/text%3E%3C/svg%3E";
                   }}
                 />
-              </a>
+              </div>
+              {paragraph.caption && (
+                <p className="text-sm text-center text-muted-foreground italic px-4">
+                  {paragraph.caption}
+                </p>
+              )}
+              <div className="flex justify-center">
+                <a
+                  href={paragraph.content}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  {t("document.openInNewTab")}
+                </a>
+              </div>
             </div>
-            {paragraph.caption && (
-              <p className="text-sm text-center text-muted-foreground italic px-4">
-                {paragraph.caption}
-              </p>
-            )}
-            <div className="flex justify-center">
-              <a
-                href={paragraph.content}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <ExternalLink className="h-3 w-3" />
-                Open in new tab
-              </a>
-            </div>
-          </div>
+
+            {/* Image Zoom Dialog */}
+            <Dialog open={imageZoomOpen} onOpenChange={setImageZoomOpen}>
+              <DialogContent className="max-w-[95vw] max-h-[95vh] p-2">
+                <div className="flex items-center justify-center w-full h-full">
+                  <img
+                    src={paragraph.content}
+                    alt={paragraph.caption || "Image"}
+                    className="max-w-full max-h-[90vh] object-contain"
+                    onError={(e) => {
+                      e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f0f0f0' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-size='16'%3EImage not available%3C/text%3E%3C/svg%3E";
+                    }}
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
+          </>
         );
       case 'List':
         // Split by newlines and filter empty lines

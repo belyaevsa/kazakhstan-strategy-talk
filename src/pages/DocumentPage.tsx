@@ -1110,11 +1110,11 @@ const DocumentPage = () => {
             </p>
           </div>
         )}
-        <header className="mb-8 pb-6 border-b flex justify-between items-start">
-          <div className="flex-1">
-            {isEditMode ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
+        <header className="mb-8 pb-6 border-b">
+          {isEditMode ? (
+            <>
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-3 flex-1">
                   <Input
                     value={editedTitle}
                     onChange={(e) => setEditedTitle(e.target.value)}
@@ -1127,18 +1127,37 @@ const DocumentPage = () => {
                     </span>
                   )}
                 </div>
-                <div className="border rounded-md p-3 min-h-[80px]">
-                  <RichTextEditor
-                    value={editedDescription}
-                    onChange={(value) => setEditedDescription(value)}
-                    placeholder="Page description (optional)"
-                    className="document-content w-full border-0 bg-transparent px-0 py-0 text-lg text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
-                  />
+                <div className="flex gap-2 ml-4">
+                  <Button
+                    onClick={() => setEditedIsDraft(!editedIsDraft)}
+                    variant={editedIsDraft ? "default" : "outline"}
+                    size="sm"
+                  >
+                    {editedIsDraft ? t("editor.draftClickToPublish") : t("editor.publishedClickToHide")}
+                  </Button>
+                  <Button onClick={() => savePageMutation.mutate()} size="sm" disabled={savePageMutation.isPending}>
+                    <Save className="h-4 w-4 mr-1" />
+                    {t("comments.save")}
+                  </Button>
+                  <Button onClick={handleCancel} variant="outline" size="sm">
+                    <X className="h-4 w-4 mr-1" />
+                    {t("comments.cancel")}
+                  </Button>
                 </div>
               </div>
-            ) : (
-              <>
-                <div className="flex items-center gap-3 mb-3">
+              <div className="border rounded-md p-3 min-h-[80px] w-full">
+                <RichTextEditor
+                  value={editedDescription}
+                  onChange={(value) => setEditedDescription(value)}
+                  placeholder="Page description (optional)"
+                  className="document-content w-full border-0 bg-transparent px-0 py-0 text-lg text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-3">
                   <h1 className="text-3xl lg:text-4xl font-bold">{currentPage.title}</h1>
                   {isEditor && currentPage.isDraft && (
                     <span className="text-sm px-3 py-1 rounded bg-yellow-100 text-yellow-800">
@@ -1146,56 +1165,38 @@ const DocumentPage = () => {
                     </span>
                   )}
                 </div>
-                {currentPage.description && (
-                  <p className="text-lg text-muted-foreground mb-2">{parseMarkdown(currentPage.description)}</p>
-                )}
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  {currentPage.updatedAt && (
-                    <p>
-                      {t("misc.lastUpdated")} {format(new Date(currentPage.updatedAt), 'dd/MM/yyyy')}
-                      {currentPage.updatedByUsername && ` ${t("misc.by")} ${currentPage.updatedByUsername}`}
-                    </p>
-                  )}
-                  {currentPage.viewCount > 0 && (
-                    <p className="flex items-center gap-1">
-                      <Eye className="h-4 w-4 text-gray-400" />
-                      {currentPage.viewCount.toLocaleString()}
-                    </p>
+                <div className="flex gap-2 ml-4">
+                  <FollowButton pageId={currentPage.id} />
+                  <Button onClick={handleShare} variant="ghost" size="sm" title="Share this page">
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                  {isEditor && (
+                    <Button onClick={handleEditMode} variant="outline" size="sm">
+                      <Pencil className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
                   )}
                 </div>
-              </>
-            )}
-          </div>
-          <div className="flex gap-2 ml-4">
-            {!isEditMode && <FollowButton pageId={currentPage.id} />}
-            <Button onClick={handleShare} variant="ghost" size="sm" title="Share this page">
-              <Share2 className="h-4 w-4" />
-            </Button>
-            {isEditMode ? (
-              <>
-                <Button
-                  onClick={() => setEditedIsDraft(!editedIsDraft)}
-                  variant={editedIsDraft ? "default" : "outline"}
-                  size="sm"
-                >
-                  {editedIsDraft ? t("editor.draftClickToPublish") : t("editor.publishedClickToHide")}
-                </Button>
-                <Button onClick={() => savePageMutation.mutate()} size="sm" disabled={savePageMutation.isPending}>
-                  <Save className="h-4 w-4 mr-1" />
-                  {t("comments.save")}
-                </Button>
-                <Button onClick={handleCancel} variant="outline" size="sm">
-                  <X className="h-4 w-4 mr-1" />
-                  {t("comments.cancel")}
-                </Button>
-              </>
-            ) : isEditor && (
-              <Button onClick={handleEditMode} variant="outline" size="sm">
-                <Pencil className="h-4 w-4 mr-1" />
-                Edit
-              </Button>
-            )}
-          </div>
+              </div>
+              {currentPage.description && (
+                <p className="text-lg text-muted-foreground mb-3 w-full">{parseMarkdown(currentPage.description)}</p>
+              )}
+              <div className="flex items-center gap-6 text-sm text-muted-foreground w-full">
+                {currentPage.updatedAt && (
+                  <p>
+                    {t("misc.lastUpdated")} {format(new Date(currentPage.updatedAt), 'dd/MM/yyyy')}
+                    {currentPage.updatedByUsername && ` ${t("misc.by")} ${currentPage.updatedByUsername}`}
+                  </p>
+                )}
+                {currentPage.viewCount > 0 && (
+                  <p className="flex items-center gap-1">
+                    <Eye className="h-4 w-4 text-gray-400" />
+                    {currentPage.viewCount.toLocaleString()}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
         </header>
 
         <div className="space-y-4">

@@ -263,7 +263,8 @@
     "codeBlock": "Код блогы",
     "newParagraphContent": "Жаңа параграф мазмұны...",
     "replaceImage": "Суретті ауыстыру",
-    "removeImageNote": "Суретті жою (қоймадан өшірмейді)"
+    "removeImageNote": "Суретті жою (қоймадан өшірмейді)",
+    "openInNewTab": "Жаңа қойындыда ашу"
   },
   "home": {
     "heroTitle": "АТ дамыту стратегиясы бойынша ашық хат",

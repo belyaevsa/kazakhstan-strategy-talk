@@ -263,7 +263,8 @@
     "codeBlock": "Code Block",
     "newParagraphContent": "New paragraph content...",
     "replaceImage": "Replace image",
-    "removeImageNote": "Remove image (doesn't delete from storage)"
+    "removeImageNote": "Remove image (doesn't delete from storage)",
+    "openInNewTab": "Open in new tab"
   },
   "home": {
     "heroTitle": "Open Letter on IT Development Strategy",
