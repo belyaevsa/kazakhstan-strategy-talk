@@ -177,13 +177,13 @@ const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
       const pastedText = e.clipboardData.getData('text/plain');
 
-      // Check if pasted text is a URL
-      const urlRegex = /^(https?:\/\/[^\s]+)$/;
-      const isUrl = urlRegex.test(pastedText.trim());
-
       // Get current selection
       const selection = window.getSelection();
       const hasSelection = selection && selection.toString().length > 0;
+
+      // Check if pasted text is a URL
+      const urlRegex = /^(https?:\/\/[^\s]+)$/;
+      const isUrl = urlRegex.test(pastedText.trim());
 
       // If pasting a URL over selected text, create a clickable HTML link
       if (isUrl && hasSelection) {
@@ -205,7 +205,8 @@ const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         return;
       }
 
-      if (onPasteMultipleParagraphs) {
+      // Check for multiple paragraphs (only when not pasting over a selection)
+      if (onPasteMultipleParagraphs && !hasSelection) {
         // Normalize line endings
         const normalizedText = pastedText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 

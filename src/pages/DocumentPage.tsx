@@ -96,7 +96,7 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement | HTMLDivElement, Sorta
       className="relative group flex items-start gap-2"
       onKeyDown={handleKeyDown}
     >
-      <div className="flex items-center gap-1 mt-4 ml-2">
+      <div className="flex items-start gap-1 justify-end" style={{ paddingTop: '1.125rem', minWidth: '120px' }}>
         <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-6 px-2 text-xs min-w-[60px]">
@@ -381,14 +381,16 @@ const SortableParagraph = forwardRef<HTMLTextAreaElement | HTMLDivElement, Sorta
           />
         )}
       </div>
-      <Button
-        onClick={onDelete}
-        variant="destructive"
-        size="sm"
-        className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+      <div style={{ paddingTop: '1.125rem' }}>
+        <Button
+          onClick={onDelete}
+          variant="destructive"
+          size="sm"
+          className="opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 });
