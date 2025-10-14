@@ -246,7 +246,17 @@
     "allChaptersAndPages": "Барлық тараулар мен беттер",
     "allChaptersDesc": "Осы құжаттағы барлық тараулар мен олардың беттерінің толық тізімі",
     "noPagesInChapterYet": "Бұл тарауда әлі беттер жоқ",
-    "reorderChapters": "Тараулардың ретін өзгерту"
+    "reorderChapters": "Тараулардың ретін өзгерту",
+    "pageActions": "Бетпен әрекеттер",
+    "moveToChapter": "Тарауға жылжыту",
+    "duplicatePage": "Бетті көшіру",
+    "copyLink": "Сілтемені көшіру",
+    "pageDuplicated": "Бет сәтті көшірілді!",
+    "pageDuplicateFailed": "Бетті көшіру мүмкін болмады",
+    "pageMoveFailed": "Бетті жылжыту мүмкін болмады",
+    "pageMoved": "Бет сәтті жылжытылды!",
+    "selectTargetChapter": "Мақсатты тарауды таңдаңыз",
+    "linkCopied": "Сілтеме көшірілді!"
   },
   "document": {
     "selectParagraph": "Түсініктемелерді көру үшін параграфты таңдаңыз",

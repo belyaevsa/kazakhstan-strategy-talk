@@ -32,7 +32,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Pencil, Save, X, Plus, Trash2, GripVertical, Eye, EyeOff, ExternalLink } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Pencil, Save, X, Plus, Trash2, GripVertical, Eye, EyeOff, ExternalLink, MoreVertical, Copy, Link2, FolderInput } from "lucide-react";
 import { toast } from "sonner";
 import { t, getCurrentLanguage, setLanguage, type Language } from "@/lib/i18n";
 import type { Chapter, Page } from "@/lib/api/types";
@@ -41,11 +51,15 @@ interface SortablePageItemProps {
   page: Page;
   index: number;
   chapterSlug: string;
+  chapters: Chapter[];
   onToggleDraft: () => void;
   onDelete: () => void;
+  onDuplicate: () => void;
+  onMove: (targetChapterId: string) => void;
+  onCopyLink: () => void;
 }
 
-const SortablePageItem = ({ page, index, chapterSlug, onToggleDraft, onDelete }: SortablePageItemProps) => {
+const SortablePageItem = ({ page, index, chapterSlug, chapters, onToggleDraft, onDelete, onDuplicate, onMove, onCopyLink }: SortablePageItemProps) => {
   const {
     attributes,
     listeners,
@@ -102,33 +116,64 @@ const SortablePageItem = ({ page, index, chapterSlug, onToggleDraft, onDelete }:
             <ExternalLink className="h-4 w-4" />
           </Button>
         </Link>
-        <Button
-          onClick={onToggleDraft}
-          size="sm"
-          variant={page.isDraft ? "default" : "outline"}
-          title={page.isDraft ? t("chapter.publishPage") : t("chapter.hidePage")}
-        >
-          {page.isDraft ? (
-            <>
-              <Eye className="h-4 w-4 mr-1" />
-              {t("chapter.publish")}
-            </>
-          ) : (
-            <>
-              <EyeOff className="h-4 w-4 mr-1" />
-              {t("chapter.hide")}
-            </>
-          )}
-        </Button>
-        <Button
-          onClick={onDelete}
-          size="sm"
-          variant="ghost"
-          className="text-destructive hover:text-destructive"
-          title={t("chapter.deletePage")}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="sm"
+              variant="ghost"
+              title={t("chapter.pageActions")}
+            >
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <FolderInput className="h-4 w-4 mr-2" />
+                {t("chapter.moveToChapter")}
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                {chapters.filter(c => c.id !== page.chapterId).map((chapter) => (
+                  <DropdownMenuItem key={chapter.id} onClick={() => onMove(chapter.id)}>
+                    {chapter.title}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+
+            <DropdownMenuItem onClick={onDuplicate}>
+              <Copy className="h-4 w-4 mr-2" />
+              {t("chapter.duplicatePage")}
+            </DropdownMenuItem>
+
+            <DropdownMenuItem onClick={onToggleDraft}>
+              {page.isDraft ? (
+                <>
+                  <Eye className="h-4 w-4 mr-2" />
+                  {t("chapter.publish")}
+                </>
+              ) : (
+                <>
+                  <EyeOff className="h-4 w-4 mr-2" />
+                  {t("chapter.hide")}
+                </>
+              )}
+            </DropdownMenuItem>
+
+            <DropdownMenuItem onClick={onCopyLink}>
+              <Link2 className="h-4 w-4 mr-2" />
+              {t("chapter.copyLink")}
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+              <Trash2 className="h-4 w-4 mr-2" />
+              {t("chapter.deletePage")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
@@ -269,6 +314,32 @@ const ChapterPage = () => {
     },
   });
 
+  const duplicatePageMutation = useMutation({
+    mutationFn: (pageId: string) => pageService.duplicate(pageId),
+    onSuccess: (newPage) => {
+      queryClient.invalidateQueries({ queryKey: ["chapters"] });
+      toast.success(t("chapter.pageDuplicated"));
+      // Navigate to the new duplicated page
+      navigate(`/${getCurrentLanguage()}/${currentChapter?.slug}/${newPage.slug}`);
+    },
+    onError: (error: any) => {
+      toast.error(t("chapter.pageDuplicateFailed") + ": " + error.message);
+    },
+  });
+
+  const movePageMutation = useMutation({
+    mutationFn: async ({ pageId, targetChapterId }: { pageId: string; targetChapterId: string }) => {
+      return pageService.update(pageId, { chapterId: targetChapterId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chapters"] });
+      toast.success(t("chapter.pageMoved"));
+    },
+    onError: (error: any) => {
+      toast.error(t("chapter.pageMoveFailed") + ": " + error.message);
+    },
+  });
+
   useEffect(() => {
     if (currentChapter && !isEditMode) {
       setEditedTitle(currentChapter.title);
@@ -343,6 +414,23 @@ const ChapterPage = () => {
 
   const handleSaveChapter = (data: { title: string; description: string; slug: string; icon: string; isVisibleOnMainPage: boolean }) => {
     addChapterMutation.mutate(data);
+  };
+
+  const handleDuplicatePage = (pageId: string) => {
+    duplicatePageMutation.mutate(pageId);
+  };
+
+  const handleMovePage = (pageId: string, targetChapterId: string) => {
+    movePageMutation.mutate({ pageId, targetChapterId });
+  };
+
+  const handleCopyPageLink = (page: Page) => {
+    const url = `${window.location.origin}/${getCurrentLanguage()}/${currentChapter?.slug}/${page.slug}`;
+    navigator.clipboard.writeText(url).then(() => {
+      toast.success(t("chapter.linkCopied"));
+    }).catch(() => {
+      toast.error("Failed to copy link");
+    });
   };
 
   if (chaptersLoading) {
@@ -526,12 +614,15 @@ const ChapterPage = () => {
                         page={page}
                         index={index}
                         chapterSlug={currentChapter?.slug || ''}
+                        chapters={chapters || []}
                         onToggleDraft={() => handleTogglePageDraft(page.id, !page.isDraft)}
                         onDelete={() => handleDeletePage(page.id)}
+                        onDuplicate={() => handleDuplicatePage(page.id)}
+                        onMove={(targetChapterId) => handleMovePage(page.id, targetChapterId)}
+                        onCopyLink={() => handleCopyPageLink(page)}
                       />
                     ))}
-                  </div>
-                </SortableContext>
+                  </div>                </SortableContext>
               </DndContext>
             ) : (
               <div className="space-y-3">

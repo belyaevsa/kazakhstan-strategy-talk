@@ -36,6 +36,7 @@ import RichTextEditor from "@/components/RichTextEditor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -409,6 +410,7 @@ const DocumentPage = () => {
   const [commentPanelRight, setCommentPanelRight] = useState('1rem');
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
+  const [editedSlug, setEditedSlug] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
   const [editedIsDraft, setEditedIsDraft] = useState(false);
   const [editedParagraphs, setEditedParagraphs] = useState<Array<{ id: string; content: string; orderIndex: number; type?: string; caption?: string; linkedPageId?: string }>>([]);
@@ -654,13 +656,14 @@ const DocumentPage = () => {
       const storageKey = `edit_${currentPage.id}`;
       const dataToSave = {
         title: editedTitle,
+        slug: editedSlug,
         description: editedDescription,
         isDraft: editedIsDraft,
         paragraphs: editedParagraphs,
       };
       localStorage.setItem(storageKey, JSON.stringify(dataToSave));
     }
-  }, [isEditMode, currentPage, editedTitle, editedDescription, editedIsDraft, editedParagraphs]);
+  }, [isEditMode, currentPage, editedTitle, editedSlug, editedDescription, editedIsDraft, editedParagraphs]);
 
   // Warn before leaving page with unsaved changes
   useEffect(() => {
@@ -681,6 +684,7 @@ const DocumentPage = () => {
       // Update page metadata
       await pageService.update(currentPage!.id, {
         title: editedTitle,
+        slug: editedSlug,
         description: editedDescription,
         isDraft: editedIsDraft,
       });
@@ -865,8 +869,9 @@ const DocumentPage = () => {
 
       if (savedData) {
         try {
-          const { title, description, isDraft, paragraphs: savedParagraphs } = JSON.parse(savedData);
+          const { title, slug, description, isDraft, paragraphs: savedParagraphs } = JSON.parse(savedData);
           setEditedTitle(title);
+          setEditedSlug(slug || currentPage.slug);
           setEditedDescription(description);
           setEditedIsDraft(isDraft);
           setEditedParagraphs(savedParagraphs);
@@ -874,12 +879,14 @@ const DocumentPage = () => {
         } catch (e) {
           // If parsing fails, use current data
           setEditedTitle(currentPage.title);
+          setEditedSlug(currentPage.slug);
           setEditedDescription(currentPage.description || "");
           setEditedIsDraft(currentPage.isDraft);
           setEditedParagraphs(paragraphs?.map(p => ({ id: p.id, content: p.content, orderIndex: p.orderIndex, type: p.type, caption: p.caption, linkedPageId: p.linkedPageId })) || []);
         }
       } else {
         setEditedTitle(currentPage.title);
+        setEditedSlug(currentPage.slug);
         setEditedDescription(currentPage.description || "");
         setEditedIsDraft(currentPage.isDraft);
         setEditedParagraphs(paragraphs?.map(p => ({ id: p.id, content: p.content, orderIndex: p.orderIndex, type: p.type, caption: p.caption, linkedPageId: p.linkedPageId })) || []);
@@ -895,6 +902,7 @@ const DocumentPage = () => {
     }
     setIsEditMode(false);
     setEditedTitle("");
+    setEditedSlug("");
     setEditedDescription("");
     setEditedParagraphs([]);
   };
@@ -1146,6 +1154,16 @@ const DocumentPage = () => {
                     {t("comments.cancel")}
                   </Button>
                 </div>
+              </div>
+              <div className="space-y-2 mb-4">
+                <Label htmlFor="page-slug">{t("page.slug")}</Label>
+                <Input
+                  id="page-slug"
+                  value={editedSlug}
+                  onChange={(e) => setEditedSlug(e.target.value)}
+                  placeholder={t("page.slugPlaceholder")}
+                  className="text-sm"
+                />
               </div>
               <div className="border rounded-md p-3 min-h-[80px] w-full">
                 <RichTextEditor
@@ -1423,7 +1441,7 @@ const DocumentPage = () => {
         onOpenChange={setChapterDialogOpen}
         chapter={editingChapter}
         onSave={handleSaveChapter}
-        onReorderPages={handleReorderPages}
+        onReorderPages={editingChapter ? (pages) => handleReorderPages(editingChapter.id, pages) : undefined}
         isSaving={saveChapterMutation.isPending}
       />
 

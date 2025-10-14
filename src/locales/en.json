@@ -246,7 +246,17 @@
     "allChaptersAndPages": "All Chapters & Pages",
     "allChaptersDesc": "Complete list of all chapters and their pages in this document",
     "noPagesInChapterYet": "No pages in this chapter yet",
-    "reorderChapters": "Reorder Chapters"
+    "reorderChapters": "Reorder Chapters",
+    "pageActions": "Page actions",
+    "moveToChapter": "Move to chapter",
+    "duplicatePage": "Duplicate page",
+    "copyLink": "Copy link",
+    "pageDuplicated": "Page duplicated successfully!",
+    "pageDuplicateFailed": "Failed to duplicate page",
+    "pageMoveFailed": "Failed to move page",
+    "pageMoved": "Page moved successfully!",
+    "selectTargetChapter": "Select target chapter",
+    "linkCopied": "Link copied to clipboard!"
   },
   "document": {
     "selectParagraph": "Select a paragraph to view comments",

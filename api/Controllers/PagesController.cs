@@ -280,6 +280,79 @@ public class PagesController : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("{id}/duplicate")]
+    [Authorize(Policy = "EditorPolicy")]
+    public async Task<ActionResult<PageDTO>> DuplicatePage(Guid id)
+    {
+        var originalPage = await _context.Pages
+            .Include(p => p.Paragraphs)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (originalPage == null)
+        {
+            return NotFound();
+        }
+
+        // Generate unique slug
+        var baseSlug = $"{originalPage.Slug}-copy";
+        var slug = baseSlug;
+        var counter = 1;
+        while (await _context.Pages.AnyAsync(p => p.Slug == slug && p.ChapterId == originalPage.ChapterId))
+        {
+            slug = $"{baseSlug}-{counter}";
+            counter++;
+        }
+
+        // Create duplicate page
+        var newPage = new Page
+        {
+            Title = $"{originalPage.Title} (Copy)",
+            Description = originalPage.Description,
+            Slug = slug,
+            OrderIndex = originalPage.OrderIndex + 1,
+            ChapterId = originalPage.ChapterId,
+            IsDraft = true // Always create as draft
+        };
+
+        _context.Pages.Add(newPage);
+        await _context.SaveChangesAsync();
+
+        // Duplicate all paragraphs
+        foreach (var paragraph in originalPage.Paragraphs.OrderBy(p => p.OrderIndex))
+        {
+            var newParagraph = new Paragraph
+            {
+                PageId = newPage.Id,
+                Content = paragraph.Content,
+                OrderIndex = paragraph.OrderIndex,
+                Type = paragraph.Type,
+                Caption = paragraph.Caption,
+                LinkedPageId = paragraph.LinkedPageId
+            };
+            _context.Paragraphs.Add(newParagraph);
+        }
+
+        await _context.SaveChangesAsync();
+
+        // Invalidate cache
+        _cache.RemoveByPattern(CacheKeys.AllChapters);
+
+        var pageDto = new PageDTO
+        {
+            Id = newPage.Id,
+            Title = newPage.Title,
+            Description = newPage.Description,
+            Slug = newPage.Slug,
+            OrderIndex = newPage.OrderIndex,
+            IsDraft = newPage.IsDraft,
+            ChapterId = newPage.ChapterId,
+            ViewCount = newPage.ViewCount,
+            CreatedAt = newPage.CreatedAt
+        };
+
+        return CreatedAtAction(nameof(GetPageBySlug), new { slug = newPage.Slug }, pageDto);
+    }
+
     [HttpDelete("{id}")]
     [Authorize(Policy = "EditorPolicy")]
     public async Task<IActionResult> DeletePage(Guid id)

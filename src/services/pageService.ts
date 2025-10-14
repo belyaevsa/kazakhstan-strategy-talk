@@ -18,6 +18,10 @@ class PageService {
     return apiClient.put<void>(`/pages/${id}`, data);
   }
 
+  async duplicate(id: string): Promise<Page> {
+    return apiClient.post<Page>(`/pages/${id}/duplicate`, {});
+  }
+
   async delete(id: string): Promise<void> {
     return apiClient.delete<void>(`/pages/${id}`);
   }

@@ -2,9 +2,20 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { chapterService } from "@/services/chapterService";
+import { pageService } from "@/services/pageService";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, BookOpen, GripVertical, Save, X, Plus } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+} from "@/components/ui/dropdown-menu";
+import { FileText, BookOpen, GripVertical, Save, X, Plus, MoreVertical, Copy, Link2, FolderInput, Eye, EyeOff, Trash2 } from "lucide-react";
 import ChapterDialog from "@/components/ChapterDialog";
 import * as LucideIcons from "lucide-react";
 import DocumentLayout from "@/components/DocumentLayout";
@@ -207,6 +218,59 @@ const AllChaptersView = () => {
     addChapterMutation.mutate(data);
   };
 
+  const duplicatePageMutation = useMutation({
+    mutationFn: (pageId: string) => pageService.duplicate(pageId),
+    onSuccess: (newPage) => {
+      queryClient.invalidateQueries({ queryKey: ["chapters"] });
+      toast.success(t("chapter.pageDuplicated"));
+      // Find the chapter containing this page
+      const chapter = chapters?.find(c => c.pages.some(p => p.id === newPage.id));
+      if (chapter) {
+        navigate(`/${currentLang}/${chapter.slug}/${newPage.slug}`);
+      }
+    },
+    onError: (error: any) => {
+      toast.error(t("chapter.pageDuplicateFailed") + ": " + error.message);
+    },
+  });
+
+  const movePageMutation = useMutation({
+    mutationFn: async ({ pageId, targetChapterId }: { pageId: string; targetChapterId: string }) => {
+      return pageService.update(pageId, { chapterId: targetChapterId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chapters"] });
+      toast.success(t("chapter.pageMoved"));
+    },
+    onError: (error: any) => {
+      toast.error(t("chapter.pageMoveFailed") + ": " + error.message);
+    },
+  });
+
+  const togglePageDraftMutation = useMutation({
+    mutationFn: async ({ id, isDraft }: { id: string; isDraft: boolean }) => {
+      return pageService.update(id, { isDraft });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chapters"] });
+      toast.success(t("chapter.pageUpdated"));
+    },
+    onError: (error: any) => {
+      toast.error(t("chapter.pageUpdateFailed") + ": " + error.message);
+    },
+  });
+
+  const deletePageMutation = useMutation({
+    mutationFn: (pageId: string) => pageService.delete(pageId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chapters"] });
+      toast.success(t("chapter.pageDeleted"));
+    },
+    onError: (error: any) => {
+      toast.error(t("chapter.pageDeleteFailed") + ": " + error.message);
+    },
+  });
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -391,21 +455,104 @@ const AllChaptersView = () => {
                       {visiblePages.map((page) => (
                         <Card
                           key={page.id}
-                          className="hover:shadow-md transition-shadow cursor-pointer"
-                          onClick={() => navigate(`/${currentLang}/${chapter.slug}/${page.slug}`)}
+                          className="hover:shadow-md transition-shadow group relative"
                         >
-                          <CardHeader className="py-4">
-                            <CardTitle className="flex items-center gap-3 text-base">
-                              <FileText className="h-4 w-4 text-primary" />
-                              <span>{page.title}</span>
-                              {isEditor && page.isDraft && (
-                                <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded font-normal">
-                                  {t("editor.draft")}
-                                </span>
+                          <CardHeader className="py-4 pr-12">
+                            <div
+                              className="cursor-pointer"
+                              onClick={() => navigate(`/${currentLang}/${chapter.slug}/${page.slug}`)}
+                            >
+                              <CardTitle className="flex items-center gap-3 text-base">
+                                <FileText className="h-4 w-4 text-primary" />
+                                <span>{page.title}</span>
+                                {isEditor && page.isDraft && (
+                                  <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded font-normal">
+                                    {t("editor.draft")}
+                                  </span>
+                                )}
+                              </CardTitle>
+                              {page.description && (
+                                <CardDescription className="text-sm mt-2">{page.description}</CardDescription>
                               )}
-                            </CardTitle>
-                            {page.description && (
-                              <CardDescription className="text-sm">{page.description}</CardDescription>
+                            </div>
+
+                            {isEditor && (
+                              <div className="absolute top-4 right-4" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      title={t("chapter.pageActions")}
+                                    >
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuSub>
+                                      <DropdownMenuSubTrigger>
+                                        <FolderInput className="h-4 w-4 mr-2" />
+                                        {t("chapter.moveToChapter")}
+                                      </DropdownMenuSubTrigger>
+                                      <DropdownMenuSubContent>
+                                        {chapters?.filter(c => c.id !== page.chapterId).map((targetChapter) => (
+                                          <DropdownMenuItem
+                                            key={targetChapter.id}
+                                            onClick={() => movePageMutation.mutate({ pageId: page.id, targetChapterId: targetChapter.id })}
+                                          >
+                                            {targetChapter.title}
+                                          </DropdownMenuItem>
+                                        ))}
+                                      </DropdownMenuSubContent>
+                                    </DropdownMenuSub>
+
+                                    <DropdownMenuItem onClick={() => duplicatePageMutation.mutate(page.id)}>
+                                      <Copy className="h-4 w-4 mr-2" />
+                                      {t("chapter.duplicatePage")}
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem onClick={() => togglePageDraftMutation.mutate({ id: page.id, isDraft: !page.isDraft })}>
+                                      {page.isDraft ? (
+                                        <>
+                                          <Eye className="h-4 w-4 mr-2" />
+                                          {t("chapter.publish")}
+                                        </>
+                                      ) : (
+                                        <>
+                                          <EyeOff className="h-4 w-4 mr-2" />
+                                          {t("chapter.hide")}
+                                        </>
+                                      )}
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem onClick={() => {
+                                      const url = `${window.location.origin}/${currentLang}/${chapter.slug}/${page.slug}`;
+                                      navigator.clipboard.writeText(url).then(() => {
+                                        toast.success(t("chapter.linkCopied"));
+                                      }).catch(() => {
+                                        toast.error("Failed to copy link");
+                                      });
+                                    }}>
+                                      <Link2 className="h-4 w-4 mr-2" />
+                                      {t("chapter.copyLink")}
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuSeparator />
+
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        if (confirm(t("chapter.deleteConfirm"))) {
+                                          deletePageMutation.mutate(page.id);
+                                        }
+                                      }}
+                                      className="text-destructive focus:text-destructive"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      {t("chapter.deletePage")}
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                             )}
                           </CardHeader>
                         </Card>

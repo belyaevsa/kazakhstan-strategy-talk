@@ -246,7 +246,17 @@
     "allChaptersAndPages": "Все главы и страницы",
     "allChaptersDesc": "Полный список всех глав и их страниц в этом документе",
     "noPagesInChapterYet": "В этой главе пока нет страниц",
-    "reorderChapters": "Изменить порядок глав"
+    "reorderChapters": "Изменить порядок глав",
+    "pageActions": "Действия со страницей",
+    "moveToChapter": "Переместить в главу",
+    "duplicatePage": "Дублировать страницу",
+    "copyLink": "Скопировать ссылку",
+    "pageDuplicated": "Страница успешно дублирована!",
+    "pageDuplicateFailed": "Не удалось дублировать страницу",
+    "pageMoveFailed": "Не удалось переместить страницу",
+    "pageMoved": "Страница успешно перемещена!",
+    "selectTargetChapter": "Выберите целевую главу",
+    "linkCopied": "Ссылка скопирована!"
   },
   "document": {
     "selectParagraph": "Выберите параграф для просмотра комментариев",
