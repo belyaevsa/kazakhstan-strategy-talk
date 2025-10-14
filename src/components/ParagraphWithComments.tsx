@@ -530,7 +530,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
           title="Suggest an edit"
         >
           <Lightbulb className="h-3 w-3" />
-          <span>Suggest Edit</span>
+          <span>{t("suggestions.suggestEdit")}</span>
         </button>
       )}
 

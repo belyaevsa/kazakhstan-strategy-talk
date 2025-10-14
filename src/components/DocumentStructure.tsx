@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useParams, useNavigate } from "react-router-dom";
-import { FileText, ChevronRight, ChevronDown, BookOpen, Settings, Plus, EyeOff } from "lucide-react";
+import { FileText, ChevronRight, ChevronDown, BookOpen, Settings, Plus, EyeOff, List } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -91,6 +91,22 @@ const DocumentStructure = ({ chapters, onAddChapter, onNavigate }: DocumentStruc
           </Button>
         )}
       </div>
+
+      {/* Link to All Chapters View */}
+      <Link
+        to={`/${currentLang}/chapters`}
+        onClick={(e) => handleLinkClick(e, `/${currentLang}/chapters`)}
+        className={cn(
+          "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors mb-3",
+          location.pathname === `/${currentLang}/chapters`
+            ? "bg-primary/10 text-primary"
+            : "hover:bg-muted text-muted-foreground hover:text-foreground"
+        )}
+      >
+        <List className="h-4 w-4" />
+        <span>{t("nav.viewAllChapters")}</span>
+      </Link>
+
       <nav className="space-y-3">
         {visibleChapters.map((chapter) => {
           const visiblePages = getVisiblePages(chapter);

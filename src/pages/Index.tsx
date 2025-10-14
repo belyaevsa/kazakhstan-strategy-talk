@@ -87,11 +87,11 @@ const Index = () => {
         </section>
 
         {/* Chapters Section */}
-        {chapters && chapters.length > 0 && (
+        {chapters && chapters.filter(c => isEditor || c.isVisibleOnMainPage).length > 0 && (
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-center">{t("home.documentChapters")}</h2>
             <div className="grid md:grid-cols-3 gap-6">
-              {chapters.map((chapter) => {
+              {chapters.filter(c => isEditor || c.isVisibleOnMainPage).map((chapter) => {
                 const ChapterIcon = getChapterIcon(chapter.icon);
                 return (
                   <Card key={chapter.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => {

@@ -29,6 +29,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Pencil, Save, X, Plus, Trash2, GripVertical, Eye, EyeOff, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { t, getCurrentLanguage, setLanguage, type Language } from "@/lib/i18n";
@@ -151,7 +153,9 @@ const ChapterPage = () => {
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
   const [editedIcon, setEditedIcon] = useState("");
+  const [editedSlug, setEditedSlug] = useState("");
   const [editedIsDraft, setEditedIsDraft] = useState(false);
+  const [editedIsVisibleOnMainPage, setEditedIsVisibleOnMainPage] = useState(true);
   const [editedPages, setEditedPages] = useState<Page[]>([]);
   const [pageDialogOpen, setPageDialogOpen] = useState(false);
   const [chapterDialogOpen, setChapterDialogOpen] = useState(false);
@@ -179,7 +183,9 @@ const ChapterPage = () => {
         title: editedTitle,
         description: editedDescription,
         icon: editedIcon,
+        slug: editedSlug,
         isDraft: editedIsDraft,
+        isVisibleOnMainPage: editedIsVisibleOnMainPage,
       });
 
       // Update page orders and draft status
@@ -244,7 +250,7 @@ const ChapterPage = () => {
   });
 
   const addChapterMutation = useMutation({
-    mutationFn: async (data: { title: string; description: string; slug: string; icon: string }) => {
+    mutationFn: async (data: { title: string; description: string; slug: string; icon: string; isVisibleOnMainPage: boolean }) => {
       const maxOrder = chapters?.reduce((max, c) => Math.max(max, c.orderIndex), -1) || 0;
       return chapterService.create({
         ...data,
@@ -267,7 +273,9 @@ const ChapterPage = () => {
       setEditedTitle(currentChapter.title);
       setEditedDescription(currentChapter.description || "");
       setEditedIcon(currentChapter.icon || "");
+      setEditedSlug(currentChapter.slug);
       setEditedIsDraft(currentChapter.isDraft);
+      setEditedIsVisibleOnMainPage(currentChapter.isVisibleOnMainPage);
       setEditedPages([...currentChapter.pages]);
     }
   }, [currentChapter, isEditMode]);
@@ -287,7 +295,9 @@ const ChapterPage = () => {
       setEditedTitle(currentChapter.title);
       setEditedDescription(currentChapter.description || "");
       setEditedIcon(currentChapter.icon || "");
+      setEditedSlug(currentChapter.slug);
       setEditedIsDraft(currentChapter.isDraft);
+      setEditedIsVisibleOnMainPage(currentChapter.isVisibleOnMainPage);
       setEditedPages([...currentChapter.pages]);
     }
   };
@@ -330,7 +340,7 @@ const ChapterPage = () => {
     addPageMutation.mutate(data);
   };
 
-  const handleSaveChapter = (data: { title: string; description: string; slug: string; icon: string }) => {
+  const handleSaveChapter = (data: { title: string; description: string; slug: string; icon: string; isVisibleOnMainPage: boolean }) => {
     addChapterMutation.mutate(data);
   };
 
@@ -365,25 +375,61 @@ const ChapterPage = () => {
             <div className="flex-1">
               {isEditMode ? (
                 <div className="space-y-4">
-                  <Input
-                    value={editedTitle}
-                    onChange={(e) => setEditedTitle(e.target.value)}
-                    className="text-3xl lg:text-4xl font-bold"
-                    placeholder={t("chapter.chapterTitle")}
-                  />
-                  <Textarea
-                    value={editedDescription}
-                    onChange={(e) => setEditedDescription(e.target.value)}
-                    className="text-lg"
-                    placeholder={t("chapter.chapterDescPlaceholder")}
-                    rows={2}
-                  />
-                  <Input
-                    value={editedIcon}
-                    onChange={(e) => setEditedIcon(e.target.value)}
-                    className="text-sm"
-                    placeholder={t("chapter.iconPlaceholder")}
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-title">{t("chapter.title")}</Label>
+                    <Input
+                      id="edit-title"
+                      value={editedTitle}
+                      onChange={(e) => setEditedTitle(e.target.value)}
+                      className="text-3xl lg:text-4xl font-bold"
+                      placeholder={t("chapter.chapterTitle")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-slug">{t("chapter.slug")}</Label>
+                    <Input
+                      id="edit-slug"
+                      value={editedSlug}
+                      onChange={(e) => setEditedSlug(e.target.value)}
+                      className="text-sm font-mono"
+                      placeholder={t("chapter.slugPlaceholder")}
+                    />
+                    <p className="text-xs text-muted-foreground">URL: /{editedSlug}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-description">{t("chapter.description")}</Label>
+                    <Textarea
+                      id="edit-description"
+                      value={editedDescription}
+                      onChange={(e) => setEditedDescription(e.target.value)}
+                      className="text-lg"
+                      placeholder={t("chapter.chapterDescPlaceholder")}
+                      rows={2}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-icon">{t("chapter.icon")}</Label>
+                    <Input
+                      id="edit-icon"
+                      value={editedIcon}
+                      onChange={(e) => setEditedIcon(e.target.value)}
+                      className="text-sm"
+                      placeholder={t("chapter.iconPlaceholder")}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="visible-main-page"
+                      checked={editedIsVisibleOnMainPage}
+                      onCheckedChange={(checked) => setEditedIsVisibleOnMainPage(checked as boolean)}
+                    />
+                    <Label
+                      htmlFor="visible-main-page"
+                      className="text-sm font-normal cursor-pointer"
+                    >
+                      {t("chapter.showOnMainPage")}
+                    </Label>
+                  </div>
                   <Button
                     onClick={() => setEditedIsDraft(!editedIsDraft)}
                     variant={editedIsDraft ? "default" : "outline"}

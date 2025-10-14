@@ -6,6 +6,7 @@
   "nav": {
     "documentStructure": "Структура документа",
     "tableOfContents": "Содержание",
+    "viewAllChapters": "Все главы",
     "signIn": "Войти",
     "logout": "Выйти",
     "admin": "Админ"
@@ -239,7 +240,12 @@
     "pagesInThisChapter": "Страницы в этой главе",
     "readPage": "Читать страницу",
     "noPages": "В этой главе нет доступных страниц",
-    "dragToReorder": "Перетащите для изменения порядка страниц"
+    "dragToReorder": "Перетащите для изменения порядка страниц",
+    "showOnMainPage": "Показывать эту главу на главной странице",
+    "hiddenFromMainPage": "Скрыто с главной страницы",
+    "allChaptersAndPages": "Все главы и страницы",
+    "allChaptersDesc": "Полный список всех глав и их страниц в этом документе",
+    "noPagesInChapterYet": "В этой главе пока нет страниц"
   },
   "document": {
     "selectParagraph": "Выберите параграф для просмотра комментариев",

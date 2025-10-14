@@ -22,6 +22,8 @@ public class Chapter
 
     public bool IsDraft { get; set; } = true;
 
+    public bool IsVisibleOnMainPage { get; set; } = true;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? UpdatedAt { get; set; }

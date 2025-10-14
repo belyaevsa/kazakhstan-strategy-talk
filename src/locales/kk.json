@@ -6,6 +6,7 @@
   "nav": {
     "documentStructure": "Құжат құрылымы",
     "tableOfContents": "Мазмұны",
+    "viewAllChapters": "Барлық тараулар",
     "signIn": "Кіру",
     "logout": "Шығу",
     "admin": "Әкімші"
@@ -239,7 +240,12 @@
     "pagesInThisChapter": "Осы тарауда беттер",
     "readPage": "Бетті оқу",
     "noPages": "Бұл тарауда қол жетімді беттер жоқ",
-    "dragToReorder": "Беттердің ретін өзгерту үшін сүйреңіз"
+    "dragToReorder": "Беттердің ретін өзгерту үшін сүйреңіз",
+    "showOnMainPage": "Бұл тарауды басты бетте көрсету",
+    "hiddenFromMainPage": "Басты беттен жасырылған",
+    "allChaptersAndPages": "Барлық тараулар мен беттер",
+    "allChaptersDesc": "Осы құжаттағы барлық тараулар мен олардың беттерінің толық тізімі",
+    "noPagesInChapterYet": "Бұл тарауда әлі беттер жоқ"
   },
   "document": {
     "selectParagraph": "Түсініктемелерді көру үшін параграфты таңдаңыз",

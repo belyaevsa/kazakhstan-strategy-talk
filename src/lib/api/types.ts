@@ -76,6 +76,7 @@ export interface Chapter {
   icon?: string;
   orderIndex: number;
   isDraft: boolean;
+  isVisibleOnMainPage: boolean;
   createdAt: string;
   updatedAt?: string;
   pages: Page[];
@@ -130,6 +131,7 @@ export interface CreateChapterRequest {
   icon?: string;
   orderIndex: number;
   isDraft?: boolean;
+  isVisibleOnMainPage?: boolean;
 }
 
 export interface UpdateChapterRequest {
@@ -139,6 +141,7 @@ export interface UpdateChapterRequest {
   icon?: string;
   orderIndex?: number;
   isDraft?: boolean;
+  isVisibleOnMainPage?: boolean;
 }
 
 export interface CreatePageRequest {

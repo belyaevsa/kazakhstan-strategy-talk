@@ -11,6 +11,7 @@ import EmailVerified from "./pages/EmailVerified";
 import DocumentPage from "./pages/DocumentPage";
 import ChapterPage from "./pages/ChapterPage";
 import ChapterDetailPage from "./pages/ChapterDetailPage";
+import AllChaptersView from "./pages/AllChaptersView";
 import AdminPanel from "./pages/AdminPanel";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
@@ -36,6 +37,7 @@ const App = () => (
           {/* Language-based routes */}
           <Route path="/:lang" element={<Index />} />
           <Route path="/:lang/notifications" element={<Notifications />} />
+          <Route path="/:lang/chapters" element={<AllChaptersView />} />
           <Route path="/:lang/:chapterSlug/:pageSlug" element={<DocumentPage />} />
           <Route path="/:lang/:chapterSlug" element={<ChapterDetailPage />} />
           {/* Legacy routes for backwards compatibility */}

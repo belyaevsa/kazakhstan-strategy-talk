@@ -56,6 +56,7 @@ public class ChaptersController : ControllerBase
             Icon = c.Icon,
             OrderIndex = c.OrderIndex,
             IsDraft = c.IsDraft,
+            IsVisibleOnMainPage = c.IsVisibleOnMainPage,
             CreatedAt = c.CreatedAt,
             UpdatedAt = c.UpdatedAt,
             Pages = c.Pages
@@ -102,6 +103,7 @@ public class ChaptersController : ControllerBase
             Icon = chapter.Icon,
             OrderIndex = chapter.OrderIndex,
             IsDraft = chapter.IsDraft,
+            IsVisibleOnMainPage = chapter.IsVisibleOnMainPage,
             CreatedAt = chapter.CreatedAt,
             UpdatedAt = chapter.UpdatedAt,
             Pages = chapter.Pages.OrderBy(p => p.OrderIndex).Select(p => new PageDTO
@@ -144,6 +146,7 @@ public class ChaptersController : ControllerBase
             Icon = chapter.Icon,
             OrderIndex = chapter.OrderIndex,
             IsDraft = chapter.IsDraft,
+            IsVisibleOnMainPage = chapter.IsVisibleOnMainPage,
             CreatedAt = chapter.CreatedAt,
             UpdatedAt = chapter.UpdatedAt,
             Pages = chapter.Pages.OrderBy(p => p.OrderIndex).Select(p => new PageDTO
@@ -184,7 +187,8 @@ public class ChaptersController : ControllerBase
             Slug = request.Slug,
             Icon = request.Icon,
             OrderIndex = request.OrderIndex,
-            IsDraft = request.IsDraft
+            IsDraft = request.IsDraft,
+            IsVisibleOnMainPage = request.IsVisibleOnMainPage
         };
 
         _context.Chapters.Add(chapter);
@@ -202,6 +206,7 @@ public class ChaptersController : ControllerBase
             Icon = chapter.Icon,
             OrderIndex = chapter.OrderIndex,
             IsDraft = chapter.IsDraft,
+            IsVisibleOnMainPage = chapter.IsVisibleOnMainPage,
             CreatedAt = chapter.CreatedAt,
             UpdatedAt = chapter.UpdatedAt,
             Pages = new List<PageDTO>()
@@ -239,6 +244,7 @@ public class ChaptersController : ControllerBase
         if (request.Icon != null) chapter.Icon = request.Icon;
         if (request.OrderIndex.HasValue) chapter.OrderIndex = request.OrderIndex.Value;
         if (request.IsDraft.HasValue) chapter.IsDraft = request.IsDraft.Value;
+        if (request.IsVisibleOnMainPage.HasValue) chapter.IsVisibleOnMainPage = request.IsVisibleOnMainPage.Value;
 
         chapter.UpdatedAt = DateTime.UtcNow;
 

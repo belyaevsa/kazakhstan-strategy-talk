@@ -9,6 +9,7 @@ public class ChapterDTO
     public string? Icon { get; set; }
     public int OrderIndex { get; set; }
     public bool IsDraft { get; set; }
+    public bool IsVisibleOnMainPage { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public List<PageDTO> Pages { get; set; } = new();
@@ -22,6 +23,7 @@ public class CreateChapterRequest
     public string? Icon { get; set; }
     public int OrderIndex { get; set; }
     public bool IsDraft { get; set; } = true;
+    public bool IsVisibleOnMainPage { get; set; } = true;
 }
 
 public class UpdateChapterRequest
@@ -32,6 +34,7 @@ public class UpdateChapterRequest
     public string? Icon { get; set; }
     public int? OrderIndex { get; set; }
     public bool? IsDraft { get; set; }
+    public bool? IsVisibleOnMainPage { get; set; }
 }
 
 public class ReorderRequest

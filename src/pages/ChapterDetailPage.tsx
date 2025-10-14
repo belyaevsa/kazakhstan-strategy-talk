@@ -39,7 +39,7 @@ const ChapterDetailPage = () => {
   });
 
   const addChapterMutation = useMutation({
-    mutationFn: async (data: { title: string; description: string; slug: string; icon: string }) => {
+    mutationFn: async (data: { title: string; description: string; slug: string; icon: string; isVisibleOnMainPage: boolean }) => {
       const maxOrder = chapters?.reduce((max, c) => Math.max(max, c.orderIndex), -1) || 0;
       return chapterService.create({
         ...data,
@@ -67,7 +67,7 @@ const ChapterDetailPage = () => {
     setChapterDialogOpen(true);
   };
 
-  const handleSaveChapter = (data: { title: string; description: string; slug: string; icon: string }) => {
+  const handleSaveChapter = (data: { title: string; description: string; slug: string; icon: string; isVisibleOnMainPage: boolean }) => {
     addChapterMutation.mutate(data);
   };
 

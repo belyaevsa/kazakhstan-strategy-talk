@@ -6,6 +6,7 @@
   "nav": {
     "documentStructure": "Document Structure",
     "tableOfContents": "Table of Contents",
+    "viewAllChapters": "View All Chapters",
     "signIn": "Sign In",
     "logout": "Logout",
     "admin": "Admin"
@@ -239,7 +240,12 @@
     "pagesInThisChapter": "Pages in this chapter",
     "readPage": "Read Page",
     "noPages": "No pages available in this chapter",
-    "dragToReorder": "Drag to reorder pages"
+    "dragToReorder": "Drag to reorder pages",
+    "showOnMainPage": "Show this chapter on the main page",
+    "hiddenFromMainPage": "Hidden from main page",
+    "allChaptersAndPages": "All Chapters & Pages",
+    "allChaptersDesc": "Complete list of all chapters and their pages in this document",
+    "noPagesInChapterYet": "No pages in this chapter yet"
   },
   "document": {
     "selectParagraph": "Select a paragraph to view comments",

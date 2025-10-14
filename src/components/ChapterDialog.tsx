@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -36,7 +37,7 @@ interface ChapterDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   chapter?: Chapter;
-  onSave: (data: { title: string; description: string; icon: string; slug: string }) => void;
+  onSave: (data: { title: string; description: string; icon: string; slug: string; isVisibleOnMainPage: boolean }) => void;
   onReorderPages?: (pages: Page[]) => void;
   isSaving: boolean;
 }
@@ -89,6 +90,7 @@ const ChapterDialog = ({ open, onOpenChange, chapter, onSave, onReorderPages, is
   const [description, setDescription] = useState("");
   const [icon, setIcon] = useState("");
   const [slug, setSlug] = useState("");
+  const [isVisibleOnMainPage, setIsVisibleOnMainPage] = useState(true);
   const [pages, setPages] = useState<Page[]>([]);
 
   const sensors = useSensors(
@@ -104,12 +106,14 @@ const ChapterDialog = ({ open, onOpenChange, chapter, onSave, onReorderPages, is
       setDescription(chapter.description || "");
       setIcon(chapter.icon || "");
       setSlug(chapter.slug);
+      setIsVisibleOnMainPage(chapter.isVisibleOnMainPage);
       setPages([...chapter.pages].sort((a, b) => a.orderIndex - b.orderIndex));
     } else {
       setTitle("");
       setDescription("");
       setIcon("");
       setSlug("");
+      setIsVisibleOnMainPage(true);
       setPages([]);
     }
   }, [chapter, open]);
@@ -138,7 +142,7 @@ const ChapterDialog = ({ open, onOpenChange, chapter, onSave, onReorderPages, is
 
   const handleSave = () => {
     if (!title.trim() || !slug.trim()) return;
-    onSave({ title, description, icon, slug });
+    onSave({ title, description, icon, slug, isVisibleOnMainPage });
   };
 
   return (
@@ -198,6 +202,20 @@ const ChapterDialog = ({ open, onOpenChange, chapter, onSave, onReorderPages, is
               onChange={(e) => setIcon(e.target.value)}
               placeholder={t("chapter.iconPlaceholder")}
             />
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="visible-on-main"
+              checked={isVisibleOnMainPage}
+              onCheckedChange={(checked) => setIsVisibleOnMainPage(checked as boolean)}
+            />
+            <Label
+              htmlFor="visible-on-main"
+              className="text-sm font-normal cursor-pointer"
+            >
+              {t("chapter.showOnMainPage")}
+            </Label>
           </div>
 
           {chapter && pages.length > 0 && (
