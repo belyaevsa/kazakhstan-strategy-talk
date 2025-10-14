@@ -79,17 +79,6 @@ const DocumentStructure = ({ chapters, onAddChapter, onNavigate }: DocumentStruc
           <BookOpen className="h-4 w-4" />
           {t("nav.documentStructure")}
         </h3>
-        {isEditor && onAddChapter && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-7 w-7 p-0"
-            onClick={onAddChapter}
-            title={t("editor.addChapter")}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        )}
       </div>
 
       {/* Link to All Chapters View */}

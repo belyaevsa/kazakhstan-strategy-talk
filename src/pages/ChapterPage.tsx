@@ -25,6 +25,7 @@ import DocumentLayout from "@/components/DocumentLayout";
 import DocumentStructure from "@/components/DocumentStructure";
 import PageDialog from "@/components/PageDialog";
 import ChapterDialog from "@/components/ChapterDialog";
+import RichTextEditor from "@/components/RichTextEditor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -375,16 +376,55 @@ const ChapterPage = () => {
             <div className="flex-1">
               {isEditMode ? (
                 <div className="space-y-4">
+                  {/* Title */}
                   <div className="space-y-2">
                     <Label htmlFor="edit-title">{t("chapter.title")}</Label>
+                    <div className="border rounded-md p-3 min-h-[80px]">
+                      <RichTextEditor
+                        value={editedTitle}
+                        onChange={(value) => setEditedTitle(value)}
+                        placeholder={t("chapter.chapterTitle")}
+                        className="document-content w-full border-0 bg-transparent px-0 py-0 text-3xl lg:text-4xl font-bold text-foreground leading-tight placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-description">{t("chapter.description")}</Label>
+                    <div className="border rounded-md p-3 min-h-[100px]">
+                      <RichTextEditor
+                        value={editedDescription}
+                        onChange={(value) => setEditedDescription(value)}
+                        placeholder={t("chapter.chapterDescPlaceholder")}
+                        className="document-content w-full border-0 bg-transparent px-0 py-0 text-lg text-foreground leading-relaxed placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Icon */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="edit-icon">{t("chapter.icon")}</Label>
+                      <a
+                        href="https://lucide.dev/icons/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary hover:underline"
+                      >
+                        {t("chapter.browseIcons")}
+                      </a>
+                    </div>
                     <Input
-                      id="edit-title"
-                      value={editedTitle}
-                      onChange={(e) => setEditedTitle(e.target.value)}
-                      className="text-3xl lg:text-4xl font-bold"
-                      placeholder={t("chapter.chapterTitle")}
+                      id="edit-icon"
+                      value={editedIcon}
+                      onChange={(e) => setEditedIcon(e.target.value)}
+                      className="text-sm"
+                      placeholder={t("chapter.iconPlaceholder")}
                     />
                   </div>
+
+                  {/* Slug */}
                   <div className="space-y-2">
                     <Label htmlFor="edit-slug">{t("chapter.slug")}</Label>
                     <Input
@@ -396,27 +436,8 @@ const ChapterPage = () => {
                     />
                     <p className="text-xs text-muted-foreground">URL: /{editedSlug}</p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-description">{t("chapter.description")}</Label>
-                    <Textarea
-                      id="edit-description"
-                      value={editedDescription}
-                      onChange={(e) => setEditedDescription(e.target.value)}
-                      className="text-lg"
-                      placeholder={t("chapter.chapterDescPlaceholder")}
-                      rows={2}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-icon">{t("chapter.icon")}</Label>
-                    <Input
-                      id="edit-icon"
-                      value={editedIcon}
-                      onChange={(e) => setEditedIcon(e.target.value)}
-                      className="text-sm"
-                      placeholder={t("chapter.iconPlaceholder")}
-                    />
-                  </div>
+
+                  {/* Show on main page checkbox */}
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="visible-main-page"
@@ -430,6 +451,8 @@ const ChapterPage = () => {
                       {t("chapter.showOnMainPage")}
                     </Label>
                   </div>
+
+                  {/* Draft/Published toggle */}
                   <Button
                     onClick={() => setEditedIsDraft(!editedIsDraft)}
                     variant={editedIsDraft ? "default" : "outline"}

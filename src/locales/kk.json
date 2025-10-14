@@ -245,7 +245,8 @@
     "hiddenFromMainPage": "Басты беттен жасырылған",
     "allChaptersAndPages": "Барлық тараулар мен беттер",
     "allChaptersDesc": "Осы құжаттағы барлық тараулар мен олардың беттерінің толық тізімі",
-    "noPagesInChapterYet": "Бұл тарауда әлі беттер жоқ"
+    "noPagesInChapterYet": "Бұл тарауда әлі беттер жоқ",
+    "reorderChapters": "Тараулардың ретін өзгерту"
   },
   "document": {
     "selectParagraph": "Түсініктемелерді көру үшін параграфты таңдаңыз",

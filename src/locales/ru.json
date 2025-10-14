@@ -245,7 +245,8 @@
     "hiddenFromMainPage": "Скрыто с главной страницы",
     "allChaptersAndPages": "Все главы и страницы",
     "allChaptersDesc": "Полный список всех глав и их страниц в этом документе",
-    "noPagesInChapterYet": "В этой главе пока нет страниц"
+    "noPagesInChapterYet": "В этой главе пока нет страниц",
+    "reorderChapters": "Изменить порядок глав"
   },
   "document": {
     "selectParagraph": "Выберите параграф для просмотра комментариев",
