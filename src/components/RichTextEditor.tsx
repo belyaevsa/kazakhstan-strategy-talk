@@ -23,6 +23,9 @@ const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const markdownToHtml = (markdown: string): string => {
       let html = markdown;
 
+      // Links: [text](url) -> <a>text</a>
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary underline">$1</a>');
+
       // Bold: **text** -> <strong>text</strong>
       html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 
@@ -47,6 +50,9 @@ const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
       // Remove divs and replace with newlines
       markdown = markdown.replace(/<div>/g, '\n').replace(/<\/div>/g, '');
+
+      // Links: <a href="url">text</a> -> [text](url)
+      markdown = markdown.replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/g, '[$2]($1)');
 
       // Bold: <strong>text</strong> -> **text**
       markdown = markdown.replace(/<strong>(.*?)<\/strong>/g, '**$1**');
@@ -169,9 +175,37 @@ const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     };
 
     const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
-      if (onPasteMultipleParagraphs) {
-        const pastedText = e.clipboardData.getData('text/plain');
+      const pastedText = e.clipboardData.getData('text/plain');
 
+      // Check if pasted text is a URL
+      const urlRegex = /^(https?:\/\/[^\s]+)$/;
+      const isUrl = urlRegex.test(pastedText.trim());
+
+      // Get current selection
+      const selection = window.getSelection();
+      const hasSelection = selection && selection.toString().length > 0;
+
+      // If pasting a URL over selected text, create a clickable HTML link
+      if (isUrl && hasSelection) {
+        e.preventDefault();
+        const selectedText = selection.toString();
+        const url = pastedText.trim();
+
+        // Create clickable HTML link
+        const linkHtml = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-primary underline">${selectedText}</a>`;
+
+        // Insert the HTML link
+        document.execCommand('insertHTML', false, linkHtml);
+
+        // Convert back to markdown for storage
+        if (editorRef.current && onChange) {
+          const markdown = htmlToMarkdown(editorRef.current.innerHTML);
+          onChange(markdown);
+        }
+        return;
+      }
+
+      if (onPasteMultipleParagraphs) {
         // Normalize line endings
         const normalizedText = pastedText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
@@ -196,9 +230,16 @@ const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
       // For single paragraph paste, handle as plain text
       e.preventDefault();
-      const text = e.clipboardData.getData('text/plain');
-      document.execCommand('insertText', false, text);
+      document.execCommand('insertText', false, pastedText);
       handleInput();
+    };
+
+    const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+      // Prevent links from being followed in edit mode
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'A') {
+        e.preventDefault();
+      }
     };
 
     const isEmpty = !value || value.trim() === '';
@@ -216,6 +257,7 @@ const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           onInput={handleInput}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
+          onClick={handleClick}
           onCompositionStart={() => { isComposingRef.current = true; }}
           onCompositionEnd={() => { isComposingRef.current = false; }}
           className={cn(

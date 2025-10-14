@@ -100,12 +100,12 @@ export const SuggestionEditor = ({
           {/* Editor */}
           <div className="space-y-2">
             <Label htmlFor="content">{t('suggestions.suggestedContent')}</Label>
-            <div className="border rounded-md p-2 min-h-[200px]">
+            <div className="border rounded-md p-3 min-h-[200px]">
               <RichTextEditor
                 value={content}
                 onChange={setContent}
                 placeholder={t('paragraph.contentPlaceholder')}
-                className="min-h-[180px]"
+                className="document-content min-h-[180px] text-foreground leading-relaxed"
               />
             </div>
           </div>

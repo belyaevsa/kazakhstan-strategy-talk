@@ -33,6 +33,74 @@ export const SuggestionsCarousel = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
+  // Parse markdown text to JSX with formatting
+  const parseMarkdown = (text: string) => {
+    const parts: (string | JSX.Element)[] = [];
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const boldRegex = /\*\*([^*]+)\*\*/g;
+    const italicRegex = /\*([^*]+)\*/g;
+
+    const allMatches: Array<{ index: number; length: number; element: JSX.Element }> = [];
+    let match: RegExpExecArray | null;
+
+    // Find all links
+    while ((match = linkRegex.exec(text)) !== null) {
+      allMatches.push({
+        index: match.index,
+        length: match[0].length,
+        element: (
+          <a
+            key={match.index}
+            href={match[2]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            {match[1]}
+          </a>
+        )
+      });
+    }
+
+    // Find all bold text
+    while ((match = boldRegex.exec(text)) !== null) {
+      allMatches.push({
+        index: match.index,
+        length: match[0].length,
+        element: <strong key={match.index}>{match[1]}</strong>
+      });
+    }
+
+    // Find all italic text
+    while ((match = italicRegex.exec(text)) !== null) {
+      const isBoldMarker = text[match.index - 1] === '*' || text[match.index + match[0].length] === '*';
+      if (!isBoldMarker) {
+        allMatches.push({
+          index: match.index,
+          length: match[0].length,
+          element: <em key={match.index}>{match[1]}</em>
+        });
+      }
+    }
+
+    allMatches.sort((a, b) => a.index - b.index);
+
+    let lastIndex = 0;
+    for (const match of allMatches) {
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      parts.push(match.element);
+      lastIndex = match.index + match.length;
+    }
+
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : text;
+  };
+
   const loadSuggestions = async () => {
     setIsLoading(true);
     try {
@@ -118,10 +186,9 @@ export const SuggestionsCarousel = ({
                   {t('suggestions.originalContent')}:
                 </h3>
                 <div className="border rounded-md p-4 bg-muted/10">
-                  <div
-                    className="prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: originalContent }}
-                  />
+                  <p className="document-content text-foreground leading-relaxed whitespace-pre-wrap">
+                    {parseMarkdown(originalContent)}
+                  </p>
                 </div>
               </div>
 
