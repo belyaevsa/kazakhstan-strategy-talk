@@ -210,8 +210,8 @@ const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // Normalize line endings
         const normalizedText = pastedText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-        // Split by double newlines
-        const rawParagraphs = normalizedText.split(/\n\s*\n/);
+        // Split by single newlines to detect multiple lines
+        const rawParagraphs = normalizedText.split('\n');
         const paragraphs: string[] = [];
 
         for (const para of rawParagraphs) {
