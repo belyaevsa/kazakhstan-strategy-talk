@@ -85,7 +85,6 @@ jobs:
           # Run migrations using SDK image with host network
           docker run --rm \
             --network host \
-            -v $PWD/api:/app \
             -e DB_HOST="$DB_HOST" \
             -e DB_PORT="$DB_PORT" \
             -e DB_NAME="$DB_NAME" \
