@@ -9,7 +9,7 @@ on:
 env:
   IMAGE_NAME: kazakhstan-strategy-app
   CONTAINER_NAME: kazakhstan-strategy
-  PORT: 8080
+  PORT: 8090
 
 jobs:
   deploy:
@@ -245,7 +245,7 @@ jobs:
               docker run -d \
                 --name ${{ env.OLD_CONTAINER }} \
                 --restart unless-stopped \
-                -p ${{ env.PORT }}:8080 \
+                -p ${{ env.PORT }}:800 \
                 -v /var/log/nginx/app-logs:/app/logs \
                 -e DB_HOST="${{ secrets.DB_HOST }}" \
                 -e DB_PORT="${{ secrets.DB_PORT }}" \
