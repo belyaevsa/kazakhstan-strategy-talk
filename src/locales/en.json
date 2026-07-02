@@ -6,6 +6,23 @@
   "theme": {
     "toggle": "Toggle theme"
   },
+  "report": {
+    "action": "Report",
+    "title": "Report content",
+    "description": "Tell us why you're reporting this. A moderator will review it.",
+    "reason": {
+      "spam": "Spam or advertising",
+      "abuse": "Harassment or abuse",
+      "offtopic": "Off-topic or irrelevant",
+      "other": "Other"
+    },
+    "detailsPlaceholder": "Add any details (optional)",
+    "cancel": "Cancel",
+    "submit": "Submit report",
+    "submitting": "Submitting…",
+    "submitted": "Thank you. Your report has been submitted.",
+    "failed": "Could not submit report"
+  },
   "nav": {
     "documentStructure": "Document Structure",
     "tableOfContents": "Table of Contents",

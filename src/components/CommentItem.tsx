@@ -8,6 +8,7 @@ import { ru, enUS, kk } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { authService } from "@/services/authService";
 import { t, getCurrentLanguage } from "@/lib/i18n";
+import ReportDialog from "@/components/ReportDialog";
 import type { Comment } from "@/lib/api/types";
 
 interface CommentItemProps {
@@ -131,6 +132,8 @@ const CommentItem = ({
                   <span className="text-xs">{t("comments.reply")}</span>
                 </Button>
               )}
+
+              <ReportDialog contentType="Comment" contentId={comment.id} />
             </div>
           )}
 

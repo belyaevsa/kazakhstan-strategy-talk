@@ -12,8 +12,9 @@ import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
 import { authService } from "@/services/authService";
 import DocumentLayout from "@/components/DocumentLayout";
-import { Shield, Users, MessageSquare, ExternalLink, UserCircle, Mail, MailCheck, Clock, MapPin, Award, Settings, Plus, Trash2, Save } from "lucide-react";
+import { Shield, Users, MessageSquare, ExternalLink, UserCircle, Mail, MailCheck, Clock, MapPin, Award, Settings, Plus, Trash2, Save, Flag } from "lucide-react";
 import { getCurrentLanguage } from "@/lib/i18n";
+import { reportService } from "@/services/reportService";
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -48,6 +49,21 @@ const AdminPanel = () => {
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ["admin-settings"],
     queryFn: () => adminService.getSettings(),
+  });
+
+  const { data: reports, isLoading: reportsLoading } = useQuery({
+    queryKey: ["admin-reports"],
+    queryFn: () => reportService.list("Pending"),
+  });
+
+  const resolveReportMutation = useMutation({
+    mutationFn: ({ id, action }: { id: string; action: "Reviewed" | "Dismissed" }) =>
+      reportService.resolve(id, action),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
+      toast.success("Report resolved");
+    },
+    onError: () => toast.error("Failed to resolve report"),
   });
 
   const freezeMutation = useMutation({
@@ -155,7 +171,7 @@ const AdminPanel = () => {
         </div>
 
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Users
@@ -163,6 +179,13 @@ const AdminPanel = () => {
             <TabsTrigger value="comments" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               Comments
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="flex items-center gap-2">
+              <Flag className="h-4 w-4" />
+              Reports
+              {reports && reports.length > 0 && (
+                <Badge variant="destructive" className="ml-1">{reports.length}</Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -448,6 +471,58 @@ const AdminPanel = () => {
                     })}
                   </TableBody>
                 </Table>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="reports" className="space-y-4">
+            {reportsLoading ? (
+              <p className="text-muted-foreground">Loading reports...</p>
+            ) : !reports || reports.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Flag className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                <p>No pending reports.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {reports.map((report) => (
+                  <div key={report.id} className="border rounded-lg p-4 space-y-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{report.contentType}</Badge>
+                        <Badge variant="destructive">{report.reason}</Badge>
+                        <span className="text-xs text-muted-foreground">
+                          by {report.reporterUsername || "unknown"} · {new Date(report.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => resolveReportMutation.mutate({ id: report.id, action: "Dismissed" })}
+                          disabled={resolveReportMutation.isPending}
+                        >
+                          Dismiss
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => resolveReportMutation.mutate({ id: report.id, action: "Reviewed" })}
+                          disabled={resolveReportMutation.isPending}
+                        >
+                          Mark reviewed
+                        </Button>
+                      </div>
+                    </div>
+                    {report.details && (
+                      <p className="text-sm"><span className="text-muted-foreground">Details:</span> {report.details}</p>
+                    )}
+                    {report.contentPreview && (
+                      <blockquote className="text-sm bg-muted/50 border-l-2 pl-3 py-1 text-muted-foreground whitespace-pre-wrap">
+                        {report.contentPreview}
+                      </blockquote>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </TabsContent>

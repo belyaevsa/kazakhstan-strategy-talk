@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { suggestionService } from '@/services/suggestionService';
 import { ParagraphSuggestion } from '@/lib/api/types';
 import { authService } from '@/services/authService';
+import ReportDialog from '@/components/ReportDialog';
 import { formatDistanceToNow } from 'date-fns';
 
 interface SuggestionCardProps {
@@ -282,6 +283,12 @@ export const SuggestionCard = ({ suggestion, onUpdate, onEdit, showActions = tru
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <MessageSquare className="h-4 w-4" />
             <span>{suggestion.commentCount}</span>
+          </div>
+        )}
+
+        {!isAuthor && (
+          <div className="ml-auto">
+            <ReportDialog contentType="Suggestion" contentId={suggestion.id} />
           </div>
         )}
       </div>

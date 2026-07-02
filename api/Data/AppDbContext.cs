@@ -28,6 +28,7 @@ public class AppDbContext : DbContext
     public DbSet<NotificationSettings> NotificationSettings { get; set; }
     public DbSet<ParagraphSuggestion> ParagraphSuggestions { get; set; }
     public DbSet<SuggestionVote> SuggestionVotes { get; set; }
+    public DbSet<ContentReport> ContentReports { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -308,6 +309,26 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(e => e.SuggestionId);
+        });
+
+        // ContentReport configuration
+        modelBuilder.Entity<ContentReport>(entity =>
+        {
+            entity.HasOne(r => r.ReporterProfile)
+                .WithMany()
+                .HasForeignKey(r => r.ReporterProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(r => r.ReviewedByProfile)
+                .WithMany()
+                .HasForeignKey(r => r.ReviewedByProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => new { e.ContentType, e.ContentId });
+            // One active report per user per item
+            entity.HasIndex(e => new { e.ReporterProfileId, e.ContentType, e.ContentId }).IsUnique();
         });
     }
 }
