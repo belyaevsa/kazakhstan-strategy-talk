@@ -169,7 +169,7 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
                   )}
                 >
                   <div className={cn(
-                    "sticky top space-y-4 transition-opacity duration-200 w-[250px] xl:w-[280px]",
+                    "sticky top-20 space-y-4 transition-opacity duration-200 w-[250px] xl:w-[280px]",
                     isSidebarCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
                   )}>
                     {sidebar}
@@ -178,7 +178,7 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
 
                 {/* Toggle Button */}
                 <div className="hidden md:block">
-                  <div className="sticky top -ml-5">
+                  <div className="sticky top-20 -ml-5">
                     <Button
                       variant="outline"
                       size="icon"
@@ -204,7 +204,7 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
             {/* Right Sidebar - Comments */}
             {comments && (
               <aside className="hidden xl:block w-[320px] shrink-0">
-                <div className="sticky top">
+                <div className="sticky top-20">
                   {comments}
                 </div>
               </aside>
