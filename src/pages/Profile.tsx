@@ -162,7 +162,7 @@ const Profile = () => {
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
                   {profile.avatarUrl ? (
-                    <img src={profile.avatarUrl} alt={profile.username} className="w-20 h-20 rounded-full" />
+                    <img src={profile.avatarUrl} alt={profile.username} loading="lazy" decoding="async" className="w-20 h-20 rounded-full" />
                   ) : (
                     <User className="w-10 h-10 text-primary" />
                   )}

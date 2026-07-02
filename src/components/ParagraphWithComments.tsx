@@ -251,6 +251,8 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
                 <img
                   src={paragraph.content}
                   alt={paragraph.caption || "Image"}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-auto max-h-[600px] object-contain"
                   onError={(e) => {
                     e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f0f0f0' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-size='16'%3EImage not available%3C/text%3E%3C/svg%3E";
@@ -283,6 +285,8 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
                   <img
                     src={paragraph.content}
                     alt={paragraph.caption || "Image"}
+                    loading="lazy"
+                    decoding="async"
                     className="max-w-full max-h-[90vh] object-contain"
                     onError={(e) => {
                       e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f0f0f0' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999' font-size='16'%3EImage not available%3C/text%3E%3C/svg%3E";
