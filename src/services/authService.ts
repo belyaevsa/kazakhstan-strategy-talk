@@ -26,6 +26,14 @@ class AuthService {
     return response;
   }
 
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    return apiClient.post<{ message: string }>('/auth/forgot-password', { email });
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    return apiClient.post<{ message: string }>('/auth/reset-password', { token, newPassword });
+  }
+
   async getCurrentUser(): Promise<User | null> {
     try {
       const token = localStorage.getItem('auth_token');

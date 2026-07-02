@@ -51,6 +51,11 @@ public class Profile
     public string? EmailVerificationToken { get; set; }
     public DateTime? EmailVerificationTokenExpiry { get; set; }
 
+    // Password reset
+    [MaxLength(100)]
+    public string? PasswordResetToken { get; set; }
+    public DateTime? PasswordResetTokenExpiry { get; set; }
+
     // IP tracking for rate limiting
     [MaxLength(45)] // IPv6 max length
     public string? RegistrationIp { get; set; }

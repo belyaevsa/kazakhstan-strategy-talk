@@ -25,6 +25,8 @@ const Auth = () => {
   const [showResendOption, setShowResendOption] = useState(false);
   const [resendEmail, setResendEmail] = useState("");
   const [resendingEmail, setResendingEmail] = useState(false);
+  const [isForgot, setIsForgot] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
 
   useEffect(() => {
     // Check if already logged in
@@ -83,6 +85,21 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      await authService.forgotPassword(email);
+      setForgotSent(true);
+    } catch (error: any) {
+      // The endpoint is intentionally non-revealing; only surface transport errors.
+      toast.error(error.message || t("auth.errorOccurred"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleResendVerification = async () => {
     setResendingEmail(true);
     try {
@@ -109,15 +126,61 @@ const Auth = () => {
             </div>
           </div>
           <CardTitle className="text-2xl">
-            {isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}
+            {isForgot ? t("auth.forgotTitle") : isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}
           </CardTitle>
           <CardDescription>
-            {isLogin
-              ? t("auth.signInDescription")
-              : t("auth.registerDescription")}
+            {isForgot
+              ? t("auth.forgotDescription")
+              : isLogin
+                ? t("auth.signInDescription")
+                : t("auth.registerDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {isForgot ? (
+            forgotSent ? (
+              <div className="space-y-4">
+                <Alert className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/30">
+                  <Mail className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-blue-800 dark:text-blue-200">
+                    {t("auth.forgotSent")}
+                  </AlertDescription>
+                </Alert>
+                <button
+                  type="button"
+                  onClick={() => { setIsForgot(false); setForgotSent(false); }}
+                  className="text-primary hover:underline text-sm w-full text-center"
+                >
+                  {t("auth.backToSignIn")}
+                </button>
+              </div>
+          ) : (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="forgot-email">{t("auth.email")}</Label>
+                <Input
+                  id="forgot-email"
+                  type="email"
+                  placeholder={t("auth.yourEmail")}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? t("auth.loading") : t("auth.sendResetLink")}
+              </Button>
+              <button
+                type="button"
+                onClick={() => setIsForgot(false)}
+                className="text-primary hover:underline text-sm w-full text-center"
+              >
+                {t("auth.backToSignIn")}
+              </button>
+            </form>
+          )
+        ) : (
+          <>
           {/* Email Verification Notice */}
           {showEmailVerification && !error && (
             <Alert className="mb-4 border-blue-200 bg-blue-50">
@@ -205,6 +268,17 @@ const Auth = () => {
                 required
                 minLength={6}
               />
+              {isLogin && (
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => { setIsForgot(true); setError(""); setForgotSent(false); }}
+                    className="text-primary hover:underline text-sm"
+                  >
+                    {t("auth.forgotPassword")}
+                  </button>
+                </div>
+              )}
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? t("auth.loading") : isLogin ? t("auth.signIn") : t("auth.createAccount")}
@@ -221,6 +295,8 @@ const Auth = () => {
                 : t("auth.alreadyHaveAccountSignIn")}
             </button>
           </div>
+          </>
+        )}
         </CardContent>
       </Card>
     </div>

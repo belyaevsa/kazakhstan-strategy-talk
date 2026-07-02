@@ -13,6 +13,7 @@ import CookieConsent from "@/components/CookieConsent";
 const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
 const EmailVerified = lazy(() => import("./pages/EmailVerified"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const DocumentPage = lazy(() => import("./pages/DocumentPage"));
 const ChapterPage = lazy(() => import("./pages/ChapterPage"));
 const ChapterDetailPage = lazy(() => import("./pages/ChapterDetailPage"));
@@ -44,6 +45,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/verify-email" element={<EmailVerified />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/profile/:userId" element={<Profile />} />
           <Route path="/notifications" element={<Notifications />} />

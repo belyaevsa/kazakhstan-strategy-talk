@@ -162,6 +162,58 @@ public class EmailService
         }
     }
 
+    public async Task SendPasswordResetAsync(string toEmail, string username, string resetToken)
+    {
+        var appBaseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL")
+            ?? _configuration["Api:BaseUrl"]
+            ?? "https://localhost:7001";
+
+        var resetUrl = $"{appBaseUrl}/reset-password?token={resetToken}";
+
+        var subject = "Reset your password | Сброс пароля - Kazakhstan IT Strategy";
+        var body = $@"
+            <html>
+            <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+                    <!-- English Version -->
+                    <div style='margin-bottom: 40px;'>
+                        <h2 style='color: #007bff;'>Password reset requested, {username}</h2>
+                        <p>We received a request to reset your password. Click the button below to choose a new one:</p>
+                        <p style='text-align: center; margin: 30px 0;'>
+                            <a href='{resetUrl}' style='display: inline-block; padding: 12px 30px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;'>Reset Password</a>
+                        </p>
+                        <p>Or copy and paste this link into your browser:</p>
+                        <p style='background-color: #f5f5f5; padding: 10px; border-radius: 5px; word-break: break-all;'>{resetUrl}</p>
+                        <p><strong>This link will expire in 1 hour.</strong></p>
+                        <p style='color: #666; font-size: 14px;'>If you didn't request a password reset, you can safely ignore this email; your password will stay the same.</p>
+                    </div>
+
+                    <hr style='border: none; border-top: 1px solid #ddd; margin: 40px 0;' />
+
+                    <!-- Russian Version -->
+                    <div style='margin-bottom: 40px;'>
+                        <h2 style='color: #007bff;'>Запрос на сброс пароля, {username}</h2>
+                        <p>Мы получили запрос на сброс вашего пароля. Нажмите кнопку ниже, чтобы задать новый:</p>
+                        <p style='text-align: center; margin: 30px 0;'>
+                            <a href='{resetUrl}' style='display: inline-block; padding: 12px 30px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;'>Сбросить пароль</a>
+                        </p>
+                        <p>Или скопируйте и вставьте эту ссылку в ваш браузер:</p>
+                        <p style='background-color: #f5f5f5; padding: 10px; border-radius: 5px; word-break: break-all;'>{resetUrl}</p>
+                        <p><strong>Ссылка действительна в течение 1 часа.</strong></p>
+                        <p style='color: #666; font-size: 14px;'>Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо; ваш пароль не изменится.</p>
+                    </div>
+
+                    <div style='margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 14px;'>
+                        <p>Best regards | С уважением,<br><strong>Kazakhstan IT Strategy Team</strong></p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        ";
+
+        await SendEmailAsync(toEmail, subject, body);
+    }
+
     public async Task SendEmailAsync(string toEmail, string subject, string htmlBody)
     {
         _logger.LogInformation("Preparing to send email. To: {ToEmail}, Subject: {Subject}",

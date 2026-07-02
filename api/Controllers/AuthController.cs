@@ -448,6 +448,72 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Verification email has been resent. Please check your inbox." });
     }
 
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        var clientIp = GetClientIpAddress();
+        _logger.LogInformation("Password reset requested for: {Email}, IP: {IpAddress}", request.Email, clientIp);
+
+        var user = await _context.Profiles.FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower());
+
+        // Only act for verified, non-blocked accounts, but never reveal whether the account exists.
+        if (user != null && user.EmailVerified && !user.IsBlocked)
+        {
+            var resetToken = Guid.NewGuid().ToString();
+            user.PasswordResetToken = resetToken;
+            user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                await _emailService.SendPasswordResetAsync(user.Email, user.Username, resetToken);
+                _logger.LogInformation("Password reset email sent. UserId: {UserId}, IP: {IpAddress}", user.Id, clientIp);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send password reset email. Email: {Email}", user.Email);
+                // Fall through to the generic response so we don't leak account state.
+            }
+        }
+        else
+        {
+            _logger.LogInformation("Password reset requested for non-eligible account: {Email}, IP: {IpAddress}", request.Email, clientIp);
+        }
+
+        return Ok(new { message = "If an account with that email exists, a password reset link has been sent." });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        var clientIp = GetClientIpAddress();
+
+        var user = await _context.Profiles.FirstOrDefaultAsync(u => u.PasswordResetToken == request.Token);
+
+        if (user == null || user.PasswordResetTokenExpiry == null || user.PasswordResetTokenExpiry < DateTime.UtcNow)
+        {
+            _logger.LogWarning("Password reset failed - invalid or expired token. IP: {IpAddress}", clientIp);
+            return BadRequest(new { message = "This password reset link is invalid or has expired. Please request a new one." });
+        }
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        user.PasswordResetToken = null;
+        user.PasswordResetTokenExpiry = null;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Password reset successful. UserId: {UserId}, IP: {IpAddress}", user.Id, clientIp);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error resetting password. UserId: {UserId}", user.Id);
+            return StatusCode(500, new { message = "An error occurred while resetting your password" });
+        }
+
+        return Ok(new { message = "Your password has been reset. You can now sign in with your new password." });
+    }
+
     [HttpPut("language")]
     [Authorize]
     public async Task<IActionResult> UpdateLanguage(UpdateLanguageRequest request)
