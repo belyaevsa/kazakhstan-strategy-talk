@@ -86,14 +86,15 @@ builder.Services.AddScoped<SuggestionService>();
 builder.Services.AddScoped<SeoMetaService>();
 builder.Services.AddSingleton<ICacheService, CacheService>();
 
-// Cache warmup (one instance used as both the hosted service and IWarmupService)
+// Cache warmup: a single instance serving as both IWarmupService and the hosted
+// background service (the hosted registration forwards to the same instance so
+// re-warm signals from controllers reach the running loop).
 builder.Services.AddHttpClient();
-builder.Services.AddSingleton<CacheWarmupService>();
-builder.Services.AddSingleton<IWarmupService>(sp => sp.GetRequiredService<CacheWarmupService>());
+builder.Services.AddSingleton<IWarmupService, CacheWarmupService>();
 
 // Background Services
 builder.Services.AddHostedService<EmailNotificationBackgroundService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<CacheWarmupService>());
+builder.Services.AddHostedService(sp => (CacheWarmupService)sp.GetRequiredService<IWarmupService>());
 
 // Yandex Object Storage Configuration (S3-compatible)
 var awsAccessKey = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID");
