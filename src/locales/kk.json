@@ -12,7 +12,10 @@
     "viewAllChapters": "Барлық тараулар",
     "signIn": "Кіру",
     "logout": "Шығу",
-    "admin": "Әкімші"
+    "admin": "Әкімші",
+    "profile": "Профиль",
+    "toggleSidebar": "Бүйірлік панельді ашу/жабу",
+    "openComments": "Пікірлерді ашу"
   },
   "auth": {
     "login": "Кіру",

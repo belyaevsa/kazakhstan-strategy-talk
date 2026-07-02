@@ -249,6 +249,7 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
                 (isFrozen && !isEditorOrAdmin)
               }
               title={t("comments.submit")}
+              aria-label={t("comments.submit")}
             >
               <Send className="h-4 w-4" />
             </Button>

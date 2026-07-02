@@ -12,7 +12,10 @@
     "viewAllChapters": "Все главы",
     "signIn": "Войти",
     "logout": "Выйти",
-    "admin": "Админ"
+    "admin": "Админ",
+    "profile": "Профиль",
+    "toggleSidebar": "Свернуть/развернуть панель",
+    "openComments": "Открыть комментарии"
   },
   "auth": {
     "login": "Вход",

@@ -12,7 +12,10 @@
     "viewAllChapters": "View All Chapters",
     "signIn": "Sign In",
     "logout": "Logout",
-    "admin": "Admin"
+    "admin": "Admin",
+    "profile": "Profile",
+    "toggleSidebar": "Toggle sidebar",
+    "openComments": "Open comments"
   },
   "auth": {
     "login": "Login",

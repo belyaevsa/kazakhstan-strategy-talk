@@ -75,7 +75,7 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
             {sidebar && (
               <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="md:hidden">
+                  <Button variant="ghost" size="icon" className="md:hidden" aria-label={t('nav.documentStructure')} title={t('nav.documentStructure')}>
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
@@ -109,7 +109,7 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
                 {comments && (
                   <Sheet open={mobileCommentsOpen} onOpenChange={setMobileCommentsOpen}>
                     <SheetTrigger asChild>
-                      <Button variant="ghost" size="icon" className="xl:hidden">
+                      <Button variant="ghost" size="icon" className="xl:hidden" aria-label={t('nav.openComments')} title={t('nav.openComments')}>
                         <MessageSquare className="h-5 w-5" />
                       </Button>
                     </SheetTrigger>
@@ -131,11 +131,13 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
                   size="icon"
                   onClick={() => navigate(`/profile/${user?.id}`)}
                   className="flex items-center gap-2"
+                  aria-label={t('nav.profile')}
+                  title={t('nav.profile')}
                 >
                   <User className="h-4 w-4" />
                 </Button>
                 {isAdmin && (
-                  <Button variant="outline" size="icon" onClick={() => navigate("/admin")} className="hidden sm:flex">
+                  <Button variant="outline" size="icon" onClick={() => navigate("/admin")} className="hidden sm:flex" aria-label={t('nav.admin')} title={t('nav.admin')}>
                     <Shield className="h-4 w-4" />
                   </Button>
                 )}
@@ -187,6 +189,8 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
                       size="icon"
                       className="bg-card shadow-md hover:shadow-lg"
                       onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                      aria-label={t('nav.toggleSidebar')}
+                      title={t('nav.toggleSidebar')}
                     >
                       {isSidebarCollapsed ? (
                         <ChevronRight className="h-4 w-4" />
