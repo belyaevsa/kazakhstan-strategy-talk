@@ -15,9 +15,9 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
-import { FileText, BookOpen, GripVertical, Save, X, Plus, MoreVertical, Copy, Link2, FolderInput, Eye, EyeOff, Trash2 } from "lucide-react";
+import { FileText, GripVertical, Save, X, Plus, MoreVertical, Copy, Link2, FolderInput, Eye, EyeOff, Trash2 } from "lucide-react";
+import { getChapterIcon } from "@/lib/chapterIcons";
 import ChapterDialog from "@/components/ChapterDialog";
-import * as LucideIcons from "lucide-react";
 import DocumentLayout from "@/components/DocumentLayout";
 import DocumentStructure from "@/components/DocumentStructure";
 import { getCurrentLanguage, setLanguage, type Language, t } from "@/lib/i18n";
@@ -291,19 +291,6 @@ const AllChaptersView = () => {
   };
 
   const currentLang = lang || getCurrentLanguage();
-
-  const getChapterIcon = (iconName?: string) => {
-    if (!iconName) return BookOpen;
-
-    // Convert kebab-case to PascalCase (e.g., "mail-open" -> "MailOpen")
-    const pascalCaseName = iconName
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join('');
-
-    const Icon = (LucideIcons as any)[pascalCaseName];
-    return Icon || BookOpen;
-  };
 
   if (isLoading) {
     return (

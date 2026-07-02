@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link, useLocation, useParams, useNavigate } from "react-router-dom";
 import { FileText, ChevronRight, ChevronDown, BookOpen, Settings, Plus, EyeOff, List } from "lucide-react";
-import * as LucideIcons from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { authService } from "@/services/authService";
 import { t, getCurrentLanguage } from "@/lib/i18n";
 import { stripMarkdownLinks } from "@/lib/markdown";
+import { getChapterIcon } from "@/lib/chapterIcons";
 import type { Chapter } from "@/lib/api/types";
 
 interface DocumentStructureProps {
@@ -42,19 +42,6 @@ const DocumentStructure = ({ chapters, onAddChapter, onAddPage, onNavigate }: Do
       ...prev,
       [chapterId]: !prev[chapterId]
     }));
-  };
-
-  const getChapterIcon = (iconName?: string) => {
-    if (!iconName) return BookOpen;
-
-    // Convert kebab-case to PascalCase (e.g., "mail-open" -> "MailOpen")
-    const pascalCaseName = iconName
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join('');
-
-    const Icon = (LucideIcons as any)[pascalCaseName];
-    return Icon || BookOpen;
   };
 
 

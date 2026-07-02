@@ -5,10 +5,10 @@ import { chapterService } from "@/services/chapterService";
 import { authService } from "@/services/authService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, ArrowRight, BookOpen, AlertCircle } from "lucide-react";
-import * as LucideIcons from "lucide-react";
+import { FileText, ArrowRight, AlertCircle } from "lucide-react";
 import DocumentLayout from "@/components/DocumentLayout";
 import { getCurrentLanguage, setLanguage, type Language, t } from "@/lib/i18n";
+import { getChapterIcon } from "@/lib/chapterIcons";
 
 const Index = () => {
   const { lang } = useParams();
@@ -40,19 +40,6 @@ const Index = () => {
       const currentLang = lang || getCurrentLanguage();
       navigate(`/${currentLang}/${chapters[0].slug}/${chapters[0].pages[0].slug}`);
     }
-  };
-
-  const getChapterIcon = (iconName?: string) => {
-    if (!iconName) return BookOpen;
-
-    // Convert kebab-case to PascalCase (e.g., "mail-open" -> "MailOpen")
-    const pascalCaseName = iconName
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join('');
-
-    const Icon = (LucideIcons as any)[pascalCaseName];
-    return Icon || BookOpen;
   };
 
   return (
