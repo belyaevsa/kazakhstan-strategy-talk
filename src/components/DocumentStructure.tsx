@@ -12,10 +12,11 @@ import type { Chapter } from "@/lib/api/types";
 interface DocumentStructureProps {
   chapters: Chapter[];
   onAddChapter?: () => void;
+  onAddPage?: (chapterId: string) => void;
   onNavigate?: (path: string) => boolean | Promise<boolean>;
 }
 
-const DocumentStructure = ({ chapters, onAddChapter, onNavigate }: DocumentStructureProps) => {
+const DocumentStructure = ({ chapters, onAddChapter, onAddPage, onNavigate }: DocumentStructureProps) => {
   const location = useLocation();
   const { lang } = useParams();
   const navigate = useNavigate();
@@ -137,6 +138,17 @@ const DocumentStructure = ({ chapters, onAddChapter, onNavigate }: DocumentStruc
                     </div>
                   </div>
                 </Link>
+                {isEditor && onAddPage && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0 mt-0.5 shrink-0"
+                    title={t("chapter.addPage")}
+                    onClick={() => onAddPage(chapter.id)}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                )}
                 {isEditor && (
                   <Link
                     to={`/${currentLang}/chapter/${chapter.slug}`}
@@ -186,6 +198,17 @@ const DocumentStructure = ({ chapters, onAddChapter, onNavigate }: DocumentStruc
             </Collapsible>
           );
         })}
+        {isEditor && onAddChapter && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start gap-2 mt-2 text-muted-foreground hover:text-foreground"
+            onClick={onAddChapter}
+          >
+            <Plus className="h-4 w-4" />
+            {t("editor.addChapter")}
+          </Button>
+        )}
       </nav>
     </div>
   );

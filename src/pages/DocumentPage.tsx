@@ -822,11 +822,15 @@ const DocumentPage = () => {
           chapterId: data.chapterId,
         });
       } else {
+        // Append new pages at the end of the chapter instead of colliding at index 0
+        const targetChapter = chapters?.find(c => c.id === data.chapterId);
+        const orderIndex = targetChapter ? targetChapter.pages.length : 0;
         const newPage = await pageService.create({
           title: data.title,
           description: data.description,
           slug: data.slug,
           chapterId: data.chapterId,
+          orderIndex,
         });
 
         // Create a default empty text paragraph for the new page
@@ -1060,7 +1064,7 @@ const DocumentPage = () => {
   return (
     <>
       <DocumentLayout
-        sidebar={chapters && <DocumentStructure chapters={chapters} onAddChapter={handleAddChapter} onNavigate={handleNavigation} />}
+        sidebar={chapters && <DocumentStructure chapters={chapters} onAddChapter={handleAddChapter} onAddPage={handleAddPage} onNavigate={handleNavigation} />}
         comments={
           !isEditMode && (
             <div className="space-y-4">
