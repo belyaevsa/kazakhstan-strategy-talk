@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using KazakhstanStrategyApi.Data;
+using KazakhstanStrategyApi.Middleware;
 using KazakhstanStrategyApi.Services;
 using DotNetEnv;
 using Amazon.S3;
@@ -202,6 +203,9 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Log every /api request input and response result (with failure reason). See LOGGING-STANDARD.md.
+app.UseRequestResponseLogging();
 
 app.MapControllers();
 

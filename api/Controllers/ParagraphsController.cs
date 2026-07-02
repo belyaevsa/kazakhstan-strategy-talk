@@ -12,7 +12,7 @@ namespace KazakhstanStrategyApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ParagraphsController : ControllerBase
+public class ParagraphsController : ApiControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ICacheService _cache;

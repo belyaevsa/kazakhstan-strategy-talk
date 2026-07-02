@@ -11,7 +11,7 @@ namespace KazakhstanStrategyApi.Controllers;
 [ApiController]
 [Route("api/reports")]
 [Authorize]
-public class ReportsController : ControllerBase
+public class ReportsController : ApiControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ILogger<ReportsController> _logger;

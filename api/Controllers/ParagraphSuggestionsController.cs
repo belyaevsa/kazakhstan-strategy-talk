@@ -8,7 +8,7 @@ namespace KazakhstanStrategyApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ParagraphSuggestionsController : ControllerBase
+public class ParagraphSuggestionsController : ApiControllerBase
 {
     private readonly SuggestionService _suggestionService;
     private readonly ILogger<ParagraphSuggestionsController> _logger;

@@ -9,7 +9,7 @@ namespace KazakhstanStrategyApi.Controllers;
 
 [ApiController]
 [Route("api/pages")]
-public class PageFollowController : ControllerBase
+public class PageFollowController : ApiControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ILogger<PageFollowController> _logger;

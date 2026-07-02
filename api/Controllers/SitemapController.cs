@@ -8,7 +8,7 @@ using System.Xml;
 namespace KazakhstanStrategyApi.Controllers;
 
 [ApiController]
-public class SitemapController : ControllerBase
+public class SitemapController : ApiControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ICacheService _cache;

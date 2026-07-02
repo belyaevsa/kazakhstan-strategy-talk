@@ -11,7 +11,7 @@ namespace KazakhstanStrategyApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController : ApiControllerBase
 {
     private readonly AppDbContext _context;
     private readonly TokenService _tokenService;
@@ -229,21 +229,21 @@ public class AuthController : ControllerBase
         {
             _logger.LogWarning("Login failed - Invalid credentials. Email: {Email}, IP: {IpAddress}",
                 request.Email, clientIp);
-            return Unauthorized(new { message = "Invalid email or password" });
+            return UnauthorizedReason("invalid_credentials", "Invalid email or password");
         }
 
         if (!user.EmailVerified)
         {
             _logger.LogWarning("Login failed - Email not verified. Email: {Email}, UserId: {UserId}, IP: {IpAddress}",
                 user.Email, user.Id, clientIp);
-            return Unauthorized(new { message = "Please verify your email address before logging in. Check your inbox for the verification link." });
+            return UnauthorizedReason("email_not_verified", "Please verify your email address before logging in. Check your inbox for the verification link.");
         }
 
         if (user.IsBlocked)
         {
             _logger.LogWarning("Login failed - Account blocked. Email: {Email}, UserId: {UserId}, IP: {IpAddress}",
                 user.Email, user.Id, clientIp);
-            return Unauthorized(new { message = "Your account has been blocked. Please contact support." });
+            return UnauthorizedReason("account_blocked", "Your account has been blocked. Please contact support.");
         }
 
         if (user.FrozenUntil.HasValue && user.FrozenUntil > DateTime.UtcNow)
@@ -256,7 +256,7 @@ public class AuthController : ControllerBase
             _logger.LogWarning("Login failed - Account frozen. Email: {Email}, UserId: {UserId}, FrozenUntil: {FrozenUntil}, IP: {IpAddress}",
                 user.Email, user.Id, user.FrozenUntil, clientIp);
 
-            return Unauthorized(new { message });
+            return UnauthorizedReason("account_frozen", message);
         }
 
         var token = await _tokenService.GenerateTokenAsync(user);

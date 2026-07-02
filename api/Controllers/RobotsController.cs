@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace KazakhstanStrategyApi.Controllers;
 
 [ApiController]
-public class RobotsController : ControllerBase
+public class RobotsController : ApiControllerBase
 {
     private readonly IConfiguration _configuration;
 

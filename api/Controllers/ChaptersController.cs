@@ -10,7 +10,7 @@ namespace KazakhstanStrategyApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ChaptersController : ControllerBase
+public class ChaptersController : ApiControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ICacheService _cache;

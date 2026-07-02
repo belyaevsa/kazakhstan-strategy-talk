@@ -10,7 +10,7 @@ namespace KazakhstanStrategyApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ProfileController : ControllerBase
+public class ProfileController : ApiControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ILogger<ProfileController> _logger;

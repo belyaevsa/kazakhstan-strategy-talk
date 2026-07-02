@@ -7,7 +7,7 @@ namespace KazakhstanStrategyApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UploadController : ControllerBase
+public class UploadController : ApiControllerBase
 {
     private readonly IS3UploadService? _s3UploadService;
     private readonly ILogger<UploadController> _logger;

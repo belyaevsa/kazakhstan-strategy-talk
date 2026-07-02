@@ -10,7 +10,7 @@ namespace KazakhstanStrategyApi.Controllers;
 [ApiController]
 [Route("api/notifications")]
 [Authorize]
-public class NotificationsController : ControllerBase
+public class NotificationsController : ApiControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ILogger<NotificationsController> _logger;

@@ -11,7 +11,7 @@ namespace KazakhstanStrategyApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class CommentsController : ControllerBase
+public class CommentsController : ApiControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ICacheService _cache;

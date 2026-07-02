@@ -11,7 +11,7 @@ namespace KazakhstanStrategyApi.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Policy = "AdminPolicy")]
-public class AdminController : ControllerBase
+public class AdminController : ApiControllerBase
 {
     private readonly AppDbContext _context;
     private readonly SettingsService _settingsService;
