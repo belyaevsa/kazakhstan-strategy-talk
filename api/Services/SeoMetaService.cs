@@ -126,6 +126,31 @@ public class SeoMetaService
 
                     meta.Title = $"{siteTitle} | {chapterTitle} | {pageTitle}";
                     meta.Description = description;
+
+                    // Render the page body as HTML so non-JS crawlers see real content,
+                    // not just the empty SPA shell.
+                    try
+                    {
+                        var paragraphs = await _db.Paragraphs
+                            .Where(p => p.PageId == page.Id && !p.IsHidden)
+                            .OrderBy(p => p.OrderIndex)
+                            .ToListAsync();
+
+                        Dictionary<Guid, string> paraTranslations = new();
+                        if (paragraphs.Count > 0)
+                        {
+                            var paraIds = paragraphs.Select(p => p.Id).ToList();
+                            paraTranslations = await _db.ParagraphTranslations
+                                .Where(tr => paraIds.Contains(tr.ParagraphId) && tr.Language == lang)
+                                .ToDictionaryAsync(tr => tr.ParagraphId, tr => tr.Content);
+                        }
+
+                        meta.BodyHtml = RenderBody(pageTitle, description, paragraphs, paraTranslations);
+                    }
+                    catch
+                    {
+                        // Body rendering is best-effort; head meta still ships if it fails.
+                    }
                 }
             }
         }
@@ -149,6 +174,110 @@ public class SeoMetaService
 
     private static string FirstNonEmpty(params string?[] values)
         => values.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v)) ?? "";
+
+    // Build a semantic HTML representation of the page for crawlers.
+    private static string RenderBody(string pageTitle, string description, List<Models.Paragraph> paragraphs, Dictionary<Guid, string> translations)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append("<article>");
+        sb.Append($"<h1>{WebUtility.HtmlEncode(pageTitle)}</h1>");
+        if (!string.IsNullOrWhiteSpace(description))
+        {
+            sb.Append($"<p>{WebUtility.HtmlEncode(description)}</p>");
+        }
+
+        foreach (var p in paragraphs)
+        {
+            var content = translations.TryGetValue(p.Id, out var tr) && !string.IsNullOrWhiteSpace(tr) ? tr : p.Content;
+
+            switch (p.Type)
+            {
+                case Models.ParagraphType.Header:
+                case Models.ParagraphType.Header1:
+                    sb.Append($"<h2>{InlineToHtml(content)}</h2>");
+                    break;
+                case Models.ParagraphType.Header2:
+                    sb.Append($"<h3>{InlineToHtml(content)}</h3>");
+                    break;
+                case Models.ParagraphType.Header3:
+                    sb.Append($"<h4>{InlineToHtml(content)}</h4>");
+                    break;
+                case Models.ParagraphType.Quote:
+                    sb.Append($"<blockquote>{InlineToHtml(content)}</blockquote>");
+                    break;
+                case Models.ParagraphType.Callout:
+                    sb.Append($"<aside>{InlineToHtml(content)}</aside>");
+                    break;
+                case Models.ParagraphType.Code:
+                    sb.Append($"<pre><code>{WebUtility.HtmlEncode(content)}</code></pre>");
+                    break;
+                case Models.ParagraphType.List:
+                    sb.Append("<ul>");
+                    foreach (var line in content.Split('\n'))
+                    {
+                        var item = line.TrimStart('-', '*', ' ', '\t').Trim();
+                        if (!string.IsNullOrWhiteSpace(item)) sb.Append($"<li>{InlineToHtml(item)}</li>");
+                    }
+                    sb.Append("</ul>");
+                    break;
+                case Models.ParagraphType.Table:
+                    sb.Append(RenderTable(content));
+                    break;
+                case Models.ParagraphType.Image:
+                    var alt = WebUtility.HtmlEncode(p.Caption ?? "");
+                    sb.Append($"<figure><img src=\"{WebUtility.HtmlEncode(content)}\" alt=\"{alt}\" loading=\"lazy\" />");
+                    if (!string.IsNullOrWhiteSpace(p.Caption)) sb.Append($"<figcaption>{alt}</figcaption>");
+                    sb.Append("</figure>");
+                    break;
+                case Models.ParagraphType.Divider:
+                    sb.Append("<hr />");
+                    break;
+                case Models.ParagraphType.Link:
+                case Models.ParagraphType.Text:
+                default:
+                    if (!string.IsNullOrWhiteSpace(content)) sb.Append($"<p>{InlineToHtml(content)}</p>");
+                    break;
+            }
+        }
+
+        sb.Append("</article>");
+        return sb.ToString();
+    }
+
+    private static string RenderTable(string markdown)
+    {
+        var lines = markdown.Trim().Split('\n').Where(l => l.Trim().Length > 0).ToList();
+        if (lines.Count < 2) return $"<p>{InlineToHtml(markdown)}</p>";
+
+        string[] Cells(string line) => line.Split('|').Select(c => c.Trim()).Where(c => c.Length > 0).ToArray();
+
+        var sb = new System.Text.StringBuilder("<table><thead><tr>");
+        foreach (var h in Cells(lines[0])) sb.Append($"<th>{InlineToHtml(h)}</th>");
+        sb.Append("</tr></thead><tbody>");
+        foreach (var row in lines.Skip(2))
+        {
+            sb.Append("<tr>");
+            foreach (var c in Cells(row)) sb.Append($"<td>{InlineToHtml(c)}</td>");
+            sb.Append("</tr>");
+        }
+        sb.Append("</tbody></table>");
+        return sb.ToString();
+    }
+
+    // Convert inline Markdown (links, footnotes, bold, italic) to safe HTML.
+    private static string InlineToHtml(string? raw)
+    {
+        var text = WebUtility.HtmlEncode(raw ?? "");
+        // Footnotes [[term|def|url|label]] -> just the term
+        text = Regex.Replace(text, @"\[\[([^\|\]]+)\|[^\]]*?\]\]", m => m.Groups[1].Value.Trim());
+        // Links [text](url) -> <a>
+        text = Regex.Replace(text, @"\[([^\]]+)\]\(([^)]+)\)",
+            m => $"<a href=\"{m.Groups[2].Value}\" rel=\"noopener\">{m.Groups[1].Value}</a>");
+        // Bold / italic
+        text = Regex.Replace(text, @"\*\*([^*]+)\*\*", "<strong>$1</strong>");
+        text = Regex.Replace(text, @"(?<!\*)\*([^*]+)\*(?!\*)", "<em>$1</em>");
+        return text;
+    }
 
     private static string Inject(string html, SeoMeta meta)
     {
@@ -181,6 +310,19 @@ public class SeoMetaService
         links.Append($"\n    <link rel=\"alternate\" hreflang=\"x-default\" href=\"{xdefault}\" />");
 
         html = html.Replace("</head>", links + "\n  </head>");
+
+        // Render the article into the SPA root so crawlers without JS see real
+        // content. React's createRoot().render() replaces these children on mount,
+        // so users with JS never see it.
+        if (!string.IsNullOrEmpty(meta.BodyHtml))
+        {
+            html = Regex.Replace(
+                html,
+                "<div id=\"root\">\\s*</div>",
+                $"<div id=\"root\">{meta.BodyHtml}</div>",
+                RegexOptions.IgnoreCase);
+        }
+
         return html;
     }
 
@@ -207,5 +349,6 @@ public class SeoMetaService
         public string Canonical { get; set; } = "";
         public string BaseUrl { get; set; } = "";
         public string PathWithoutLang { get; set; } = "";
+        public string BodyHtml { get; set; } = "";
     }
 }
