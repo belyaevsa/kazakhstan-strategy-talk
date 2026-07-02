@@ -80,88 +80,56 @@ public class ProfileController : ApiControllerBase
             return NotFound(new { message = "User not found" });
         }
 
-        // Get latest comments (last 10)
-        var latestCommentsQuery = await _context.Comments
+        // Vote scores are denormalized on the comment (AgreeCount/DisagreeCount),
+        // so none of the stats below need per-comment vote queries.
+
+        // Latest comments (last 10)
+        var latestComments = (await _context.Comments
             .Where(c => c.UserId == userId && !c.IsDeleted && c.PageId != null)
             .Include(c => c.Page)
                 .ThenInclude(p => p.Chapter)
             .OrderByDescending(c => c.CreatedAt)
             .Take(10)
-            .ToListAsync();
-
-        var latestComments = new List<CommentWithContextDTO>();
-        foreach (var c in latestCommentsQuery)
-        {
-            var agreeCount = await _context.CommentVotes
-                .Where(cv => cv.CommentId == c.Id && cv.VoteType == "agree")
-                .CountAsync();
-            var disagreeCount = await _context.CommentVotes
-                .Where(cv => cv.CommentId == c.Id && cv.VoteType == "disagree")
-                .CountAsync();
-            var voteScore = agreeCount - disagreeCount;
-
-            latestComments.Add(new CommentWithContextDTO
+            .ToListAsync())
+            .Select(c => new CommentWithContextDTO
             {
                 Id = c.Id,
                 Content = c.Content,
                 CreatedAt = c.CreatedAt,
-                VoteScore = voteScore,
+                VoteScore = c.AgreeCount - c.DisagreeCount,
                 PageId = c.PageId!.Value,
                 PageTitle = c.Page?.Title ?? "",
                 PageSlug = c.Page?.Slug ?? "",
                 ChapterSlug = c.Page?.Chapter?.Slug ?? "",
                 ParagraphId = c.ParagraphId
-            });
-        }
+            }).ToList();
 
-        // Get most popular comment (highest vote score)
-        var allComments = await _context.Comments
+        // Most popular comment (highest score) in a single ordered query
+        var mostPopular = await _context.Comments
             .Where(c => c.UserId == userId && !c.IsDeleted && c.PageId != null)
             .Include(c => c.Page)
                 .ThenInclude(p => p.Chapter)
-            .ToListAsync();
+            .OrderByDescending(c => c.AgreeCount - c.DisagreeCount)
+            .FirstOrDefaultAsync();
 
         CommentWithContextDTO? popularComment = null;
-        if (allComments.Any())
+        if (mostPopular != null && mostPopular.AgreeCount - mostPopular.DisagreeCount > 0)
         {
-            int maxScore = int.MinValue;
-            Comment? mostPopular = null;
-
-            foreach (var c in allComments)
+            popularComment = new CommentWithContextDTO
             {
-                var agreeCount = await _context.CommentVotes
-                    .Where(cv => cv.CommentId == c.Id && cv.VoteType == "agree")
-                    .CountAsync();
-                var disagreeCount = await _context.CommentVotes
-                    .Where(cv => cv.CommentId == c.Id && cv.VoteType == "disagree")
-                    .CountAsync();
-                var voteScore = agreeCount - disagreeCount;
-
-                if (voteScore > maxScore)
-                {
-                    maxScore = voteScore;
-                    mostPopular = c;
-                }
-            }
-
-            if (mostPopular != null && maxScore > 0)
-            {
-                popularComment = new CommentWithContextDTO
-                {
-                    Id = mostPopular.Id,
-                    Content = mostPopular.Content,
-                    CreatedAt = mostPopular.CreatedAt,
-                    VoteScore = maxScore,
-                    PageId = mostPopular.PageId!.Value,
-                    PageTitle = mostPopular.Page?.Title ?? "",
-                    PageSlug = mostPopular.Page?.Slug ?? "",
-                    ChapterSlug = mostPopular.Page?.Chapter?.Slug ?? "",
-                    ParagraphId = mostPopular.ParagraphId
-                };
-            }
+                Id = mostPopular.Id,
+                Content = mostPopular.Content,
+                CreatedAt = mostPopular.CreatedAt,
+                VoteScore = mostPopular.AgreeCount - mostPopular.DisagreeCount,
+                PageId = mostPopular.PageId!.Value,
+                PageTitle = mostPopular.Page?.Title ?? "",
+                PageSlug = mostPopular.Page?.Slug ?? "",
+                ChapterSlug = mostPopular.Page?.Chapter?.Slug ?? "",
+                ParagraphId = mostPopular.ParagraphId
+            };
         }
 
-        // Get active discussions (pages where user has commented recently)
+        // Active discussions (pages where user has commented recently)
         var activeDiscussions = await _context.Comments
             .Where(c => c.UserId == userId && !c.IsDeleted && c.PageId != null)
             .GroupBy(c => c.PageId)
@@ -175,23 +143,28 @@ public class ProfileController : ApiControllerBase
             .Take(5)
             .ToListAsync();
 
-        var discussions = new List<ActiveDiscussionDTO>();
-        foreach (var disc in activeDiscussions)
-        {
-            var page = await _context.Pages.Include(p => p.Chapter).FirstOrDefaultAsync(p => p.Id == disc.PageId);
-            if (page != null)
+        // Fetch the involved pages in one query instead of one per discussion
+        var discussionPageIds = activeDiscussions.Select(d => d.PageId).ToList();
+        var discussionPages = await _context.Pages
+            .Include(p => p.Chapter)
+            .Where(p => discussionPageIds.Contains(p.Id))
+            .ToDictionaryAsync(p => p.Id);
+
+        var discussions = activeDiscussions
+            .Where(d => discussionPages.ContainsKey(d.PageId))
+            .Select(d =>
             {
-                discussions.Add(new ActiveDiscussionDTO
+                var page = discussionPages[d.PageId];
+                return new ActiveDiscussionDTO
                 {
-                    PageId = disc.PageId,
+                    PageId = d.PageId,
                     PageTitle = page.Title,
                     PageSlug = page.Slug,
                     ChapterSlug = page.Chapter?.Slug ?? "",
-                    CommentCount = disc.CommentCount,
-                    LastCommentAt = disc.LastCommentAt
-                });
-            }
-        }
+                    CommentCount = d.CommentCount,
+                    LastCommentAt = d.LastCommentAt
+                };
+            }).ToList();
 
         var stats = new ProfileStatsDTO
         {
