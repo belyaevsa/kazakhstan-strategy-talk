@@ -61,6 +61,7 @@ builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<SettingsService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<SuggestionService>();
+builder.Services.AddScoped<SeoMetaService>();
 builder.Services.AddSingleton<ICacheService, CacheService>();
 
 // Background Services
@@ -181,6 +182,32 @@ app.MapFallbackToFile("index.html").Add(endpointBuilder =>
             context.Response.StatusCode = 404;
             return;
         }
+
+        // Inject per-URL SEO metadata into index.html for content routes so
+        // crawlers/social scrapers see real tags instead of the generic shell.
+        if (HttpMethods.IsGet(context.Request.Method))
+        {
+            try
+            {
+                var seo = context.RequestServices.GetRequiredService<SeoMetaService>();
+                var html = await seo.RenderAsync(
+                    context.Request.Path.Value ?? "/",
+                    context.Request.Scheme,
+                    context.Request.Host.Value ?? string.Empty);
+
+                if (html != null)
+                {
+                    context.Response.ContentType = "text/html; charset=utf-8";
+                    await context.Response.WriteAsync(html);
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "SEO meta injection failed for {Path}; serving default index.html", path);
+            }
+        }
+
         await originalRequestDelegate(context);
     };
 });
