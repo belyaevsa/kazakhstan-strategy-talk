@@ -1,13 +1,21 @@
 import { apiClient } from '@/lib/api/client';
 import { Comment, CreateCommentRequest, UpdateCommentRequest, VoteRequest } from '@/lib/api/types';
 
+export interface PagedComments {
+  items: Comment[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+}
+
 class CommentService {
-  async getByPage(pageId: string): Promise<Comment[]> {
-    return apiClient.get<Comment[]>(`/comments/page/${pageId}`);
+  async getByPage(pageId: string, page = 1, pageSize = 20): Promise<PagedComments> {
+    return apiClient.get<PagedComments>(`/comments/page/${pageId}?page=${page}&pageSize=${pageSize}`);
   }
 
-  async getByParagraph(paragraphId: string): Promise<Comment[]> {
-    return apiClient.get<Comment[]>(`/comments/paragraph/${paragraphId}`);
+  async getByParagraph(paragraphId: string, page = 1, pageSize = 20): Promise<PagedComments> {
+    return apiClient.get<PagedComments>(`/comments/paragraph/${paragraphId}?page=${page}&pageSize=${pageSize}`);
   }
 
   async getById(id: string): Promise<Comment> {

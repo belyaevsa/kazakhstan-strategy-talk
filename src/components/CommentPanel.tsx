@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authService } from "@/services/authService";
-import { commentService } from "@/services/commentService";
+import { commentService, type PagedComments } from "@/services/commentService";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageSquare, Send, Clock } from "lucide-react";
@@ -28,6 +28,7 @@ function insertComment(tree: Comment[], comment: Comment, parentId?: string): Co
 
 const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
   const [newComment, setNewComment] = useState("");
+  const [pageSize, setPageSize] = useState(20);
   const [countdown, setCountdown] = useState(0);
   const [userState, setUserState] = useState(authService.getUser());
   const queryClient = useQueryClient();
@@ -67,18 +68,21 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
     return () => clearInterval(interval);
   }, [user, isEditorOrAdmin]);
 
-  const { data: comments, isLoading } = useQuery({
-    queryKey: ["comments", paragraphId, pageId, mode],
-    queryFn: async () => {
+  const { data, isLoading } = useQuery({
+    queryKey: ["comments", paragraphId, pageId, mode, pageSize],
+    queryFn: async (): Promise<PagedComments> => {
       if (mode === "paragraph" && paragraphId) {
-        return commentService.getByParagraph(paragraphId);
+        return commentService.getByParagraph(paragraphId, 1, pageSize);
       } else if (mode === "page" && pageId) {
-        return commentService.getByPage(pageId);
+        return commentService.getByPage(pageId, 1, pageSize);
       }
-      return [];
+      return { items: [], total: 0, page: 1, pageSize, hasMore: false };
     },
     enabled: !!(paragraphId || pageId),
   });
+
+  const comments = data?.items ?? [];
+  const hasMore = data?.hasMore ?? false;
 
   const addCommentMutation = useMutation({
     mutationFn: async ({ content, parentId }: { content: string; parentId?: string }) => {
@@ -99,9 +103,9 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
     },
     // Optimistically show the new comment immediately, then reconcile on settle.
     onMutate: async ({ content, parentId }) => {
-      const key = ["comments", paragraphId, pageId, mode];
+      const key = ["comments", paragraphId, pageId, mode, pageSize];
       await queryClient.cancelQueries({ queryKey: key });
-      const previous = queryClient.getQueryData<Comment[]>(key);
+      const previous = queryClient.getQueryData<PagedComments>(key);
 
       const currentUser = authService.getUser();
       if (currentUser) {
@@ -116,7 +120,9 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
           parentId,
           replies: [],
         };
-        queryClient.setQueryData<Comment[]>(key, (old = []) => insertComment(old, optimistic, parentId));
+        queryClient.setQueryData<PagedComments>(key, (old) =>
+          old ? { ...old, items: insertComment(old.items, optimistic, parentId), total: old.total + 1 } : old
+        );
       }
 
       setNewComment("");
@@ -269,6 +275,17 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
               />
             </div>
           ))
+        )}
+
+        {hasMore && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full"
+            onClick={() => setPageSize((s) => s + 20)}
+          >
+            {t("comments.loadMore")}
+          </Button>
         )}
       </div>
 

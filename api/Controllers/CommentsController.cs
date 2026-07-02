@@ -27,27 +27,35 @@ public class CommentsController : ApiControllerBase
     }
 
     [HttpGet("page/{pageId}")]
-    public async Task<ActionResult<IEnumerable<CommentDTO>>> GetCommentsByPage(Guid pageId)
+    public async Task<ActionResult<object>> GetCommentsByPage(Guid pageId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        var comments = await _context.Comments
-            .Include(c => c.User)
-            .Where(c => c.PageId == pageId && c.ParentId == null)
-            .OrderBy(c => c.CreatedAt)
-            .ToListAsync();
-
-        return Ok(await MapCommentsWithReplies(comments));
+        return Ok(await PageRootComments(
+            _context.Comments.Where(c => c.PageId == pageId && c.ParentId == null), page, pageSize));
     }
 
     [HttpGet("paragraph/{paragraphId}")]
-    public async Task<ActionResult<IEnumerable<CommentDTO>>> GetCommentsByParagraph(Guid paragraphId)
+    public async Task<ActionResult<object>> GetCommentsByParagraph(Guid paragraphId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        var comments = await _context.Comments
+        return Ok(await PageRootComments(
+            _context.Comments.Where(c => c.ParagraphId == paragraphId && c.ParentId == null), page, pageSize));
+    }
+
+    // Paginate the top-level comments (roots); each root still carries its full reply tree.
+    private async Task<object> PageRootComments(IQueryable<Comment> rootQuery, int page, int pageSize)
+    {
+        pageSize = Math.Clamp(pageSize, 1, 100);
+        page = Math.Max(1, page);
+
+        var total = await rootQuery.CountAsync();
+        var roots = await rootQuery
             .Include(c => c.User)
-            .Where(c => c.ParagraphId == paragraphId && c.ParentId == null)
             .OrderBy(c => c.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
 
-        return Ok(await MapCommentsWithReplies(comments));
+        var items = await MapCommentsWithReplies(roots);
+        return new { items, total, page, pageSize, hasMore = page * pageSize < total };
     }
 
     [HttpGet("suggestion/{suggestionId}")]

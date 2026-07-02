@@ -99,6 +99,7 @@
   },
   "comments": {
     "generalDiscussion": "General Discussion",
+    "loadMore": "Load more comments",
     "paragraphComments": "Paragraph Comments",
     "writeComment": "Write a comment...",
     "writeReply": "Write a reply...",

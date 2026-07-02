@@ -99,6 +99,7 @@
   },
   "comments": {
     "generalDiscussion": "Общее обсуждение",
+    "loadMore": "Показать ещё комментарии",
     "paragraphComments": "Комментарии к параграфу",
     "writeComment": "Написать комментарий...",
     "writeReply": "Написать ответ...",
