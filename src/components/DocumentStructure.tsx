@@ -7,6 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Button } from "@/components/ui/button";
 import { authService } from "@/services/authService";
 import { t, getCurrentLanguage } from "@/lib/i18n";
+import { stripMarkdownLinks } from "@/lib/markdown";
 import type { Chapter } from "@/lib/api/types";
 
 interface DocumentStructureProps {
@@ -56,11 +57,6 @@ const DocumentStructure = ({ chapters, onAddChapter, onAddPage, onNavigate }: Do
     return Icon || BookOpen;
   };
 
-  // Strip Markdown-style links [text](url) and return just the text for TOC
-  const stripMarkdownLinks = (text: string) => {
-    // Replace [text](url) with just text
-    return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
-  };
 
   // Filter chapters and pages based on user role
   const visibleChapters = isEditor

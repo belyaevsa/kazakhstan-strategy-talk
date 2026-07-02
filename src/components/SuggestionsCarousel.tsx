@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/useTranslation';
 import { toast } from 'sonner';
 import { suggestionService } from '@/services/suggestionService';
+import { parseInlineMarkdown } from '@/lib/markdown';
 import { ParagraphSuggestion } from '@/lib/api/types';
 import { SuggestionCard } from './SuggestionCard';
 import { SuggestionEditor } from './SuggestionEditor';
@@ -34,72 +35,7 @@ export const SuggestionsCarousel = ({
   const [isEditing, setIsEditing] = useState(false);
 
   // Parse markdown text to JSX with formatting
-  const parseMarkdown = (text: string) => {
-    const parts: (string | JSX.Element)[] = [];
-    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-    const boldRegex = /\*\*([^*]+)\*\*/g;
-    const italicRegex = /\*([^*]+)\*/g;
-
-    const allMatches: Array<{ index: number; length: number; element: JSX.Element }> = [];
-    let match: RegExpExecArray | null;
-
-    // Find all links
-    while ((match = linkRegex.exec(text)) !== null) {
-      allMatches.push({
-        index: match.index,
-        length: match[0].length,
-        element: (
-          <a
-            key={match.index}
-            href={match[2]}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            {match[1]}
-          </a>
-        )
-      });
-    }
-
-    // Find all bold text
-    while ((match = boldRegex.exec(text)) !== null) {
-      allMatches.push({
-        index: match.index,
-        length: match[0].length,
-        element: <strong key={match.index}>{match[1]}</strong>
-      });
-    }
-
-    // Find all italic text
-    while ((match = italicRegex.exec(text)) !== null) {
-      const isBoldMarker = text[match.index - 1] === '*' || text[match.index + match[0].length] === '*';
-      if (!isBoldMarker) {
-        allMatches.push({
-          index: match.index,
-          length: match[0].length,
-          element: <em key={match.index}>{match[1]}</em>
-        });
-      }
-    }
-
-    allMatches.sort((a, b) => a.index - b.index);
-
-    let lastIndex = 0;
-    for (const match of allMatches) {
-      if (match.index > lastIndex) {
-        parts.push(text.substring(lastIndex, match.index));
-      }
-      parts.push(match.element);
-      lastIndex = match.index + match.length;
-    }
-
-    if (lastIndex < text.length) {
-      parts.push(text.substring(lastIndex));
-    }
-
-    return parts.length > 0 ? parts : text;
-  };
+  const parseMarkdown = (text: string) => parseInlineMarkdown(text);
 
   const loadSuggestions = async () => {
     setIsLoading(true);

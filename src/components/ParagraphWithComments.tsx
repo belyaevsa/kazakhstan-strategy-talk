@@ -3,7 +3,7 @@ import { MessageSquare, Link2, ExternalLink, Maximize2, FileText, Info, AlertTri
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Footnote } from "@/components/Footnote";
+import { parseInlineMarkdown } from "@/lib/markdown";
 import { SuggestionEditor } from "@/components/SuggestionEditor";
 import { SuggestionsCarousel } from "@/components/SuggestionsCarousel";
 import { suggestionService } from "@/services/suggestionService";
@@ -108,113 +108,15 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
     }, 2000);
   };
 
-  // Parse Markdown-style links [text](url), footnotes [[term|definition]], bold **text**, and italic *text*
-  const parseMarkdownLinks = (text: string) => {
-    const parts: (string | JSX.Element)[] = [];
-
-    // Combined regex for links, footnotes, bold, and italic
-    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-    const footnoteRegex = /\[\[([^\|]+)\|([^\]]+?)(?:\|([^\]]+?))?(?:\|([^\]]+?))?\]\]/g;
-    const boldRegex = /\*\*([^*]+)\*\*/g;
-    const italicRegex = /\*([^*]+)\*/g;
-
-    // Combine all matches
-    const allMatches: Array<{ index: number; length: number; element: JSX.Element }> = [];
-    let match: RegExpExecArray | null;
-
-    // Find all footnotes
-    while ((match = footnoteRegex.exec(text)) !== null) {
-      const term = match[1].trim();
-      const definition = match[2].trim();
-      const url = match[3]?.trim();
-      const label = match[4]?.trim();
-
-      allMatches.push({
-        index: match.index,
-        length: match[0].length,
-        element: (
-          <Footnote
-            key={match.index}
-            term={term}
-            definition={definition}
-            link={url ? { url, label } : undefined}
-          />
-        )
-      });
-    }
-
-    // Find all regular links
-    while ((match = linkRegex.exec(text)) !== null) {
-      allMatches.push({
-        index: match.index,
-        length: match[0].length,
-        element: (
-          <a
-            key={match.index}
-            href={match[2]}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline break-words"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {match[1]}
-          </a>
-        )
-      });
-    }
-
-    // Find all bold text
-    while ((match = boldRegex.exec(text)) !== null) {
-      allMatches.push({
-        index: match.index,
-        length: match[0].length,
-        element: (
-          <strong key={match.index} className="font-bold">
-            {match[1]}
-          </strong>
-        )
-      });
-    }
-
-    // Find all italic text (but skip if it's part of bold)
-    while ((match = italicRegex.exec(text)) !== null) {
-      // Check if this is part of a bold marker (**)
-      const isBoldMarker = text[match.index - 1] === '*' || text[match.index + match[0].length] === '*';
-      if (!isBoldMarker) {
-        allMatches.push({
-          index: match.index,
-          length: match[0].length,
-          element: (
-            <em key={match.index} className="italic">
-              {match[1]}
-            </em>
-          )
-        });
-      }
-    }
-
-    // Sort by index
-    allMatches.sort((a, b) => a.index - b.index);
-
-    // Build the parts array
-    let lastIndex = 0;
-    for (const match of allMatches) {
-      // Add text before the match
-      if (match.index > lastIndex) {
-        parts.push(text.substring(lastIndex, match.index));
-      }
-      // Add the element
-      parts.push(match.element);
-      lastIndex = match.index + match.length;
-    }
-
-    // Add remaining text
-    if (lastIndex < text.length) {
-      parts.push(text.substring(lastIndex));
-    }
-
-    return parts.length > 0 ? parts : text;
-  };
+  // Parse inline Markdown (footnotes, links, bold, italic) into React nodes
+  const parseMarkdownLinks = (text: string) =>
+    parseInlineMarkdown(text, {
+      footnotes: true,
+      stopPropagation: true,
+      linkClassName: "text-primary hover:underline break-words",
+      boldClassName: "font-bold",
+      italicClassName: "italic",
+    });
 
   const renderContent = () => {
     switch (paragraph.type) {

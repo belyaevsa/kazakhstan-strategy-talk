@@ -48,6 +48,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ru, enUS, kk } from "date-fns/locale";
 import { t, getCurrentLanguage, setLanguage, type Language } from "@/lib/i18n";
+import { parseInlineMarkdown, stripMarkdownLinks } from "@/lib/markdown";
 import type { Chapter, Page } from "@/lib/api/types";
 import ImageUploadZone from "@/components/ImageUploadZone";
 
@@ -441,73 +442,9 @@ const DocumentPage = () => {
   }, [lang, chapterSlug, pageSlug, actualPageSlug, navigate]);
 
   // Strip Markdown-style links [text](url) and return just the text for TOC
-  const stripMarkdownLinks = (text: string) => {
-    // Replace [text](url) with just text
-    return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
-  };
-
-  // Parse Markdown-style formatting (bold, italic) for description
-  const parseMarkdown = (text: string) => {
-    const parts: (string | JSX.Element)[] = [];
-    const boldRegex = /\*\*([^*]+)\*\*/g;
-    const italicRegex = /\*([^*]+)\*/g;
-
-    // Combine all matches
-    const allMatches: Array<{ index: number; length: number; element: JSX.Element }> = [];
-    let match: RegExpExecArray | null;
-
-    // Find all bold text
-    while ((match = boldRegex.exec(text)) !== null) {
-      allMatches.push({
-        index: match.index,
-        length: match[0].length,
-        element: (
-          <strong key={match.index} className="font-bold">
-            {match[1]}
-          </strong>
-        )
-      });
-    }
-
-    // Find all italic text (but skip if it's part of bold)
-    while ((match = italicRegex.exec(text)) !== null) {
-      // Check if this is part of a bold marker (**)
-      const isBoldMarker = text[match.index - 1] === '*' || text[match.index + match[0].length] === '*';
-      if (!isBoldMarker) {
-        allMatches.push({
-          index: match.index,
-          length: match[0].length,
-          element: (
-            <em key={match.index} className="italic">
-              {match[1]}
-            </em>
-          )
-        });
-      }
-    }
-
-    // Sort by index
-    allMatches.sort((a, b) => a.index - b.index);
-
-    // Build the parts array
-    let lastIndex = 0;
-    for (const match of allMatches) {
-      // Add text before the match
-      if (match.index > lastIndex) {
-        parts.push(text.substring(lastIndex, match.index));
-      }
-      // Add the element
-      parts.push(match.element);
-      lastIndex = match.index + match.length;
-    }
-
-    // Add remaining text
-    if (lastIndex < text.length) {
-      parts.push(text.substring(lastIndex));
-    }
-
-    return parts.length > 0 ? parts : text;
-  };
+  // Markdown helpers shared across the app
+  const parseMarkdown = (text: string) =>
+    parseInlineMarkdown(text, { links: false, boldClassName: "font-bold", italicClassName: "italic" });
 
   const sensors = useSensors(
     useSensor(PointerSensor),
