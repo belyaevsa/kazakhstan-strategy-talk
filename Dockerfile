@@ -9,8 +9,10 @@ WORKDIR /app/frontend
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies and update browserslist data
+RUN npm ci && \
+    npx update-browserslist-db@latest && \
+    npm i baseline-browser-mapping@latest
 
 # Copy frontend source
 COPY . .
