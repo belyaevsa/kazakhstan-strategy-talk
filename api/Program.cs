@@ -1,5 +1,9 @@
 using System.Text;
+using System.IO.Compression;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.StaticFiles.Infrastructure;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using KazakhstanStrategyApi.Data;
@@ -38,6 +42,23 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 builder.Services.AddMemoryCache();
 builder.Services.AddHealthChecks();
+
+// Response compression (Brotli + Gzip), including for HTTPS
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[]
+    {
+        "application/json",
+        "image/svg+xml",
+        "application/manifest+json",
+        "application/xml"
+    });
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
+builder.Services.Configure<GzipCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
 
 // Database - Use environment variables if available, otherwise fallback to appsettings.json
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
@@ -154,12 +175,30 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseResponseCompression();
+
 app.UseHttpsRedirection();
 
 app.UseCors("AllowReactApp");
 
-// Serve static files from wwwroot
-app.UseStaticFiles();
+// Serve static files from wwwroot with cache headers.
+// Vite fingerprints assets under /assets, so they can be cached immutably;
+// index.html must revalidate so new deploys are picked up immediately.
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        var headers = ctx.Context.Response.Headers;
+        if (ctx.Context.Request.Path.StartsWithSegments("/assets"))
+        {
+            headers.CacheControl = "public, max-age=31536000, immutable";
+        }
+        else if (ctx.File.Name.Equals("index.html", StringComparison.OrdinalIgnoreCase))
+        {
+            headers.CacheControl = "no-cache";
+        }
+    }
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -198,6 +237,7 @@ app.MapFallbackToFile("index.html").Add(endpointBuilder =>
                 if (html != null)
                 {
                     context.Response.ContentType = "text/html; charset=utf-8";
+                    context.Response.Headers.CacheControl = "no-cache";
                     await context.Response.WriteAsync(html);
                     return;
                 }
