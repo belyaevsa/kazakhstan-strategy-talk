@@ -8,11 +8,22 @@ import { MessageSquare, Send, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { t } from "@/lib/i18n";
 import CommentItem from "@/components/CommentItem";
+import type { Comment } from "@/lib/api/types";
 
 interface CommentPanelProps {
   paragraphId?: string;
   pageId?: string;
   mode: "paragraph" | "page";
+}
+
+// Immutably insert a comment into the (possibly nested) comment tree.
+function insertComment(tree: Comment[], comment: Comment, parentId?: string): Comment[] {
+  if (!parentId) return [...tree, comment];
+  return tree.map((c) =>
+    c.id === parentId
+      ? { ...c, replies: [...(c.replies || []), comment] }
+      : { ...c, replies: insertComment(c.replies || [], comment, parentId) }
+  );
 }
 
 const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
@@ -86,25 +97,54 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
 
       return commentService.create(commentData);
     },
-    onSuccess: async () => {
-      queryClient.invalidateQueries({ queryKey: ["comments"] });
-      if (paragraphId) {
-        queryClient.invalidateQueries({ queryKey: ["paragraphs"] });
+    // Optimistically show the new comment immediately, then reconcile on settle.
+    onMutate: async ({ content, parentId }) => {
+      const key = ["comments", paragraphId, pageId, mode];
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<Comment[]>(key);
+
+      const currentUser = authService.getUser();
+      if (currentUser) {
+        const optimistic: Comment = {
+          id: `temp-${Date.now()}`,
+          content,
+          agreeCount: 0,
+          disagreeCount: 0,
+          createdAt: new Date().toISOString(),
+          isDeleted: false,
+          user: currentUser as unknown as Comment["user"],
+          parentId,
+          replies: [],
+        };
+        queryClient.setQueryData<Comment[]>(key, (old = []) => insertComment(old, optimistic, parentId));
       }
-      // Refresh user data to get updated lastCommentAt
-      await authService.getCurrentUser();
+
       setNewComment("");
+      return { previous, key };
+    },
+    onSuccess: async () => {
+      // Refresh user data to get updated lastCommentAt (drives the post throttle)
+      await authService.getCurrentUser();
       toast.success(t("message.commentPosted"));
-      // Force re-render by triggering a state update
       window.dispatchEvent(new Event('storage'));
     },
-    onError: (error: any) => {
+    onError: (error: any, _vars, context) => {
+      // Roll back the optimistic insert
+      if (context?.previous) {
+        queryClient.setQueryData(context.key, context.previous);
+      }
       if (error.response?.data?.error === "AccountFrozen") {
         toast.error(error.response.data.message);
       } else if (error.response?.data?.error === "TooManyRequests") {
         toast.error(error.response.data.message);
       } else {
         toast.error(t("message.commentAddFailed"));
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments"] });
+      if (paragraphId) {
+        queryClient.invalidateQueries({ queryKey: ["paragraphs"] });
       }
     },
   });
