@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using KazakhstanStrategyApi.Data;
@@ -126,6 +127,7 @@ public class SeoMetaService
 
                     meta.Title = $"{siteTitle} | {chapterTitle} | {pageTitle}";
                     meta.Description = description;
+                    meta.JsonLd = BuildArticleJsonLd(meta, siteTitle, pageTitle, chapterTitle, chapterSlug, description, page.CreatedAt, page.UpdatedAt ?? page.CreatedAt);
 
                     // Render the page body as HTML so non-JS crawlers see real content,
                     // not just the empty SPA shell.
@@ -168,8 +170,90 @@ public class SeoMetaService
                 meta.Description = description;
             }
         }
+        // Homepage: /{lang} or /
+        else if (rest.Length == 0)
+        {
+            meta.JsonLd = BuildWebSiteJsonLd(meta, siteTitle);
+        }
 
         return meta;
+    }
+
+    private static string BuildArticleJsonLd(SeoMeta meta, string siteTitle, string pageTitle, string chapterTitle,
+        string chapterSlug, string description, DateTime datePublished, DateTime dateModified)
+    {
+        var logoUrl = $"{meta.BaseUrl}/web-app-manifest-512x512.png";
+        var publisher = new Dictionary<string, object>
+        {
+            ["@type"] = "Organization",
+            ["name"] = siteTitle,
+            ["logo"] = new Dictionary<string, object> { ["@type"] = "ImageObject", ["url"] = logoUrl },
+        };
+
+        var article = new Dictionary<string, object>
+        {
+            ["@type"] = "Article",
+            ["headline"] = pageTitle,
+            ["description"] = description,
+            ["inLanguage"] = meta.Lang,
+            ["url"] = meta.Canonical,
+            ["mainEntityOfPage"] = meta.Canonical,
+            ["image"] = logoUrl,
+            ["datePublished"] = datePublished.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            ["dateModified"] = dateModified.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            ["author"] = publisher,
+            ["publisher"] = publisher,
+            ["isPartOf"] = new Dictionary<string, object>
+            {
+                ["@type"] = "WebSite",
+                ["name"] = siteTitle,
+                ["url"] = $"{meta.BaseUrl}/{meta.Lang}",
+            },
+        };
+
+        var breadcrumb = new Dictionary<string, object>
+        {
+            ["@type"] = "BreadcrumbList",
+            ["itemListElement"] = new object[]
+            {
+                new Dictionary<string, object> { ["@type"] = "ListItem", ["position"] = 1, ["name"] = siteTitle, ["item"] = $"{meta.BaseUrl}/{meta.Lang}" },
+                new Dictionary<string, object> { ["@type"] = "ListItem", ["position"] = 2, ["name"] = chapterTitle, ["item"] = $"{meta.BaseUrl}/{meta.Lang}/{chapterSlug}" },
+                new Dictionary<string, object> { ["@type"] = "ListItem", ["position"] = 3, ["name"] = pageTitle, ["item"] = meta.Canonical },
+            },
+        };
+
+        var graph = new Dictionary<string, object>
+        {
+            ["@context"] = "https://schema.org",
+            ["@graph"] = new object[] { article, breadcrumb },
+        };
+
+        return JsonSerializer.Serialize(graph);
+    }
+
+    private static string BuildWebSiteJsonLd(SeoMeta meta, string siteTitle)
+    {
+        var website = new Dictionary<string, object>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "WebSite",
+            ["name"] = siteTitle,
+            ["url"] = $"{meta.BaseUrl}/{meta.Lang}",
+            ["inLanguage"] = meta.Lang,
+            ["description"] = meta.Description,
+            ["publisher"] = new Dictionary<string, object>
+            {
+                ["@type"] = "Organization",
+                ["name"] = siteTitle,
+                ["logo"] = new Dictionary<string, object>
+                {
+                    ["@type"] = "ImageObject",
+                    ["url"] = $"{meta.BaseUrl}/web-app-manifest-512x512.png",
+                },
+            },
+        };
+
+        return JsonSerializer.Serialize(website);
     }
 
     private static string FirstNonEmpty(params string?[] values)
@@ -309,6 +393,12 @@ public class SeoMetaService
         var xdefault = WebUtility.HtmlEncode($"{meta.BaseUrl}/{DefaultLang}{meta.PathWithoutLang}");
         links.Append($"\n    <link rel=\"alternate\" hreflang=\"x-default\" href=\"{xdefault}\" />");
 
+        // JSON-LD structured data (System.Text.Json escapes <, >, & so it can't break out of the script tag)
+        if (!string.IsNullOrEmpty(meta.JsonLd))
+        {
+            links.Append($"\n    <script type=\"application/ld+json\">{meta.JsonLd}</script>");
+        }
+
         html = html.Replace("</head>", links + "\n  </head>");
 
         // Render the article into the SPA root so crawlers without JS see real
@@ -350,5 +440,6 @@ public class SeoMetaService
         public string BaseUrl { get; set; } = "";
         public string PathWithoutLang { get; set; } = "";
         public string BodyHtml { get; set; } = "";
+        public string JsonLd { get; set; } = "";
     }
 }
