@@ -345,7 +345,12 @@
   "common": {
     "loading": "Loading...",
     "notFound": "Not Found",
-    "chapterNotFound": "The requested chapter could not be found"
+    "chapterNotFound": "The requested chapter could not be found",
+    "pageNotFound": "Page not found",
+    "pageNotFoundDesc": "The requested document page could not be found.",
+    "loadErrorTitle": "Couldn't load content",
+    "loadError": "Something went wrong while loading. Please check your connection and try again.",
+    "retry": "Try again"
   },
   "notifications": {
     "title": "Notifications",

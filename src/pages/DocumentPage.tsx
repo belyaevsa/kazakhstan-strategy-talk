@@ -521,7 +521,7 @@ const DocumentPage = () => {
     queryFn: () => chapterService.getAll(isEditor),
   });
 
-  const { data: currentPage, isLoading: pageLoading } = useQuery({
+  const { data: currentPage, isLoading: pageLoading, isError: pageError, refetch: refetchPage } = useQuery({
     queryKey: ["page", actualPageSlug],
     queryFn: () => pageService.getBySlug(actualPageSlug!),
     enabled: !!actualPageSlug,
@@ -574,7 +574,7 @@ const DocumentPage = () => {
     }
   }, [currentPage, chapters]);
 
-  const { data: paragraphs, isLoading: paragraphsLoading } = useQuery({
+  const { data: paragraphs, isLoading: paragraphsLoading, isError: paragraphsError, refetch: refetchParagraphs } = useQuery({
     queryKey: ["paragraphs", currentPage?.id, isEditor],
     queryFn: () => paragraphService.getByPage(currentPage!.id, isEditor),
     enabled: !!currentPage?.id,
@@ -1029,13 +1029,29 @@ const DocumentPage = () => {
     );
   }
 
+  // Handle load error (distinct from a genuine 404)
+  if (pageError || paragraphsError) {
+    return (
+      <DocumentLayout>
+        <div className="text-center py-12">
+          <AlertCircle className="h-10 w-10 text-destructive mx-auto mb-3" />
+          <h2 className="text-2xl font-bold mb-2">{t("common.loadErrorTitle")}</h2>
+          <p className="text-muted-foreground mb-4">{t("common.loadError")}</p>
+          <Button variant="outline" onClick={() => { refetchPage(); refetchParagraphs(); }}>
+            {t("common.retry")}
+          </Button>
+        </div>
+      </DocumentLayout>
+    );
+  }
+
   // Handle page not found
   if (!currentPage) {
     return (
       <DocumentLayout>
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold mb-2">Page not found</h2>
-          <p className="text-muted-foreground">The requested document page could not be found.</p>
+          <h2 className="text-2xl font-bold mb-2">{t("common.pageNotFound")}</h2>
+          <p className="text-muted-foreground">{t("common.pageNotFoundDesc")}</p>
         </div>
       </DocumentLayout>
     );

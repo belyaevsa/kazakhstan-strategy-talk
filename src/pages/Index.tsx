@@ -5,7 +5,7 @@ import { chapterService } from "@/services/chapterService";
 import { authService } from "@/services/authService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, ArrowRight, BookOpen } from "lucide-react";
+import { FileText, ArrowRight, BookOpen, AlertCircle } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import DocumentLayout from "@/components/DocumentLayout";
 import { getCurrentLanguage, setLanguage, type Language, t } from "@/lib/i18n";
@@ -28,7 +28,7 @@ const Index = () => {
     }
   }, [lang, navigate]);
 
-  const { data: chapters } = useQuery({
+  const { data: chapters, isLoading, isError, refetch } = useQuery({
     queryKey: ["chapters", isEditor],
     queryFn: async () => {
       return chapterService.getAll(isEditor);
@@ -87,7 +87,33 @@ const Index = () => {
         </section>
 
         {/* Chapters Section */}
-        {chapters && chapters.filter(c => isEditor || c.isVisibleOnMainPage).length > 0 && (
+        {isLoading ? (
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-center">{t("home.documentChapters")}</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              {[0, 1, 2].map((i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardHeader>
+                    <div className="h-8 w-8 bg-muted rounded mb-2" />
+                    <div className="h-6 w-2/3 bg-muted rounded" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-4 w-full bg-muted rounded" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        ) : isError ? (
+          <section className="mb-12">
+            <Card className="p-8 text-center">
+              <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-3" />
+              <h2 className="text-xl font-semibold mb-2">{t("common.loadErrorTitle")}</h2>
+              <p className="text-muted-foreground mb-4">{t("common.loadError")}</p>
+              <Button variant="outline" onClick={() => refetch()}>{t("common.retry")}</Button>
+            </Card>
+          </section>
+        ) : chapters && chapters.filter(c => isEditor || c.isVisibleOnMainPage).length > 0 ? (
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-center">{t("home.documentChapters")}</h2>
             <div className="grid md:grid-cols-3 gap-6">
@@ -127,7 +153,7 @@ const Index = () => {
               })}
             </div>
           </section>
-        )}
+        ) : null}
 
         {/* About Section */}
         <section className="bg-card rounded-lg shadow-sm border p-8">
