@@ -38,7 +38,7 @@ const CommentItem = ({
   const [replyContent, setReplyContent] = useState("");
   const canReply = isAuthenticated;
   const visualDepth = Math.min(depth, 1); // Cap visual indentation at 1 level
-  const isAdmin = authService.isAdmin();
+  const isModerator = authService.isEditor(); // Editor or Admin
   const isDeleted = comment.isDeleted;
 
   // Get date-fns locale based on current language
@@ -80,7 +80,7 @@ const CommentItem = ({
                 {comment.updatedAt && (
                   <span className="text-xs text-muted-foreground italic">({t("comments.edited")})</span>
                 )}
-                {isAdmin && (
+                {isModerator && (
                   <Button
                     variant="ghost"
                     size="sm"

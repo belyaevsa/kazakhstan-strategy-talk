@@ -349,7 +349,7 @@ public class ParagraphSuggestionsController : ApiControllerBase
     /// Approve a suggestion (admin only) - updates the paragraph content
     /// </summary>
     [HttpPost("{id}/approve")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "EditorPolicy")]
     public async Task<ActionResult<object>> ApproveSuggestion(Guid id)
     {
         try
@@ -384,7 +384,7 @@ public class ParagraphSuggestionsController : ApiControllerBase
     /// Reject a suggestion (admin only)
     /// </summary>
     [HttpPost("{id}/reject")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "EditorPolicy")]
     public async Task<ActionResult<object>> RejectSuggestion(Guid id)
     {
         try

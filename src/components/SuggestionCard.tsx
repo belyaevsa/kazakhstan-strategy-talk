@@ -23,11 +23,11 @@ export const SuggestionCard = ({ suggestion, onUpdate, onEdit, showActions = tru
   const [isActioning, setIsActioning] = useState(false);
 
   const currentUser = authService.getUser();
-  const isAdmin = authService.isAdmin();
+  const isEditor = authService.isEditor();
   const isAuthor = currentUser?.id === suggestion.userId;
   const canEdit = isAuthor && suggestion.status === 'Pending';
-  const canDelete = isAdmin || isAuthor;
-  const canApprove = isAdmin && suggestion.status === 'Pending';
+  const canDelete = isEditor || isAuthor;
+  const canApprove = isEditor && suggestion.status === 'Pending';
 
   // Parse markdown text to JSX with formatting
   const parseMarkdown = (text: string) => {

@@ -318,10 +318,10 @@ public class CommentsController : ApiControllerBase
             return NotFound();
         }
 
-        // Check if user is admin or comment owner
-        var isAdmin = User.IsInRole("Admin");
+        // Moderators (Admin or Editor) can delete any comment; owners can delete their own
+        var isModerator = User.IsInRole("Admin") || User.IsInRole("Editor");
 
-        if (!isAdmin && comment.UserId != userId.Value)
+        if (!isModerator && comment.UserId != userId.Value)
         {
             _logger.LogWarning("Forbidden comment deletion attempt. CommentId: {CommentId}, CommentOwner: {CommentOwner}, Requester: {Requester}, IPAddress: {IPAddress}",
                 id, comment.UserId, userId.Value, ipAddress ?? "Unknown");
@@ -329,7 +329,7 @@ public class CommentsController : ApiControllerBase
         }
 
         var deletedBy = await _context.Profiles.FindAsync(userId.Value);
-        var deletionType = isAdmin && comment.UserId != userId.Value ? "Admin" : "Owner";
+        var deletionType = isModerator && comment.UserId != userId.Value ? "Moderator" : "Owner";
 
         // Mark as deleted instead of removing (soft delete)
         comment.IsDeleted = true;
