@@ -247,28 +247,28 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
         const variant = paragraph.caption || "info";
         const variantStyles = {
           info: {
-            border: "border-l-4 border-gray-600",
-            bg: "bg-gray-50 dark:bg-gray-900/20",
+            border: "border-l-4 border-blue-500",
+            bg: "bg-blue-50 dark:bg-blue-950/30",
             icon: Info,
-            iconColor: "text-gray-600 dark:text-gray-400"
+            iconColor: "text-blue-600 dark:text-blue-400"
           },
           warning: {
-            border: "border-l-4 border-dashed border-gray-500",
-            bg: "bg-gray-50 dark:bg-gray-900/20",
+            border: "border-l-4 border-amber-500",
+            bg: "bg-amber-50 dark:bg-amber-950/30",
             icon: AlertTriangle,
-            iconColor: "text-gray-600 dark:text-gray-400"
+            iconColor: "text-amber-600 dark:text-amber-400"
           },
           success: {
-            border: "border-l-4 border-gray-700",
-            bg: "bg-gray-50 dark:bg-gray-900/20",
+            border: "border-l-4 border-green-500",
+            bg: "bg-green-50 dark:bg-green-950/30",
             icon: CheckCircle,
-            iconColor: "text-gray-700 dark:text-gray-300"
+            iconColor: "text-green-600 dark:text-green-400"
           },
           error: {
-            border: "border-l-[6px] border-gray-900 dark:border-gray-100",
-            bg: "bg-gray-100 dark:bg-gray-900/40",
+            border: "border-l-4 border-red-500",
+            bg: "bg-red-50 dark:bg-red-950/30",
             icon: AlertCircle,
-            iconColor: "text-gray-900 dark:text-gray-100"
+            iconColor: "text-red-600 dark:text-red-400"
           },
         };
         const style = variantStyles[variant as keyof typeof variantStyles] || variantStyles.info;
