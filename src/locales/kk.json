@@ -209,6 +209,8 @@
     "commentAddFailed": "Түсініктеме қосу мүмкін болмады",
     "voteFailed": "Дауыс беру мүмкін болмады",
     "commentDeleteFailed": "Түсініктемені жою мүмкін болмады",
+    "commentUpdated": "Түсініктеме жаңартылды",
+    "commentUpdateFailed": "Түсініктемені жаңарту мүмкін болмады",
     "linkCopyFailed": "Сілтемені көшіру мүмкін болмады",
     "paragraphLinkCopied": "Абзац сілтемесі көшірілді!",
     "imageInvalid": "Сурет файлын жүктеңіз",

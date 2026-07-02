@@ -175,6 +175,19 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
     },
   });
 
+  const editCommentMutation = useMutation({
+    mutationFn: async ({ commentId, content }: { commentId: string; content: string }) => {
+      return commentService.update(commentId, { content });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments"] });
+      toast.success(t("message.commentUpdated"));
+    },
+    onError: () => {
+      toast.error(t("message.commentUpdateFailed"));
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
@@ -248,9 +261,11 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
                 onVote={handleVote}
                 onReply={handleReply}
                 onDelete={handleDelete}
+                onEdit={(commentId, content) => editCommentMutation.mutate({ commentId, content })}
                 isVoting={voteMutation.isPending}
                 isReplying={addCommentMutation.isPending}
                 isDeleting={deleteCommentMutation.isPending}
+                isSavingEdit={editCommentMutation.isPending}
               />
             </div>
           ))

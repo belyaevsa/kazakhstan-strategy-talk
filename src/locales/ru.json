@@ -209,6 +209,8 @@
     "commentAddFailed": "Не удалось добавить комментарий",
     "voteFailed": "Не удалось проголосовать",
     "commentDeleteFailed": "Не удалось удалить комментарий",
+    "commentUpdated": "Комментарий обновлён",
+    "commentUpdateFailed": "Не удалось обновить комментарий",
     "linkCopyFailed": "Не удалось скопировать ссылку",
     "paragraphLinkCopied": "Ссылка на абзац скопирована!",
     "imageInvalid": "Пожалуйста, загрузите изображение",

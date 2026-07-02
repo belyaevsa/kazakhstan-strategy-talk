@@ -209,6 +209,8 @@
     "commentAddFailed": "Failed to add comment",
     "voteFailed": "Failed to vote",
     "commentDeleteFailed": "Failed to delete comment",
+    "commentUpdated": "Comment updated",
+    "commentUpdateFailed": "Failed to update comment",
     "linkCopyFailed": "Failed to copy link",
     "paragraphLinkCopied": "Paragraph link copied!",
     "imageInvalid": "Please upload an image file",

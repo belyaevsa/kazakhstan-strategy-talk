@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ThumbsUp, ThumbsDown, Reply, Send, Trash } from "lucide-react";
+import { ThumbsUp, ThumbsDown, Reply, Send, Trash, Pencil } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ru, enUS, kk } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -18,9 +18,11 @@ interface CommentItemProps {
   onVote: (commentId: string, voteType: "agree" | "disagree") => void;
   onReply: (parentId: string, content: string) => void;
   onDelete: (commentId: string) => void;
+  onEdit: (commentId: string, content: string) => void;
   isVoting: boolean;
   isReplying: boolean;
   isDeleting: boolean;
+  isSavingEdit: boolean;
 }
 
 const CommentItem = ({
@@ -30,16 +32,31 @@ const CommentItem = ({
   onVote,
   onReply,
   onDelete,
+  onEdit,
   isVoting,
   isReplying,
   isDeleting,
+  isSavingEdit,
 }: CommentItemProps) => {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editContent, setEditContent] = useState(comment.content);
   const canReply = isAuthenticated;
   const visualDepth = Math.min(depth, 1); // Cap visual indentation at 1 level
   const isModerator = authService.isEditor(); // Editor or Admin
+  const isOwner = authService.getUser()?.id === comment.user?.id;
   const isDeleted = comment.isDeleted;
+
+  const handleSaveEdit = () => {
+    const trimmed = editContent.trim();
+    if (!trimmed || trimmed === comment.content) {
+      setIsEditMode(false);
+      return;
+    }
+    onEdit(comment.id, trimmed);
+    setIsEditMode(false);
+  };
 
   // Get date-fns locale based on current language
   const getDateLocale = () => {
@@ -80,20 +97,55 @@ const CommentItem = ({
                 {comment.updatedAt && (
                   <span className="text-xs text-muted-foreground italic">({t("comments.edited")})</span>
                 )}
-                {isModerator && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-5 px-1 ml-auto text-destructive hover:text-destructive"
-                    onClick={() => onDelete(comment.id)}
-                    disabled={isDeleting}
-                  >
-                    <Trash className="h-3 w-3" />
-                  </Button>
-                )}
+                <div className="ml-auto flex items-center gap-1">
+                  {isOwner && !isEditMode && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 px-1 text-muted-foreground hover:text-foreground"
+                      onClick={() => { setEditContent(comment.content); setIsEditMode(true); }}
+                      title={t("comments.edit")}
+                      aria-label={t("comments.edit")}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  )}
+                  {(isModerator || isOwner) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 px-1 text-destructive hover:text-destructive"
+                      onClick={() => onDelete(comment.id)}
+                      disabled={isDeleting}
+                      title={t("comments.delete")}
+                      aria-label={t("comments.delete")}
+                    >
+                      <Trash className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
               </div>
 
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+              {isEditMode ? (
+                <div className="space-y-2">
+                  <Textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="min-h-[60px] text-sm"
+                    autoFocus
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setIsEditMode(false)} disabled={isSavingEdit}>
+                      {t("comments.cancel")}
+                    </Button>
+                    <Button size="sm" onClick={handleSaveEdit} disabled={isSavingEdit || !editContent.trim()}>
+                      {t("comments.save")}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+              )}
             </>
           )}
 
@@ -184,9 +236,11 @@ const CommentItem = ({
                   onVote={onVote}
                   onReply={onReply}
                   onDelete={onDelete}
+                  onEdit={onEdit}
                   isVoting={isVoting}
                   isReplying={isReplying}
                   isDeleting={isDeleting}
+                  isSavingEdit={isSavingEdit}
                 />
               ))}
             </div>
