@@ -29,6 +29,7 @@ import CommentPanel from "@/components/CommentPanel";
 import ChapterDialog from "@/components/ChapterDialog";
 import PageDialog from "@/components/PageDialog";
 import ChapterPagesList from "@/components/ChapterPagesList";
+import TableOfContents from "@/components/TableOfContents";
 import FollowButton from "@/components/FollowButton";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import AutoResizeTextarea from "@/components/AutoResizeTextarea";
@@ -43,7 +44,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Pencil, Save, X, Plus, Trash2, Type, Image, Quote, Code, Share2, GripVertical, List, Link2, Eye, Table, Minus, Info, AlertTriangle, CheckCircle, AlertCircle, FileText } from "lucide-react";
+import { Pencil, Save, X, Plus, Trash2, Type, Image, Quote, Code, Share2, GripVertical, List, Link2, Eye, Table, Minus, Info, AlertTriangle, CheckCircle, AlertCircle, FileText, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ru, enUS, kk } from "date-fns/locale";
@@ -1005,38 +1006,10 @@ const DocumentPage = () => {
         comments={
           !isEditMode && (
             <div className="space-y-4">
-              {/* Table of Contents - Always visible */}
+              {/* Table of Contents - right rail (xl+) */}
               <div className="bg-card border shadow-sm rounded-lg p-4">
                 <h3 className="font-semibold mb-4">{t("document.tableOfContents")}</h3>
-                <div className="space-y-2">
-                  {paragraphs && paragraphs.length > 0 ? (
-                    paragraphs
-                      .filter(p => p.type === 'Header' || p.type === 'Header1' || p.type === 'Header2' || p.type === 'Header3')
-                      .map((paragraph, index) => {
-                        const headerLevel = paragraph.type === 'Header' || paragraph.type === 'Header1' ? 1
-                          : paragraph.type === 'Header2' ? 2
-                          : 3;
-                        const indentation = headerLevel === 1 ? 'pl-2' : headerLevel === 2 ? 'pl-6' : 'pl-10';
-                        const fontSize = headerLevel === 1 ? 'text-sm font-medium' : headerLevel === 2 ? 'text-sm' : 'text-xs';
-
-                        return (
-                          <a
-                            key={paragraph.id}
-                            href={`#paragraph-${paragraph.id}`}
-                            className={`block text-muted-foreground hover:text-foreground transition-colors ${indentation} ${fontSize} border-l-2 border-transparent hover:border-primary`}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              document.getElementById(`paragraph-${paragraph.id}`)?.scrollIntoView({ behavior: 'smooth' });
-                            }}
-                          >
-                            {stripMarkdownLinks(paragraph.content)}
-                          </a>
-                        );
-                      })
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic">No headers found</p>
-                  )}
-                </div>
+                <TableOfContents paragraphs={paragraphs} />
               </div>
 
               {/* Paragraph Comments - Shows when paragraph selected */}
@@ -1066,6 +1039,19 @@ const DocumentPage = () => {
             chapterSlug={chapterSlug}
             currentPageSlug={actualPageSlug}
           />
+        )}
+
+        {/* Table of Contents - inline collapsible for tablet/mobile (below xl) */}
+        {!isEditMode && paragraphs?.some(p => ['Header', 'Header1', 'Header2', 'Header3'].includes(p.type)) && (
+          <details className="xl:hidden mb-6 rounded-lg border bg-muted/30 p-4 group">
+            <summary className="font-semibold cursor-pointer list-none flex items-center justify-between select-none">
+              {t("document.tableOfContents")}
+              <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="mt-3">
+              <TableOfContents paragraphs={paragraphs} />
+            </div>
+          </details>
         )}
 
         {isEditMode && (
