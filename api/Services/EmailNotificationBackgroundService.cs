@@ -304,8 +304,8 @@ public class EmailNotificationBackgroundService : BackgroundService
         Notification notification,
         Profile user)
     {
-        var subject = notification.Title;
-        var body = BuildSingleNotificationHtml(notification);
+        var subject = NotificationLocalizer.Title(notification, user.Language);
+        var body = BuildSingleNotificationHtml(notification, user.Language);
 
         await emailService.SendEmailAsync(
             user.Email,
@@ -327,8 +327,13 @@ public class EmailNotificationBackgroundService : BackgroundService
         Profile user,
         string frequency)
     {
-        var subject = $"Your {frequency} notification digest - {notifications.Count} new notification(s)";
-        var body = BuildDigestHtml(notifications, frequency);
+        var freqLabel = NotificationLocalizer.T($"freq.{frequency}", user.Language);
+        var subject = NotificationLocalizer.T("email.digestSubject", user.Language, new Dictionary<string, string>
+        {
+            ["frequency"] = freqLabel,
+            ["count"] = notifications.Count.ToString()
+        });
+        var body = BuildDigestHtml(notifications, frequency, user.Language);
 
         await emailService.SendEmailAsync(
             user.Email,
@@ -345,12 +350,17 @@ public class EmailNotificationBackgroundService : BackgroundService
     /// <summary>
     /// Build HTML for a single notification email
     /// </summary>
-    private string BuildSingleNotificationHtml(Notification notification)
+    private string BuildSingleNotificationHtml(Notification notification, string? lang)
     {
         var baseUrl = GetBaseUrl();
         var pageLink = notification.Page != null
-            ? $"{baseUrl}/{notification.Page.Chapter?.Slug}/{notification.Page.Slug}"
+            ? $"{baseUrl}/{lang ?? "ru"}/{notification.Page.Chapter?.Slug}/{notification.Page.Slug}"
             : baseUrl;
+        var title = NotificationLocalizer.Title(notification, lang);
+        var message = NotificationLocalizer.Message(notification, lang);
+        var viewPage = NotificationLocalizer.T("email.viewPage", lang);
+        var footerNote = NotificationLocalizer.T("email.footerNote", lang);
+        var footerPrefs = NotificationLocalizer.T("email.footerPrefs", lang);
 
         return $@"
 <!DOCTYPE html>
@@ -370,14 +380,14 @@ public class EmailNotificationBackgroundService : BackgroundService
 <body>
     <div class=""container"">
         <div class=""notification"">
-            <div class=""title"">{notification.Title}</div>
-            <div class=""message"">{notification.Message}</div>
-            <a href=""{pageLink}"" class=""button"">View Page</a>
+            <div class=""title"">{title}</div>
+            <div class=""message"">{message}</div>
+            <a href=""{pageLink}"" class=""button"">{viewPage}</a>
         </div>
 
         <div class=""footer"">
-            <p>You received this email because you have notifications enabled for Kazakhstan IT Strategy.</p>
-            <p>To change your notification preferences, visit your <a href=""{baseUrl}/profile/settings"">profile settings</a>.</p>
+            <p>{footerNote}</p>
+            <p><a href=""{baseUrl}/profile/settings"">{footerPrefs}</a></p>
         </div>
     </div>
 </body>
@@ -387,21 +397,25 @@ public class EmailNotificationBackgroundService : BackgroundService
     /// <summary>
     /// Build HTML for a digest email with multiple notifications
     /// </summary>
-    private string BuildDigestHtml(List<Notification> notifications, string frequency)
+    private string BuildDigestHtml(List<Notification> notifications, string frequency, string? lang)
     {
         var baseUrl = GetBaseUrl();
+        var viewPage = NotificationLocalizer.T("email.viewPage", lang);
+        var footerNote = NotificationLocalizer.T("email.footerNote", lang);
+        var footerPrefs = NotificationLocalizer.T("email.footerPrefs", lang);
+        var heading = NotificationLocalizer.T("email.digestHeading", lang, new Dictionary<string, string> { ["count"] = notifications.Count.ToString() });
         var notificationsHtml = string.Join("", notifications.Select(n =>
         {
             var pageLink = n.Page != null
-                ? $"{baseUrl}/{n.Page.Chapter?.Slug}/{n.Page.Slug}"
+                ? $"{baseUrl}/{lang ?? "ru"}/{n.Page.Chapter?.Slug}/{n.Page.Slug}"
                 : baseUrl;
 
             return $@"
         <div class=""notification"">
-            <div class=""title"">{n.Title}</div>
-            <div class=""message"">{n.Message}</div>
+            <div class=""title"">{NotificationLocalizer.Title(n, lang)}</div>
+            <div class=""message"">{NotificationLocalizer.Message(n, lang)}</div>
             <div class=""time"">{n.CreatedAt:MMM dd, yyyy HH:mm} UTC</div>
-            <a href=""{pageLink}"" class=""link"">View Page →</a>
+            <a href=""{pageLink}"" class=""link"">{viewPage} →</a>
         </div>";
         }));
 
@@ -425,15 +439,14 @@ public class EmailNotificationBackgroundService : BackgroundService
 <body>
     <div class=""container"">
         <div class=""header"">
-            <h2>Your {frequency} notification digest</h2>
-            <p>{notifications.Count} new notification(s)</p>
+            <h2>{heading}</h2>
         </div>
 
         {notificationsHtml}
 
         <div class=""footer"">
-            <p>You received this {frequency} digest because you have notifications enabled for Kazakhstan IT Strategy.</p>
-            <p>To change your notification preferences, visit your <a href=""{baseUrl}/profile/settings"">profile settings</a>.</p>
+            <p>{footerNote}</p>
+            <p><a href=""{baseUrl}/profile/settings"">{footerPrefs}</a></p>
         </div>
     </div>
 </body>
