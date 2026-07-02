@@ -20,20 +20,14 @@ public class RobotsController : ControllerBase
             ?? _configuration["App:BaseUrl"]
             ?? $"{Request.Scheme}://{Request.Host}";
 
-        var robotsTxt = @$"User-agent: Googlebot
+        var robotsTxt = @$"User-agent: *
 Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
-User-agent: *
-Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /profile/
+Disallow: /notifications
+Disallow: /verify-email
+Disallow: /api/
 
 Sitemap: {baseUrl}/sitemap.xml";
 

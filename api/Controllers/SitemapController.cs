@@ -82,6 +82,16 @@ public class SitemapController : ControllerBase
                 WriteUrl(writer, $"{baseUrl}/{lang}", "1.0", "daily", DateTime.UtcNow, baseUrl, lang, languages);
             }
 
+            // Add chapter landing pages for each language
+            foreach (var chapter in chapters)
+            {
+                var chapterLastMod = chapter.UpdatedAt ?? chapter.CreatedAt;
+                foreach (var lang in languages)
+                {
+                    WriteUrl(writer, $"{baseUrl}/{lang}/{chapter.Slug}", "0.6", "weekly", chapterLastMod, baseUrl, lang, languages);
+                }
+            }
+
             // Add pages for each chapter
             foreach (var chapter in chapters)
             {
@@ -136,6 +146,18 @@ public class SitemapController : ControllerBase
             writer.WriteAttributeString("href", alternateLoc);
             writer.WriteEndElement(); // link
         }
+
+        // x-default -> Russian (site default language)
+        writer.WriteStartElement("link", "http://www.w3.org/1999/xhtml");
+        writer.WriteAttributeString("rel", "alternate");
+        writer.WriteAttributeString("hreflang", "x-default");
+        var defaultLoc = loc.Replace($"/{currentLang}/", "/ru/");
+        if (loc.EndsWith($"/{currentLang}"))
+        {
+            defaultLoc = loc.Substring(0, loc.Length - currentLang.Length) + "ru";
+        }
+        writer.WriteAttributeString("href", defaultLoc);
+        writer.WriteEndElement(); // link
 
         writer.WriteEndElement(); // url
     }
