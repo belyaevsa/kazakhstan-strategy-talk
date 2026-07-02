@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
+import { usePolling } from "@/hooks/usePolling";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getCurrentLanguage } from "@/lib/i18n";
 
@@ -49,14 +50,11 @@ const NotificationBell = () => {
     }
   };
 
-  // Fetch unread count on mount and set up polling
+  // Fetch unread count on mount, then poll every 30s (paused while tab hidden)
   useEffect(() => {
     fetchUnreadCount();
-
-    // Poll every 30 seconds
-    const interval = setInterval(fetchUnreadCount, 30000);
-    return () => clearInterval(interval);
   }, []);
+  usePolling(fetchUnreadCount, 30000);
 
   // Fetch notifications when dropdown opens
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, ChevronLeft, ChevronRight, Shield, Menu, MessageSquare } from "lucide-react";
@@ -10,6 +10,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useSeoLinks } from "@/hooks/useSeoLinks";
+import { usePolling } from "@/hooks/usePolling";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 interface DocumentLayoutProps {
@@ -39,22 +40,19 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Periodically refresh user data from server to check for frozen status
+  // Refresh user data from server to check for frozen status
+  const refreshUserData = useCallback(async () => {
+    await authService.getCurrentUser();
+    setUserState(authService.getUser());
+  }, []);
+
+  // Refresh immediately on mount when authenticated
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (isAuthenticated) refreshUserData();
+  }, [isAuthenticated, refreshUserData]);
 
-    const refreshUserData = async () => {
-      await authService.getCurrentUser();
-      setUserState(authService.getUser());
-    };
-
-    // Refresh immediately on mount
-    refreshUserData();
-
-    // Then refresh every 30 seconds
-    const interval = setInterval(refreshUserData, 30000);
-    return () => clearInterval(interval);
-  }, [isAuthenticated]);
+  // Then poll every 30s, paused while the tab is hidden
+  usePolling(refreshUserData, 30000, isAuthenticated);
 
   const user = userState;
   const isFrozen = user?.frozenUntil && new Date(user.frozenUntil) > new Date();
