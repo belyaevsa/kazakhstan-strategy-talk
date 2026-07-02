@@ -3,6 +3,9 @@
     "title": "IT strategy of Kazakhstan",
     "siteTitle": "IT strategy of Kazakhstan"
   },
+  "theme": {
+    "toggle": "Toggle theme"
+  },
   "nav": {
     "documentStructure": "Document Structure",
     "tableOfContents": "Table of Contents",

@@ -6,6 +6,7 @@ import { authService } from "@/services/authService";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import LanguageSelector from "@/components/LanguageSelector";
+import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -139,13 +140,15 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
                   </Button>
                 )}
                 <LanguageSelector />
-                <Button variant="ghost" size="icon" onClick={handleLogout}>
+                <ThemeToggle />
+                <Button variant="ghost" size="icon" aria-label={t('nav.logout')} title={t('nav.logout')} onClick={handleLogout}>
                   <LogOut className="h-4 w-4" />
                 </Button>
               </>
             ) : (
               <>
                 <LanguageSelector />
+                <ThemeToggle />
                 <Button variant="default" size="sm" onClick={() => navigate("/auth")}>
                   {t('nav.signIn')}
                 </Button>

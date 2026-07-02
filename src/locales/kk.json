@@ -3,6 +3,9 @@
     "title": "Қазақстан АТ стратегиясы",
     "siteTitle": "Қазақстан АТ стратегиясы"
   },
+  "theme": {
+    "toggle": "Тақырыпты ауыстыру"
+  },
   "nav": {
     "documentStructure": "Құжат құрылымы",
     "tableOfContents": "Мазмұны",
