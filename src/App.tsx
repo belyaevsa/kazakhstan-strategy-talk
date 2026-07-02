@@ -4,21 +4,31 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import { Loader2 } from "lucide-react";
 import Analytics from "@/components/Analytics";
 import CookieConsent from "@/components/CookieConsent";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import EmailVerified from "./pages/EmailVerified";
-import DocumentPage from "./pages/DocumentPage";
-import ChapterPage from "./pages/ChapterPage";
-import ChapterDetailPage from "./pages/ChapterDetailPage";
-import AllChaptersView from "./pages/AllChaptersView";
-import AdminPanel from "./pages/AdminPanel";
-import Profile from "./pages/Profile";
-import Notifications from "./pages/Notifications";
-import NotFound from "./pages/NotFound";
+
+// Route-level code splitting: each page ships in its own chunk
+const Index = lazy(() => import("./pages/Index"));
+const Auth = lazy(() => import("./pages/Auth"));
+const EmailVerified = lazy(() => import("./pages/EmailVerified"));
+const DocumentPage = lazy(() => import("./pages/DocumentPage"));
+const ChapterPage = lazy(() => import("./pages/ChapterPage"));
+const ChapterDetailPage = lazy(() => import("./pages/ChapterDetailPage"));
+const AllChaptersView = lazy(() => import("./pages/AllChaptersView"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
+
+const PageLoader = () => (
+  <div className="flex min-h-screen items-center justify-center">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -29,6 +39,7 @@ const App = () => (
       <CookieConsent />
       <BrowserRouter>
         <Analytics />
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
@@ -50,6 +61,7 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
     </ThemeProvider>
