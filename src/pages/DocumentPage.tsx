@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, forwardRef, createRef } from "react";
+import { useState, useEffect, useRef, forwardRef, createRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -22,6 +22,7 @@ import { authService } from "@/services/authService";
 import { chapterService } from "@/services/chapterService";
 import { pageService } from "@/services/pageService";
 import { paragraphService } from "@/services/paragraphService";
+import { suggestionService } from "@/services/suggestionService";
 import DocumentLayout from "@/components/DocumentLayout";
 import DocumentStructure from "@/components/DocumentStructure";
 import ParagraphWithComments from "@/components/ParagraphWithComments";
@@ -517,6 +518,21 @@ const DocumentPage = () => {
     queryFn: () => paragraphService.getByPage(currentPage!.id, isEditor),
     enabled: !!currentPage?.id,
   });
+
+  // Fetch every paragraph's suggestions for this page in one request (was N+1)
+  const { data: pageSuggestions } = useQuery({
+    queryKey: ["suggestions", "page", currentPage?.id],
+    queryFn: () => suggestionService.getSuggestionsByPage(currentPage!.id),
+    enabled: !!currentPage?.id,
+  });
+
+  const suggestionCountByParagraph = useMemo(() => {
+    const map: Record<string, number> = {};
+    (pageSuggestions || []).forEach((s: any) => {
+      map[s.paragraphId] = (map[s.paragraphId] || 0) + 1;
+    });
+    return map;
+  }, [pageSuggestions]);
 
   // Calculate comment panel position to avoid TOC overlap
   useEffect(() => {
@@ -1351,6 +1367,8 @@ const DocumentPage = () => {
                   key={paragraph.id}
                   paragraph={paragraph}
                   chapters={chapters}
+                  suggestionCount={suggestionCountByParagraph[paragraph.id] || 0}
+                  onSuggestionsChanged={() => queryClient.invalidateQueries({ queryKey: ["suggestions", "page", currentPage?.id] })}
                   isActive={activeParagraphId === paragraph.id}
                   onClick={() => {
                     if (activeParagraphId === paragraph.id) {

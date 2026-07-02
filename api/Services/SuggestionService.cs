@@ -69,6 +69,21 @@ public class SuggestionService
             .Include(s => s.Comments)
                 .ThenInclude(c => c.User)
             .Where(s => s.ParagraphId == paragraphId && !s.IsDeleted)
+            .AsSplitQuery()
+            .OrderByDescending(s => s.CreatedAt)
+            .ToListAsync();
+    }
+
+    /// <summary>All non-deleted suggestions across every paragraph of a page, in one query.</summary>
+    public async Task<List<ParagraphSuggestion>> GetSuggestionsByPageAsync(Guid pageId)
+    {
+        return await _context.ParagraphSuggestions
+            .Include(s => s.User)
+            .Include(s => s.Votes)
+            .Include(s => s.Comments)
+                .ThenInclude(c => c.User)
+            .Where(s => s.Paragraph.PageId == pageId && !s.IsDeleted)
+            .AsSplitQuery()
             .OrderByDescending(s => s.CreatedAt)
             .ToListAsync();
     }

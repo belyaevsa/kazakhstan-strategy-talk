@@ -18,6 +18,11 @@ class SuggestionService {
     return apiClient.get<ParagraphSuggestion[]>(`/paragraphsuggestions/paragraph/${paragraphId}`);
   }
 
+  // Get all suggestions for a whole page in one request (avoids per-paragraph N+1)
+  async getSuggestionsByPage(pageId: string): Promise<ParagraphSuggestion[]> {
+    return apiClient.get<ParagraphSuggestion[]>(`/paragraphsuggestions/page/${pageId}`);
+  }
+
   // Get a single suggestion by ID
   async getSuggestionById(id: string): Promise<SuggestionDetail> {
     return apiClient.get<SuggestionDetail>(`/paragraphsuggestions/${id}`);

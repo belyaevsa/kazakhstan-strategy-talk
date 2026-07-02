@@ -6,7 +6,6 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { parseInlineMarkdown } from "@/lib/markdown";
 import { SuggestionEditor } from "@/components/SuggestionEditor";
 import { SuggestionsCarousel } from "@/components/SuggestionsCarousel";
-import { suggestionService } from "@/services/suggestionService";
 import { authService } from "@/services/authService";
 import { t } from "@/lib/i18n";
 
@@ -22,33 +21,21 @@ interface ParagraphWithCommentsProps {
   isActive: boolean;
   onClick: () => void;
   chapters?: any[];
+  suggestionCount?: number;
+  onSuggestionsChanged?: () => void;
 }
 
-const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: ParagraphWithCommentsProps) => {
+const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters, suggestionCount = 0, onSuggestionsChanged }: ParagraphWithCommentsProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [tableZoomOpen, setTableZoomOpen] = useState(false);
   const [imageZoomOpen, setImageZoomOpen] = useState(false);
   const [suggestionEditorOpen, setSuggestionEditorOpen] = useState(false);
   const [suggestionsCarouselOpen, setSuggestionsCarouselOpen] = useState(false);
-  const [suggestionCount, setSuggestionCount] = useState(0);
   const paragraphRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isAuthenticated = authService.isAuthenticated();
-
-  // Load suggestion count
-  useEffect(() => {
-    const loadSuggestionCount = async () => {
-      try {
-        const suggestions = await suggestionService.getSuggestionsByParagraph(paragraph.id);
-        setSuggestionCount(suggestions.length);
-      } catch (error) {
-        console.error('Failed to load suggestions:', error);
-      }
-    };
-    loadSuggestionCount();
-  }, [paragraph.id]);
 
   // Check if this paragraph is in the URL hash on mount and when hash changes
   useEffect(() => {
@@ -446,17 +433,19 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
         onOpenChange={setSuggestionEditorOpen}
         paragraphId={paragraph.id}
         originalContent={paragraph.content}
-        onSuccess={async () => {
-          // Reload suggestion count
-          const suggestions = await suggestionService.getSuggestionsByParagraph(paragraph.id);
-          setSuggestionCount(suggestions.length);
+        onSuccess={() => {
+          // Refresh the page-level suggestions (updates this paragraph's count)
+          onSuggestionsChanged?.();
         }}
       />
 
       {/* Suggestions Carousel Modal */}
       <SuggestionsCarousel
         open={suggestionsCarouselOpen}
-        onOpenChange={setSuggestionsCarouselOpen}
+        onOpenChange={(open) => {
+          setSuggestionsCarouselOpen(open);
+          if (!open) onSuggestionsChanged?.();
+        }}
         paragraphId={paragraph.id}
         originalContent={paragraph.content}
       />

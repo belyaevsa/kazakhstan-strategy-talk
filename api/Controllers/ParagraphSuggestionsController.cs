@@ -135,32 +135,7 @@ public class ParagraphSuggestionsController : ApiControllerBase
             var suggestions = await _suggestionService.GetSuggestionsByParagraphAsync(paragraphId);
             var userId = User.Identity?.IsAuthenticated == true ? GetCurrentUserId() : (Guid?)null;
 
-            var result = suggestions.Select(s => new
-            {
-                id = s.Id,
-                paragraphId = s.ParagraphId,
-                userId = s.UserId,
-                user = new
-                {
-                    id = s.User?.Id,
-                    username = s.User?.Username,
-                    displayName = s.User?.DisplayName,
-                    avatarUrl = s.User?.AvatarUrl
-                },
-                suggestedContent = s.SuggestedContent,
-                comment = s.Comment,
-                status = s.Status.ToString(),
-                createdAt = s.CreatedAt,
-                updatedAt = s.UpdatedAt,
-                upvotes = s.Votes.Count(v => v.VoteType == VoteType.Upvote),
-                downvotes = s.Votes.Count(v => v.VoteType == VoteType.Downvote),
-                userVote = userId.HasValue
-                    ? s.Votes.FirstOrDefault(v => v.UserId == userId.Value)?.VoteType.ToString()
-                    : null,
-                commentCount = s.Comments.Count(c => !c.IsDeleted)
-            }).ToList();
-
-            return Ok(result);
+            return Ok(suggestions.Select(s => ProjectSuggestion(s, userId)).ToList());
         }
         catch (Exception ex)
         {
@@ -168,6 +143,51 @@ public class ParagraphSuggestionsController : ApiControllerBase
             return StatusCode(500, new { message = "An error occurred while fetching suggestions" });
         }
     }
+
+    /// <summary>
+    /// Get all suggestions for every paragraph on a page in a single request (avoids the per-paragraph N+1).
+    /// </summary>
+    [HttpGet("page/{pageId}")]
+    public async Task<ActionResult<object>> GetSuggestionsByPage(Guid pageId)
+    {
+        try
+        {
+            var suggestions = await _suggestionService.GetSuggestionsByPageAsync(pageId);
+            var userId = User.Identity?.IsAuthenticated == true ? GetCurrentUserId() : (Guid?)null;
+
+            return Ok(suggestions.Select(s => ProjectSuggestion(s, userId)).ToList());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching suggestions for page {PageId}", pageId);
+            return StatusCode(500, new { message = "An error occurred while fetching suggestions" });
+        }
+    }
+
+    private static object ProjectSuggestion(Models.ParagraphSuggestion s, Guid? userId) => new
+    {
+        id = s.Id,
+        paragraphId = s.ParagraphId,
+        userId = s.UserId,
+        user = new
+        {
+            id = s.User?.Id,
+            username = s.User?.Username,
+            displayName = s.User?.DisplayName,
+            avatarUrl = s.User?.AvatarUrl
+        },
+        suggestedContent = s.SuggestedContent,
+        comment = s.Comment,
+        status = s.Status.ToString(),
+        createdAt = s.CreatedAt,
+        updatedAt = s.UpdatedAt,
+        upvotes = s.Votes.Count(v => v.VoteType == VoteType.Upvote),
+        downvotes = s.Votes.Count(v => v.VoteType == VoteType.Downvote),
+        userVote = userId.HasValue
+            ? s.Votes.FirstOrDefault(v => v.UserId == userId.Value)?.VoteType.ToString()
+            : null,
+        commentCount = s.Comments.Count(c => !c.IsDeleted)
+    };
 
     /// <summary>
     /// Get a single suggestion by ID
