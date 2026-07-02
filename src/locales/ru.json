@@ -462,6 +462,14 @@
     "suggestionApproved": {
       "title": "Ваше предложение одобрено",
       "message": "{{username}} одобрил ваше предложение на странице '{{pageName}}'"
+    },
+    "suggestionRejected": {
+      "title": "Ваше предложение не принято",
+      "message": "{{username}} рассмотрел ваше предложение на странице '{{pageName}}'"
+    },
+    "newSuggestion": {
+      "title": "Новое предложение на рассмотрение",
+      "message": "{{username}} предложил правку на странице '{{pageName}}'"
     }
   },
   "suggestions": {

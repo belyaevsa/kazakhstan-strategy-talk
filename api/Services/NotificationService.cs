@@ -10,6 +10,8 @@ public interface INotificationService
     Task CreateCommentNotificationAsync(Comment comment);
     Task CreatePageUpdateNotificationAsync(Guid pageId, Guid updatedByUserId);
     Task NotifySuggestionApprovedAsync(Guid userId, Guid pageId, string pageSlug, string pageTitle, Guid approvedByUserId);
+    Task NotifySuggestionRejectedAsync(Guid userId, Guid pageId, string pageSlug, string pageTitle, Guid rejectedByUserId);
+    Task NotifyAdminsNewSuggestionAsync(Guid authorId, Guid pageId, string pageTitle);
 }
 
 public class NotificationService : INotificationService
@@ -282,6 +284,79 @@ public class NotificationService : INotificationService
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Created suggestion approved notification for user {UserId}", userId);
+    }
+
+    public async Task NotifySuggestionRejectedAsync(Guid userId, Guid pageId, string pageSlug, string pageTitle, Guid rejectedByUserId)
+    {
+        var reviewer = await _context.Profiles.FindAsync(rejectedByUserId);
+        var reviewerName = reviewer?.Username ?? "Admin";
+
+        var parameters = new
+        {
+            username = reviewerName,
+            pageName = pageTitle
+        };
+
+        var notification = new Notification
+        {
+            UserId = userId,
+            Type = "SuggestionRejected",
+            Title = "Your suggestion was not accepted",
+            Message = $"{reviewerName} reviewed your suggestion on '{pageTitle}'",
+            TitleKey = "notification.suggestionRejected.title",
+            MessageKey = "notification.suggestionRejected.message",
+            Parameters = JsonSerializer.Serialize(parameters),
+            PageId = pageId,
+            RelatedUserId = rejectedByUserId
+        };
+
+        _context.Notifications.Add(notification);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Created suggestion rejected notification for user {UserId}", userId);
+    }
+
+    /// <summary>
+    /// Notify all admins (except the author) that a new suggestion was submitted.
+    /// </summary>
+    public async Task NotifyAdminsNewSuggestionAsync(Guid authorId, Guid pageId, string pageTitle)
+    {
+        var author = await _context.Profiles.FindAsync(authorId);
+        var authorName = author?.Username ?? "Someone";
+
+        var adminIds = await _context.ProfileRoles
+            .Where(r => r.Role == UserRole.Admin && r.ProfileId != authorId)
+            .Select(r => r.ProfileId)
+            .Distinct()
+            .ToListAsync();
+
+        if (adminIds.Count == 0) return;
+
+        var parameters = new
+        {
+            username = authorName,
+            pageName = pageTitle
+        };
+        var serializedParams = JsonSerializer.Serialize(parameters);
+
+        foreach (var adminId in adminIds)
+        {
+            _context.Notifications.Add(new Notification
+            {
+                UserId = adminId,
+                Type = "NewSuggestion",
+                Title = "New suggestion to review",
+                Message = $"{authorName} suggested an edit on '{pageTitle}'",
+                TitleKey = "notification.newSuggestion.title",
+                MessageKey = "notification.newSuggestion.message",
+                Parameters = serializedParams,
+                PageId = pageId,
+                RelatedUserId = authorId
+            });
+        }
+
+        await _context.SaveChangesAsync();
+        _logger.LogInformation("Created new-suggestion notifications for {Count} admins", adminIds.Count);
     }
 
     /// <summary>

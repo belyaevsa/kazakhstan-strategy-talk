@@ -49,8 +49,12 @@ public class SuggestionService
         _context.ParagraphSuggestions.Add(suggestion);
         await _context.SaveChangesAsync();
 
-        // TODO: Notify admins about new suggestion
-        // This could be added later when we have admin notification preferences
+        // Notify admins that a new suggestion is awaiting review
+        await _notificationService.NotifyAdminsNewSuggestionAsync(
+            userId,
+            paragraph.Page!.Id,
+            paragraph.Page.Title
+        );
 
         return suggestion;
     }
@@ -165,9 +169,28 @@ public class SuggestionService
             throw new InvalidOperationException("Only pending suggestions can be approved");
         }
 
+        var paragraph = suggestion.Paragraph!;
+
+        // Snapshot the current paragraph content as a version before applying the
+        // suggestion, mirroring direct edits so accepted suggestions are reversible.
+        var lastVersion = await _context.ParagraphVersions
+            .Where(pv => pv.ParagraphId == paragraph.Id)
+            .MaxAsync(pv => (int?)pv.Version) ?? 0;
+
+        _context.ParagraphVersions.Add(new ParagraphVersion
+        {
+            ParagraphId = paragraph.Id,
+            Version = lastVersion + 1,
+            Content = paragraph.Content,
+            Type = paragraph.Type,
+            UpdatedByProfileId = adminId,
+            UpdatedAt = DateTime.UtcNow
+        });
+
         // Update the paragraph content
-        suggestion.Paragraph!.Content = suggestion.SuggestedContent;
-        suggestion.Paragraph.UpdatedAt = DateTime.UtcNow;
+        paragraph.Content = suggestion.SuggestedContent;
+        paragraph.UpdatedAt = DateTime.UtcNow;
+        paragraph.UpdatedByProfileId = adminId;
 
         // Mark suggestion as approved
         suggestion.Status = SuggestionStatus.Approved;
@@ -192,6 +215,8 @@ public class SuggestionService
     public async Task<ParagraphSuggestion> RejectSuggestionAsync(Guid suggestionId, Guid rejectedByUserId)
     {
         var suggestion = await _context.ParagraphSuggestions
+            .Include(s => s.Paragraph)
+                .ThenInclude(p => p.Page)
             .Where(s => !s.IsDeleted)
             .FirstOrDefaultAsync(s => s.Id == suggestionId);
 
@@ -211,6 +236,16 @@ public class SuggestionService
         suggestion.RejectedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
+
+        // Notify the suggestion author that their suggestion was reviewed/rejected
+        var page = suggestion.Paragraph!.Page!;
+        await _notificationService.NotifySuggestionRejectedAsync(
+            suggestion.UserId,
+            page.Id,
+            page.Slug,
+            page.Title,
+            rejectedByUserId
+        );
 
         return suggestion;
     }

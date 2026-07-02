@@ -462,6 +462,14 @@
     "suggestionApproved": {
       "title": "Сіздің ұсынысыңыз бекітілді",
       "message": "{{username}} '{{pageName}}' бетінде ұсынысыңызды бекітті"
+    },
+    "suggestionRejected": {
+      "title": "Ұсынысыңыз қабылданбады",
+      "message": "{{username}} '{{pageName}}' бетіндегі ұсынысыңызды қарады"
+    },
+    "newSuggestion": {
+      "title": "Қарауға жаңа ұсыныс",
+      "message": "{{username}} '{{pageName}}' бетінде түзету ұсынды"
     }
   },
   "suggestions": {

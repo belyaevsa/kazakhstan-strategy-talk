@@ -462,6 +462,14 @@
     "suggestionApproved": {
       "title": "Your suggestion was approved",
       "message": "{{username}} approved your suggestion on '{{pageName}}'"
+    },
+    "suggestionRejected": {
+      "title": "Your suggestion was not accepted",
+      "message": "{{username}} reviewed your suggestion on '{{pageName}}'"
+    },
+    "newSuggestion": {
+      "title": "New suggestion to review",
+      "message": "{{username}} suggested an edit on '{{pageName}}'"
     }
   },
   "suggestions": {
