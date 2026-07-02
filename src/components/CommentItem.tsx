@@ -77,7 +77,7 @@ const CommentItem = ({
   };
 
   return (
-    <div className={cn("space-y-2", visualDepth > 0 && "ml-6 mt-3 pl-4 border-l-2 border-border")}>
+    <div className={cn("space-y-2 animate-fade-in-up", visualDepth > 0 && "ml-6 mt-3 pl-4 border-l-2 border-border")}>
       <div className="flex items-start gap-3">
         <div className="flex-1 space-y-2">
           {isDeleted ? (

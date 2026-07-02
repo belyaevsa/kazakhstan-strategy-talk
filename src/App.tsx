@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import Analytics from "@/components/Analytics";
@@ -31,9 +31,18 @@ const PageLoader = () => (
   </div>
 );
 
+const PageTransition = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  return (
+    <div key={location.pathname} className="animate-page-enter">
+      {children}
+    </div>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -41,6 +50,7 @@ const App = () => (
       <BrowserRouter>
         <Analytics />
         <Suspense fallback={<PageLoader />}>
+        <PageTransition>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
@@ -63,6 +73,7 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </PageTransition>
         </Suspense>
       </BrowserRouter>
     </TooltipProvider>

@@ -92,7 +92,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters, suggest
     }
     hoverTimeoutRef.current = setTimeout(() => {
       setIsHovered(false);
-    }, 2000);
+    }, 400);
   };
 
   // Parse inline Markdown (footnotes, links, bold, italic) into React nodes

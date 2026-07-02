@@ -65,12 +65,12 @@ const TableOfContents = ({ paragraphs, onNavigate, className }: TableOfContentsP
               href={`#paragraph-${paragraph.id}`}
               aria-current={isActive ? "location" : undefined}
               className={cn(
-                "block transition-colors border-l-2",
+                "block transition-all duration-200 rounded-r border-l-2",
                 indentation,
                 fontSize,
                 isActive
-                  ? "text-primary border-primary font-medium"
-                  : "text-muted-foreground hover:text-foreground border-transparent hover:border-primary"
+                  ? "text-primary border-primary bg-primary/5 font-medium"
+                  : "text-muted-foreground hover:text-foreground border-transparent hover:border-primary hover:bg-muted/30"
               )}
               onClick={(e) => handleClick(e, paragraph.id)}
             >

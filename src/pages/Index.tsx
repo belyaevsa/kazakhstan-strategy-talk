@@ -47,20 +47,32 @@ const Index = () => {
       <div className="max-w-4xl mx-auto">
         {/* Hero Section */}
         <section className="text-center py-12 mb-12">
-            <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-6">
+            <div
+              className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-6 animate-fade-in"
+              style={{ animationDelay: "0ms" }}
+            >
             <img
               src="/main-icon.webp"
               alt="Kazakhstan IT Strategy logo featuring a stylized digital motif, centered in a circular background, conveying a modern and optimistic atmosphere"
               className="h-12 w-12"
             />
             </div>
-          <h1 className="text-4xl lg:text-5xl font-bold mb-4 leading-tight">
+          <h1
+            className="text-4xl lg:text-5xl font-bold mb-4 leading-tight animate-fade-in-up"
+            style={{ animationDelay: "100ms" }}
+          >
             {t("home.heroTitle")}
           </h1>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p
+            className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-in-up"
+            style={{ animationDelay: "200ms" }}
+          >
             {t("home.heroSubtitle")}
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div
+            className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up"
+            style={{ animationDelay: "300ms" }}
+          >
             <Button size="lg" onClick={handleGetStarted}>
               {t("home.startReading")}
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -104,10 +116,14 @@ const Index = () => {
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-center">{t("home.documentChapters")}</h2>
             <div className="grid md:grid-cols-3 gap-6">
-              {chapters.filter(c => isEditor || c.isVisibleOnMainPage).map((chapter) => {
+              {chapters.filter(c => isEditor || c.isVisibleOnMainPage).map((chapter, index) => {
                 const ChapterIcon = getChapterIcon(chapter.icon);
                 return (
-                  <Card key={chapter.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => {
+                  <Card
+                    key={chapter.id}
+                    className="hover:-translate-y-1 hover:shadow-lg transition-all duration-300 cursor-pointer animate-fade-in-up"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                    onClick={() => {
                     if (chapter.pages.length > 0) {
                       const currentLang = lang || getCurrentLanguage();
                       navigate(`/${currentLang}/${chapter.slug}/${chapter.pages[0].slug}`);

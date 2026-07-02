@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, ChevronLeft, ChevronRight, Shield, Menu, MessageSquare } from "lucide-react";
+import { LogOut, User, ChevronLeft, Shield, Menu, MessageSquare } from "lucide-react";
 import { authService } from "@/services/authService";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -193,9 +193,9 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
                       title={t('nav.toggleSidebar')}
                     >
                       {isSidebarCollapsed ? (
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronLeft className="h-4 w-4 rotate-180 transition-transform duration-300" />
                       ) : (
-                        <ChevronLeft className="h-4 w-4" />
+                        <ChevronLeft className="h-4 w-4 transition-transform duration-300" />
                       )}
                     </Button>
                   </div>

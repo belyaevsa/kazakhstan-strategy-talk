@@ -1360,6 +1360,17 @@ const DocumentPage = () => {
               </DropdownMenu>
               </div>
             </>
+          ) : paragraphsLoading ? (
+            <div className="space-y-4">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              ))}
+            </div>
           ) : (
             paragraphs && paragraphs.length > 0 ? (
               paragraphs.map((paragraph) => (
