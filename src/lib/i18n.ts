@@ -63,7 +63,15 @@ export function getCurrentLanguage(): Language {
 // Set language preference
 export function setLanguage(lang: Language): void {
   localStorage.setItem('language', lang);
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = lang;
+  }
   window.dispatchEvent(new Event('languagechange'));
+}
+
+// Keep <html lang> in sync with the stored/default language on initial load
+if (typeof document !== 'undefined') {
+  document.documentElement.lang = getCurrentLanguage();
 }
 
 // Get language name in its own language

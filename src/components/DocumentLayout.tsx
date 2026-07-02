@@ -9,6 +9,7 @@ import LanguageSelector from "@/components/LanguageSelector";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useSeoLinks } from "@/hooks/useSeoLinks";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 interface DocumentLayoutProps {
@@ -20,6 +21,7 @@ interface DocumentLayoutProps {
 const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  useSeoLinks();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [userState, setUserState] = useState(authService.getUser());
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
