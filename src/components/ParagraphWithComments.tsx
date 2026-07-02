@@ -86,9 +86,9 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters }: Parag
     const url = `${window.location.origin}${window.location.pathname}#paragraph-${paragraph.id}`;
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("Paragraph link copied!");
+      toast.success(t("message.paragraphLinkCopied"));
     } catch (err) {
-      toast.error("Failed to copy link");
+      toast.error(t("message.linkCopyFailed"));
     }
   };
 

@@ -429,7 +429,7 @@ const ChapterPage = () => {
     navigator.clipboard.writeText(url).then(() => {
       toast.success(t("chapter.linkCopied"));
     }).catch(() => {
-      toast.error("Failed to copy link");
+      toast.error(t("message.linkCopyFailed"));
     });
   };
 

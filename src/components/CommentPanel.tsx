@@ -94,7 +94,7 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
       // Refresh user data to get updated lastCommentAt
       await authService.getCurrentUser();
       setNewComment("");
-      toast.success("Comment added!");
+      toast.success(t("message.commentPosted"));
       // Force re-render by triggering a state update
       window.dispatchEvent(new Event('storage'));
     },
@@ -104,7 +104,7 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
       } else if (error.response?.data?.error === "TooManyRequests") {
         toast.error(error.response.data.message);
       } else {
-        toast.error("Failed to add comment");
+        toast.error(t("message.commentAddFailed"));
       }
     },
   });
@@ -118,7 +118,7 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
       queryClient.invalidateQueries({ queryKey: ["comments"] });
     },
     onError: () => {
-      toast.error("Failed to vote");
+      toast.error(t("message.voteFailed"));
     },
   });
 
@@ -128,10 +128,10 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments"] });
-      toast.success("Comment deleted");
+      toast.success(t("message.commentDeleted"));
     },
     onError: () => {
-      toast.error("Failed to delete comment");
+      toast.error(t("message.commentDeleteFailed"));
     },
   });
 

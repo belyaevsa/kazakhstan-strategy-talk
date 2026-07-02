@@ -173,7 +173,16 @@
     "noContent": "No content available for this page yet",
     "noHeadersFound": "No headers found",
     "pageNotFound": "Page not found",
-    "pageNotFoundDesc": "The requested document page could not be found"
+    "pageNotFoundDesc": "The requested document page could not be found",
+    "loggedOut": "Logged out successfully",
+    "commentAddFailed": "Failed to add comment",
+    "voteFailed": "Failed to vote",
+    "commentDeleteFailed": "Failed to delete comment",
+    "linkCopyFailed": "Failed to copy link",
+    "paragraphLinkCopied": "Paragraph link copied!",
+    "imageInvalid": "Please upload an image file",
+    "imageTooLarge": "File size must be less than 10MB",
+    "imageUploaded": "Image uploaded successfully!"
   },
   "misc": {
     "share": "Share",
@@ -353,7 +362,8 @@
     "pageNotFoundDesc": "The requested document page could not be found.",
     "loadErrorTitle": "Couldn't load content",
     "loadError": "Something went wrong while loading. Please check your connection and try again.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "returnHome": "Return to home"
   },
   "notifications": {
     "title": "Notifications",

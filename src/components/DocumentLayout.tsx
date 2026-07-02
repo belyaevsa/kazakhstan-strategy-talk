@@ -61,7 +61,7 @@ const DocumentLayout = ({ children, sidebar, comments }: DocumentLayoutProps) =>
 
   const handleLogout = () => {
     authService.logout();
-    toast.success("Logged out successfully");
+    toast.success(t("message.loggedOut"));
     navigate("/");
   };
 

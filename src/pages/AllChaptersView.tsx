@@ -530,7 +530,7 @@ const AllChaptersView = () => {
                                       navigator.clipboard.writeText(url).then(() => {
                                         toast.success(t("chapter.linkCopied"));
                                       }).catch(() => {
-                                        toast.error("Failed to copy link");
+                                        toast.error(t("message.linkCopyFailed"));
                                       });
                                     }}>
                                       <Link2 className="h-4 w-4 mr-2" />

@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { Upload, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { t } from "@/lib/i18n";
 import { authService } from "@/services/authService";
 
 interface ImageUploadZoneProps {
@@ -18,12 +19,12 @@ const ImageUploadZone = ({ onUploadComplete, className }: ImageUploadZoneProps) 
 
   const uploadFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file");
+      toast.error(t("message.imageInvalid"));
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("File size must be less than 10MB");
+      toast.error(t("message.imageTooLarge"));
       return;
     }
 
@@ -48,7 +49,7 @@ const ImageUploadZone = ({ onUploadComplete, className }: ImageUploadZoneProps) 
 
       const data = await response.json();
       onUploadComplete(data.url);
-      toast.success("Image uploaded successfully!");
+      toast.success(t("message.imageUploaded"));
     } catch (error: any) {
       toast.error(error.message || "Failed to upload image");
     } finally {
