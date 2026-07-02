@@ -386,6 +386,8 @@
     "saveSettings": "Баптауларды сақтау",
     "updateSuccess": "Профиль сәтті жаңартылды!",
     "updateError": "Профильді жаңарту мүмкін болмады",
+    "changeAvatar": "Фотоны өзгерту",
+    "uploading": "Жүктелуде…",
     "activeDiscussionsDesc": "Жақында түсініктемелеріңіз бар беттер"
   },
   "common": {

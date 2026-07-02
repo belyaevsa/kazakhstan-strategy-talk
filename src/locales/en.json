@@ -386,6 +386,8 @@
     "saveSettings": "Save Settings",
     "updateSuccess": "Profile updated successfully!",
     "updateError": "Failed to update profile",
+    "changeAvatar": "Change photo",
+    "uploading": "Uploading…",
     "activeDiscussionsDesc": "Pages where you have recent comments"
   },
   "common": {

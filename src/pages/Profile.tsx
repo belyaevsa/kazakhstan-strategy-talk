@@ -32,10 +32,12 @@ const Profile = () => {
   const [editedProfile, setEditedProfile] = useState({
     displayName: "",
     bio: "",
+    avatarUrl: "",
     showEmail: false,
     emailNotifications: true,
     timeZone: "UTC"
   });
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const [notificationSettings, setNotificationSettings] = useState({
     emailFrequency: "none" as "immediate" | "hourly" | "daily" | "none",
@@ -67,6 +69,7 @@ const Profile = () => {
       setEditedProfile({
         displayName: profile.displayName || "",
         bio: profile.bio || "",
+        avatarUrl: profile.avatarUrl || "",
         showEmail: profile.showEmail ?? false,
         emailNotifications: profile.emailNotifications ?? true,
         timeZone: profile.timeZone || "UTC"
@@ -108,6 +111,33 @@ const Profile = () => {
     }
   });
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error(t("message.imageTooLarge"));
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/avatar`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${authService.getToken()}` },
+        body: formData,
+      });
+      if (!res.ok) throw new Error("upload failed");
+      const data = await res.json();
+      setEditedProfile((p) => ({ ...p, avatarUrl: data.url }));
+      toast.success(t("message.imageUploaded"));
+    } catch {
+      toast.error(t("profile.updateError"));
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const handleSave = () => {
     updateProfileMutation.mutate(editedProfile);
   };
@@ -121,6 +151,7 @@ const Profile = () => {
       setEditedProfile({
         displayName: profile.displayName || "",
         bio: profile.bio || "",
+        avatarUrl: profile.avatarUrl || "",
         showEmail: profile.showEmail ?? false,
         emailNotifications: profile.emailNotifications ?? true,
         timeZone: profile.timeZone || "UTC"
@@ -160,11 +191,19 @@ const Profile = () => {
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                  {profile.avatarUrl ? (
-                    <img src={profile.avatarUrl} alt={profile.username} loading="lazy" decoding="async" className="w-20 h-20 rounded-full" />
-                  ) : (
-                    <User className="w-10 h-10 text-primary" />
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                    {(isEditing ? editedProfile.avatarUrl : profile.avatarUrl) ? (
+                      <img src={isEditing ? editedProfile.avatarUrl : profile.avatarUrl} alt={profile.username} loading="lazy" decoding="async" className="w-20 h-20 rounded-full object-cover" />
+                    ) : (
+                      <User className="w-10 h-10 text-primary" />
+                    )}
+                  </div>
+                  {isEditing && (
+                    <label className="text-xs text-primary hover:underline cursor-pointer">
+                      {uploadingAvatar ? t("profile.uploading") : t("profile.changeAvatar")}
+                      <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploadingAvatar} />
+                    </label>
                   )}
                 </div>
                 <div>

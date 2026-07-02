@@ -215,6 +215,12 @@ public class ProfileController : ApiControllerBase
             user.Bio = request.Bio;
         }
 
+        if (request.AvatarUrl != null && user.AvatarUrl != request.AvatarUrl)
+        {
+            changes.Add("AvatarUrl updated");
+            user.AvatarUrl = request.AvatarUrl;
+        }
+
         if (request.ShowEmail.HasValue && user.ShowEmail != request.ShowEmail.Value)
         {
             changes.Add($"ShowEmail: {user.ShowEmail} -> {request.ShowEmail.Value}");

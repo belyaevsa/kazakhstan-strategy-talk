@@ -59,6 +59,9 @@ public class UpdateProfileRequest
     [MaxLength(500)]
     public string? Bio { get; set; }
 
+    [MaxLength(500)]
+    public string? AvatarUrl { get; set; }
+
     public bool? ShowEmail { get; set; }
     public bool? EmailNotifications { get; set; }
 

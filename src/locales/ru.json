@@ -386,6 +386,8 @@
     "saveSettings": "Сохранить настройки",
     "updateSuccess": "Профиль успешно обновлен!",
     "updateError": "Не удалось обновить профиль",
+    "changeAvatar": "Изменить фото",
+    "uploading": "Загрузка…",
     "activeDiscussionsDesc": "Страницы, где у вас есть недавние комментарии"
   },
   "common": {
