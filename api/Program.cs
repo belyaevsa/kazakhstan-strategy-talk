@@ -86,8 +86,13 @@ builder.Services.AddScoped<SuggestionService>();
 builder.Services.AddScoped<SeoMetaService>();
 builder.Services.AddSingleton<ICacheService, CacheService>();
 
+// SEO cache warmup (one instance used as both the hosted service and ISeoWarmupService)
+builder.Services.AddSingleton<SeoWarmupService>();
+builder.Services.AddSingleton<ISeoWarmupService>(sp => sp.GetRequiredService<SeoWarmupService>());
+
 // Background Services
 builder.Services.AddHostedService<EmailNotificationBackgroundService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<SeoWarmupService>());
 
 // Yandex Object Storage Configuration (S3-compatible)
 var awsAccessKey = Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID");

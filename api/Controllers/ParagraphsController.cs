@@ -16,11 +16,13 @@ public class ParagraphsController : ApiControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ICacheService _cache;
+    private readonly ISeoWarmupService _seoWarmup;
 
-    public ParagraphsController(AppDbContext context, ICacheService cache)
+    public ParagraphsController(AppDbContext context, ICacheService cache, ISeoWarmupService seoWarmup)
     {
         _context = context;
         _cache = cache;
+        _seoWarmup = seoWarmup;
     }
 
     private Guid GetCurrentUserId()
@@ -140,6 +142,7 @@ public class ParagraphsController : ApiControllerBase
         // Invalidate cache
         _cache.RemoveByPattern(CacheKeys.ParagraphsByPage(request.PageId));
         _cache.RemoveByPattern(CacheKeys.AllChapters);
+        _seoWarmup.InvalidateAndRewarm();
 
         var paragraphDto = new ParagraphDTO
         {
@@ -243,6 +246,7 @@ public class ParagraphsController : ApiControllerBase
             // Invalidate cache once
             _cache.RemoveByPattern(CacheKeys.ParagraphsByPage(request.PageId));
             _cache.RemoveByPattern(CacheKeys.AllChapters);
+            _seoWarmup.InvalidateAndRewarm();
             _cache.Remove(CacheKeys.PageById(request.PageId));
             if (page != null)
             {
@@ -292,6 +296,7 @@ public class ParagraphsController : ApiControllerBase
 
         // Invalidate cache
         _cache.RemoveByPattern(CacheKeys.ParagraphsByPage(paragraph.PageId));
+        _seoWarmup.InvalidateAndRewarm();
 
         return NoContent();
     }
@@ -315,6 +320,7 @@ public class ParagraphsController : ApiControllerBase
         // Invalidate cache
         _cache.RemoveByPattern(CacheKeys.ParagraphsByPage(pageId));
         _cache.RemoveByPattern(CacheKeys.AllChapters);
+        _seoWarmup.InvalidateAndRewarm();
 
         return NoContent();
     }

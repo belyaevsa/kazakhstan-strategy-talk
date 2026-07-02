@@ -14,11 +14,13 @@ public class ChaptersController : ApiControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ICacheService _cache;
+    private readonly ISeoWarmupService _seoWarmup;
 
-    public ChaptersController(AppDbContext context, ICacheService cache)
+    public ChaptersController(AppDbContext context, ICacheService cache, ISeoWarmupService seoWarmup)
     {
         _context = context;
         _cache = cache;
+        _seoWarmup = seoWarmup;
     }
 
     [HttpGet]
@@ -196,6 +198,7 @@ public class ChaptersController : ApiControllerBase
 
         // Invalidate chapters cache
         _cache.RemoveByPattern(CacheKeys.AllChapters);
+        _seoWarmup.InvalidateAndRewarm();
 
         var chapterDTO = new ChapterDTO
         {
@@ -252,6 +255,7 @@ public class ChaptersController : ApiControllerBase
 
         // Invalidate cache
         _cache.RemoveByPattern(CacheKeys.AllChapters);
+        _seoWarmup.InvalidateAndRewarm();
         _cache.Remove(CacheKeys.Chapter(id));
 
         return NoContent();
@@ -290,6 +294,7 @@ public class ChaptersController : ApiControllerBase
 
         // Invalidate cache
         _cache.RemoveByPattern(CacheKeys.AllChapters);
+        _seoWarmup.InvalidateAndRewarm();
 
         return NoContent();
     }
@@ -313,6 +318,7 @@ public class ChaptersController : ApiControllerBase
 
         // Invalidate cache
         _cache.RemoveByPattern(CacheKeys.AllChapters);
+        _seoWarmup.InvalidateAndRewarm();
         _cache.Remove(CacheKeys.Chapter(id));
         // Invalidate all page caches for this chapter
         foreach (var page in chapter.Pages)

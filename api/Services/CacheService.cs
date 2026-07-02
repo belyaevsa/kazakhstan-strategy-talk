@@ -34,6 +34,16 @@ public class CacheService : ICacheService
             AbsoluteExpirationRelativeToNow = absoluteExpiration ?? DefaultExpiration
         };
 
+        // Prune the key-tracking set when the entry expires/evicts, so it can't
+        // grow unbounded (important for the per-URL SEO cache).
+        options.RegisterPostEvictionCallback((evictedKey, _, _, _) =>
+        {
+            lock (_lock)
+            {
+                _cacheKeys.Remove(evictedKey.ToString()!);
+            }
+        });
+
         _cache.Set(key, value, options);
 
         lock (_lock)
@@ -72,6 +82,7 @@ public class CacheService : ICacheService
 public static class CacheKeys
 {
     public const string AllChapters = "chapters:all";
+    public const string SeoHtmlPrefix = "seo:html";
     public static string Chapter(Guid id) => $"chapter:{id}";
     public static string PageById(Guid id) => $"page:id:{id}";
     public static string PageBySlug(string slug) => $"page:slug:{slug}";

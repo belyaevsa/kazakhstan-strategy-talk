@@ -16,11 +16,13 @@ public class PagesController : ApiControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ICacheService _cache;
+    private readonly ISeoWarmupService _seoWarmup;
 
-    public PagesController(AppDbContext context, ICacheService cache)
+    public PagesController(AppDbContext context, ICacheService cache, ISeoWarmupService seoWarmup)
     {
         _context = context;
         _cache = cache;
+        _seoWarmup = seoWarmup;
     }
 
     private Guid GetCurrentUserId()
@@ -147,6 +149,7 @@ public class PagesController : ApiControllerBase
 
         // Invalidate cache
         _cache.RemoveByPattern(CacheKeys.AllChapters);
+        _seoWarmup.InvalidateAndRewarm();
 
         var pageDto = new PageDTO
         {
@@ -273,6 +276,7 @@ public class PagesController : ApiControllerBase
 
         // Invalidate cache
         _cache.RemoveByPattern(CacheKeys.AllChapters);
+        _seoWarmup.InvalidateAndRewarm();
         _cache.Remove(CacheKeys.PageById(id));
         _cache.Remove(CacheKeys.PageBySlug(page.Slug));
         _cache.Remove(CacheKeys.ParagraphsByPage(id));
@@ -336,6 +340,7 @@ public class PagesController : ApiControllerBase
 
         // Invalidate cache
         _cache.RemoveByPattern(CacheKeys.AllChapters);
+        _seoWarmup.InvalidateAndRewarm();
 
         var pageDto = new PageDTO
         {
@@ -369,6 +374,7 @@ public class PagesController : ApiControllerBase
 
         // Invalidate cache
         _cache.RemoveByPattern(CacheKeys.AllChapters);
+        _seoWarmup.InvalidateAndRewarm();
         _cache.Remove(CacheKeys.PageById(id));
         _cache.Remove(CacheKeys.PageBySlug(page.Slug));
         _cache.Remove(CacheKeys.ParagraphsByPage(id));

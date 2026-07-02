@@ -47,7 +47,23 @@ public class SeoMetaService
     /// Returns the SEO-enriched index.html for the given request path, or null if
     /// the default file should be served (path not a content route, or template missing).
     /// </summary>
-    public async Task<string?> RenderAsync(string path, string scheme, string host)
+    // Resolved content is cached for 72h (busted + re-warmed on edits). Unknown
+    // paths (e.g. crawler-scanned garbage URLs) get a short TTL so they can't
+    // accumulate in memory.
+    private static readonly TimeSpan ResolvedTtl = TimeSpan.FromHours(72);
+    private static readonly TimeSpan UnresolvedTtl = TimeSpan.FromMinutes(1);
+
+    public Task<string?> RenderAsync(string path, string scheme, string host)
+        => RenderAndCacheAsync(path, scheme, host, force: false);
+
+    /// <summary>Force-render a path from the configured base URL and (re)populate the cache. Used for warming.</summary>
+    public Task WarmAsync(string path)
+    {
+        var (scheme, host) = BaseSchemeAndHost();
+        return RenderAndCacheAsync(path, scheme, host, force: true);
+    }
+
+    private async Task<string?> RenderAndCacheAsync(string path, string scheme, string host, bool force)
     {
         var normalized = "/" + path.Trim('/');
         if (normalized == "/") normalized = "/";
@@ -56,9 +72,12 @@ public class SeoMetaService
         var lastSegment = normalized.Split('/').Last();
         if (lastSegment.Contains('.')) return null;
 
-        var cacheKey = $"seo:html:{normalized}";
-        var cached = _cache.Get<string>(cacheKey);
-        if (cached != null) return cached;
+        var cacheKey = $"{CacheKeys.SeoHtmlPrefix}:{normalized}";
+        if (!force)
+        {
+            var cached = _cache.Get<string>(cacheKey);
+            if (cached != null) return cached;
+        }
 
         var template = LoadTemplate();
         if (template == null) return null;
@@ -66,9 +85,18 @@ public class SeoMetaService
         var meta = await BuildMetaAsync(normalized, scheme, host);
         var html = Inject(template, meta);
 
-        // Cache for 10 minutes; content edits become visible shortly after.
-        _cache.Set(cacheKey, html, TimeSpan.FromMinutes(10));
+        _cache.Set(cacheKey, html, meta.Resolved ? ResolvedTtl : UnresolvedTtl);
         return html;
+    }
+
+    private (string scheme, string host) BaseSchemeAndHost()
+    {
+        var baseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL") ?? _configuration["App:BaseUrl"];
+        if (!string.IsNullOrWhiteSpace(baseUrl) && Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri))
+        {
+            return (uri.Scheme, uri.Authority);
+        }
+        return ("https", "localhost");
     }
 
     private string? LoadTemplate()
@@ -127,6 +155,7 @@ public class SeoMetaService
 
                     meta.Title = $"{siteTitle} | {chapterTitle} | {pageTitle}";
                     meta.Description = description;
+                    meta.Resolved = true;
                     meta.JsonLd = BuildArticleJsonLd(meta, siteTitle, pageTitle, chapterTitle, chapterSlug, description, page.CreatedAt, page.UpdatedAt ?? page.CreatedAt);
 
                     // Render the page body as HTML so non-JS crawlers see real content,
@@ -168,11 +197,13 @@ public class SeoMetaService
 
                 meta.Title = $"{siteTitle} | {chapterTitle}";
                 meta.Description = description;
+                meta.Resolved = true;
             }
         }
         // Homepage: /{lang} or /
         else if (rest.Length == 0)
         {
+            meta.Resolved = true;
             meta.JsonLd = BuildWebSiteJsonLd(meta, siteTitle);
         }
 
@@ -441,5 +472,6 @@ public class SeoMetaService
         public string PathWithoutLang { get; set; } = "";
         public string BodyHtml { get; set; } = "";
         public string JsonLd { get; set; } = "";
+        public bool Resolved { get; set; } = false;
     }
 }

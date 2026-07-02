@@ -8,11 +8,15 @@ public class SuggestionService
 {
     private readonly AppDbContext _context;
     private readonly INotificationService _notificationService;
+    private readonly ICacheService _cache;
+    private readonly ISeoWarmupService _seoWarmup;
 
-    public SuggestionService(AppDbContext context, INotificationService notificationService)
+    public SuggestionService(AppDbContext context, INotificationService notificationService, ICacheService cache, ISeoWarmupService seoWarmup)
     {
         _context = context;
         _notificationService = notificationService;
+        _cache = cache;
+        _seoWarmup = seoWarmup;
     }
 
     public async Task<ParagraphSuggestion> CreateSuggestionAsync(
@@ -199,6 +203,11 @@ public class SuggestionService
         suggestion.ApprovedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
+
+        // The paragraph content changed: refresh app + SEO caches
+        _cache.RemoveByPattern(CacheKeys.ParagraphsByPage(paragraph.PageId));
+        _cache.RemoveByPattern(CacheKeys.AllChapters);
+        _seoWarmup.InvalidateAndRewarm();
 
         // Notify the suggestion author about approval
         await _notificationService.NotifySuggestionApprovedAsync(
