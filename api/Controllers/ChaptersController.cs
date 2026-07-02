@@ -14,13 +14,13 @@ public class ChaptersController : ApiControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ICacheService _cache;
-    private readonly ISeoWarmupService _seoWarmup;
+    private readonly IWarmupService _warmup;
 
-    public ChaptersController(AppDbContext context, ICacheService cache, ISeoWarmupService seoWarmup)
+    public ChaptersController(AppDbContext context, ICacheService cache, IWarmupService warmup)
     {
         _context = context;
         _cache = cache;
-        _seoWarmup = seoWarmup;
+        _warmup = warmup;
     }
 
     [HttpGet]
@@ -197,8 +197,7 @@ public class ChaptersController : ApiControllerBase
         await _context.SaveChangesAsync();
 
         // Invalidate chapters cache
-        _cache.RemoveByPattern(CacheKeys.AllChapters);
-        _seoWarmup.InvalidateAndRewarm();
+        _warmup.InvalidateAndRewarm();
 
         var chapterDTO = new ChapterDTO
         {
@@ -254,9 +253,7 @@ public class ChaptersController : ApiControllerBase
         await _context.SaveChangesAsync();
 
         // Invalidate cache
-        _cache.RemoveByPattern(CacheKeys.AllChapters);
-        _seoWarmup.InvalidateAndRewarm();
-        _cache.Remove(CacheKeys.Chapter(id));
+        _warmup.InvalidateAndRewarm();
 
         return NoContent();
     }
@@ -293,8 +290,7 @@ public class ChaptersController : ApiControllerBase
         await _context.SaveChangesAsync();
 
         // Invalidate cache
-        _cache.RemoveByPattern(CacheKeys.AllChapters);
-        _seoWarmup.InvalidateAndRewarm();
+        _warmup.InvalidateAndRewarm();
 
         return NoContent();
     }
@@ -316,17 +312,8 @@ public class ChaptersController : ApiControllerBase
         _context.Chapters.Remove(chapter);
         await _context.SaveChangesAsync();
 
-        // Invalidate cache
-        _cache.RemoveByPattern(CacheKeys.AllChapters);
-        _seoWarmup.InvalidateAndRewarm();
-        _cache.Remove(CacheKeys.Chapter(id));
-        // Invalidate all page caches for this chapter
-        foreach (var page in chapter.Pages)
-        {
-            _cache.Remove(CacheKeys.PageById(page.Id));
-            _cache.Remove(CacheKeys.PageBySlug(page.Slug));
-            _cache.Remove(CacheKeys.ParagraphsByPage(page.Id));
-        }
+        // Invalidate all content caches + re-warm
+        _warmup.InvalidateAndRewarm();
 
         return NoContent();
     }

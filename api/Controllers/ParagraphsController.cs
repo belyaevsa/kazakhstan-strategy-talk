@@ -16,13 +16,13 @@ public class ParagraphsController : ApiControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ICacheService _cache;
-    private readonly ISeoWarmupService _seoWarmup;
+    private readonly IWarmupService _warmup;
 
-    public ParagraphsController(AppDbContext context, ICacheService cache, ISeoWarmupService seoWarmup)
+    public ParagraphsController(AppDbContext context, ICacheService cache, IWarmupService warmup)
     {
         _context = context;
         _cache = cache;
-        _seoWarmup = seoWarmup;
+        _warmup = warmup;
     }
 
     private Guid GetCurrentUserId()
@@ -140,9 +140,7 @@ public class ParagraphsController : ApiControllerBase
         await _context.SaveChangesAsync();
 
         // Invalidate cache
-        _cache.RemoveByPattern(CacheKeys.ParagraphsByPage(request.PageId));
-        _cache.RemoveByPattern(CacheKeys.AllChapters);
-        _seoWarmup.InvalidateAndRewarm();
+        _warmup.InvalidateAndRewarm();
 
         var paragraphDto = new ParagraphDTO
         {
@@ -244,14 +242,7 @@ public class ParagraphsController : ApiControllerBase
             await transaction.CommitAsync();
 
             // Invalidate cache once
-            _cache.RemoveByPattern(CacheKeys.ParagraphsByPage(request.PageId));
-            _cache.RemoveByPattern(CacheKeys.AllChapters);
-            _seoWarmup.InvalidateAndRewarm();
-            _cache.Remove(CacheKeys.PageById(request.PageId));
-            if (page != null)
-            {
-                _cache.Remove(CacheKeys.PageBySlug(page.Slug));
-            }
+            _warmup.InvalidateAndRewarm();
 
             return NoContent();
         }
@@ -295,8 +286,7 @@ public class ParagraphsController : ApiControllerBase
         await _context.SaveChangesAsync();
 
         // Invalidate cache
-        _cache.RemoveByPattern(CacheKeys.ParagraphsByPage(paragraph.PageId));
-        _seoWarmup.InvalidateAndRewarm();
+        _warmup.InvalidateAndRewarm();
 
         return NoContent();
     }
@@ -318,9 +308,7 @@ public class ParagraphsController : ApiControllerBase
         await _context.SaveChangesAsync();
 
         // Invalidate cache
-        _cache.RemoveByPattern(CacheKeys.ParagraphsByPage(pageId));
-        _cache.RemoveByPattern(CacheKeys.AllChapters);
-        _seoWarmup.InvalidateAndRewarm();
+        _warmup.InvalidateAndRewarm();
 
         return NoContent();
     }

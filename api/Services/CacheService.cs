@@ -83,6 +83,7 @@ public static class CacheKeys
 {
     public const string AllChapters = "chapters:all";
     public const string SeoHtmlPrefix = "seo:html";
+    public const string Sitemap = "sitemap:xml";
     public static string Chapter(Guid id) => $"chapter:{id}";
     public static string PageById(Guid id) => $"page:id:{id}";
     public static string PageBySlug(string slug) => $"page:slug:{slug}";

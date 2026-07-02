@@ -16,13 +16,13 @@ public class PagesController : ApiControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ICacheService _cache;
-    private readonly ISeoWarmupService _seoWarmup;
+    private readonly IWarmupService _warmup;
 
-    public PagesController(AppDbContext context, ICacheService cache, ISeoWarmupService seoWarmup)
+    public PagesController(AppDbContext context, ICacheService cache, IWarmupService warmup)
     {
         _context = context;
         _cache = cache;
-        _seoWarmup = seoWarmup;
+        _warmup = warmup;
     }
 
     private Guid GetCurrentUserId()
@@ -148,8 +148,7 @@ public class PagesController : ApiControllerBase
         await _context.SaveChangesAsync();
 
         // Invalidate cache
-        _cache.RemoveByPattern(CacheKeys.AllChapters);
-        _seoWarmup.InvalidateAndRewarm();
+        _warmup.InvalidateAndRewarm();
 
         var pageDto = new PageDTO
         {
@@ -275,11 +274,7 @@ public class PagesController : ApiControllerBase
         await _context.SaveChangesAsync();
 
         // Invalidate cache
-        _cache.RemoveByPattern(CacheKeys.AllChapters);
-        _seoWarmup.InvalidateAndRewarm();
-        _cache.Remove(CacheKeys.PageById(id));
-        _cache.Remove(CacheKeys.PageBySlug(page.Slug));
-        _cache.Remove(CacheKeys.ParagraphsByPage(id));
+        _warmup.InvalidateAndRewarm();
 
         return NoContent();
     }
@@ -339,8 +334,7 @@ public class PagesController : ApiControllerBase
         await _context.SaveChangesAsync();
 
         // Invalidate cache
-        _cache.RemoveByPattern(CacheKeys.AllChapters);
-        _seoWarmup.InvalidateAndRewarm();
+        _warmup.InvalidateAndRewarm();
 
         var pageDto = new PageDTO
         {
@@ -373,11 +367,7 @@ public class PagesController : ApiControllerBase
         await _context.SaveChangesAsync();
 
         // Invalidate cache
-        _cache.RemoveByPattern(CacheKeys.AllChapters);
-        _seoWarmup.InvalidateAndRewarm();
-        _cache.Remove(CacheKeys.PageById(id));
-        _cache.Remove(CacheKeys.PageBySlug(page.Slug));
-        _cache.Remove(CacheKeys.ParagraphsByPage(id));
+        _warmup.InvalidateAndRewarm();
 
         return NoContent();
     }

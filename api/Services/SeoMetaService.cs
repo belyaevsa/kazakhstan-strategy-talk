@@ -53,17 +53,7 @@ public class SeoMetaService
     private static readonly TimeSpan ResolvedTtl = TimeSpan.FromHours(72);
     private static readonly TimeSpan UnresolvedTtl = TimeSpan.FromMinutes(1);
 
-    public Task<string?> RenderAsync(string path, string scheme, string host)
-        => RenderAndCacheAsync(path, scheme, host, force: false);
-
-    /// <summary>Force-render a path from the configured base URL and (re)populate the cache. Used for warming.</summary>
-    public Task WarmAsync(string path)
-    {
-        var (scheme, host) = BaseSchemeAndHost();
-        return RenderAndCacheAsync(path, scheme, host, force: true);
-    }
-
-    private async Task<string?> RenderAndCacheAsync(string path, string scheme, string host, bool force)
+    public async Task<string?> RenderAsync(string path, string scheme, string host)
     {
         var normalized = "/" + path.Trim('/');
         if (normalized == "/") normalized = "/";
@@ -73,11 +63,8 @@ public class SeoMetaService
         if (lastSegment.Contains('.')) return null;
 
         var cacheKey = $"{CacheKeys.SeoHtmlPrefix}:{normalized}";
-        if (!force)
-        {
-            var cached = _cache.Get<string>(cacheKey);
-            if (cached != null) return cached;
-        }
+        var cached = _cache.Get<string>(cacheKey);
+        if (cached != null) return cached;
 
         var template = LoadTemplate();
         if (template == null) return null;
@@ -87,16 +74,6 @@ public class SeoMetaService
 
         _cache.Set(cacheKey, html, meta.Resolved ? ResolvedTtl : UnresolvedTtl);
         return html;
-    }
-
-    private (string scheme, string host) BaseSchemeAndHost()
-    {
-        var baseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL") ?? _configuration["App:BaseUrl"];
-        if (!string.IsNullOrWhiteSpace(baseUrl) && Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri))
-        {
-            return (uri.Scheme, uri.Authority);
-        }
-        return ("https", "localhost");
     }
 
     private string? LoadTemplate()

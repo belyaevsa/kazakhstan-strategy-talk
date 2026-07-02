@@ -25,7 +25,7 @@ public class SitemapController : ApiControllerBase
     [Produces("application/xml")]
     public async Task<IActionResult> GetSitemap([FromQuery] bool nocache = false)
     {
-        const string cacheKey = "sitemap:xml";
+        const string cacheKey = CacheKeys.Sitemap;
 
         // Check cache first (unless nocache is specified)
         if (!nocache)
