@@ -17,12 +17,14 @@ public class ParagraphsController : ApiControllerBase
     private readonly AppDbContext _context;
     private readonly ICacheService _cache;
     private readonly IWarmupService _warmup;
+    private readonly INotificationService _notificationService;
 
-    public ParagraphsController(AppDbContext context, ICacheService cache, IWarmupService warmup)
+    public ParagraphsController(AppDbContext context, ICacheService cache, IWarmupService warmup, INotificationService notificationService)
     {
         _context = context;
         _cache = cache;
         _warmup = warmup;
+        _notificationService = notificationService;
     }
 
     private Guid GetCurrentUserId()
@@ -243,6 +245,9 @@ public class ParagraphsController : ApiControllerBase
 
             // Invalidate cache once
             _warmup.InvalidateAndRewarm();
+
+            // Notify followers that the page content was updated
+            await _notificationService.CreatePageUpdateNotificationAsync(request.PageId, userId);
 
             return NoContent();
         }

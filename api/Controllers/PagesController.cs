@@ -17,12 +17,14 @@ public class PagesController : ApiControllerBase
     private readonly AppDbContext _context;
     private readonly ICacheService _cache;
     private readonly IWarmupService _warmup;
+    private readonly INotificationService _notificationService;
 
-    public PagesController(AppDbContext context, ICacheService cache, IWarmupService warmup)
+    public PagesController(AppDbContext context, ICacheService cache, IWarmupService warmup, INotificationService notificationService)
     {
         _context = context;
         _cache = cache;
         _warmup = warmup;
+        _notificationService = notificationService;
     }
 
     private Guid GetCurrentUserId()
@@ -275,6 +277,12 @@ public class PagesController : ApiControllerBase
 
         // Invalidate cache
         _warmup.InvalidateAndRewarm();
+
+        // Notify followers that the page was updated
+        if (!(request.IsDraft ?? page.IsDraft))
+        {
+            await _notificationService.CreatePageUpdateNotificationAsync(id, userId);
+        }
 
         return NoContent();
     }
