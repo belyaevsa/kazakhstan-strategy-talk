@@ -414,6 +414,7 @@ const DocumentPage = () => {
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(null);
   const [commentPanelTop, setCommentPanelTop] = useState(100);
   const [commentPanelRight, setCommentPanelRight] = useState('1rem');
+  const commentPanelRef = useRef<HTMLDivElement>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedSlug, setEditedSlug] = useState("");
@@ -557,10 +558,9 @@ const DocumentPage = () => {
       const paragraphEl = document.getElementById(`paragraph-${activeParagraphId}`);
       const headerHeight = 64;
       const viewportHeight = window.innerHeight;
-      const panelWidth = 320;
       const minGap = 16;
 
-      // Calculate right edge: align panel to the right of the container
+      // Align the panel's right edge with the page container's right edge.
       const containerElement = document.querySelector('.container');
       if (containerElement) {
         const containerRect = containerElement.getBoundingClientRect();
@@ -568,42 +568,29 @@ const DocumentPage = () => {
         setCommentPanelRight(`${rightOffset + minGap}px`);
       }
 
-      if (!paragraphEl) {
-        setCommentPanelTop(headerHeight + minGap);
-        return;
-      }
-
-      const paraRect = paragraphEl.getBoundingClientRect();
-
-      // Check if paragraph is visible in the viewport at all
-      if (paraRect.bottom < headerHeight || paraRect.top > viewportHeight) {
-        setCommentPanelTop(headerHeight + minGap);
-        return;
-      }
-
-      // Start with paragraph's top, but don't let the panel go above the paragraph
-      let panelTop = paraRect.top;
-
-      // Clamp: not above header, not below viewport (with some panel height visible)
-      const panelMinHeight = 200; // minimum panel height we want visible
-      panelTop = Math.max(panelTop, headerHeight + minGap);
-      panelTop = Math.min(panelTop, viewportHeight - panelMinHeight);
-
-      // Avoid overlapping the TOC in the right rail (same column as the panel)
-      const tocElement = document.querySelector('.bg-card.border.shadow-sm.rounded-lg');
-      if (tocElement) {
-        const tocRect = tocElement.getBoundingClientRect();
-        // Only adjust if TOC is currently visible in the viewport
-        if (tocRect.bottom > 0 && tocRect.top < viewportHeight) {
-          const panelBottom = panelTop + panelMinHeight;
-          if (panelBottom > tocRect.top && panelTop < tocRect.bottom) {
-            // Push below visible TOC, but re-clamp afterwards
-            panelTop = tocRect.bottom + minGap;
-            panelTop = Math.max(panelTop, headerHeight + minGap);
-            panelTop = Math.min(panelTop, viewportHeight - panelMinHeight);
-          }
+      // Lower bound for the panel top: below the sticky header, and below the TOC rail
+      // whenever it's visible (the TOC is sticky, so it stays pinned near the top while
+      // scrolling). This is what keeps the panel "below the TOC" instead of over it.
+      let minTop = headerHeight + minGap;
+      const tocEl = document.getElementById('toc-rail');
+      if (tocEl) {
+        const tocRect = tocEl.getBoundingClientRect();
+        if (tocRect.bottom > minTop) {
+          minTop = tocRect.bottom + minGap;
         }
       }
+
+      // Desired position: in line with the active paragraph's top, tracking scroll.
+      let panelTop = minTop;
+      if (paragraphEl) {
+        panelTop = Math.max(minTop, paragraphEl.getBoundingClientRect().top);
+      }
+
+      // Keep the panel within the viewport bottom when it fits; if it's taller than the
+      // available space, pin it to minTop and let its inner list scroll.
+      const panelHeight = commentPanelRef.current?.offsetHeight ?? 320;
+      const maxTop = viewportHeight - minGap - panelHeight;
+      panelTop = Math.max(minTop, Math.min(panelTop, maxTop));
 
       setCommentPanelTop(panelTop);
     };
@@ -612,9 +599,15 @@ const DocumentPage = () => {
     window.addEventListener('scroll', calculatePosition, { passive: true });
     window.addEventListener('resize', calculatePosition, { passive: true });
 
+    // Recompute when the panel's own height changes (comments load, textarea grows, etc.)
+    // so the viewport-bottom clamp stays accurate.
+    const ro = new ResizeObserver(calculatePosition);
+    if (commentPanelRef.current) ro.observe(commentPanelRef.current);
+
     return () => {
       window.removeEventListener('scroll', calculatePosition);
       window.removeEventListener('resize', calculatePosition);
+      ro.disconnect();
     };
   }, [activeParagraphId]);
 
@@ -1035,7 +1028,7 @@ const DocumentPage = () => {
           !isEditMode && (
             <div className="space-y-4">
               {/* Table of Contents - right rail (xl+) */}
-              <div className="bg-card border shadow-sm rounded-lg p-4">
+              <div id="toc-rail" className="bg-card border shadow-sm rounded-lg p-4">
                 <h3 className="font-semibold mb-4">{t("document.tableOfContents")}</h3>
                 <TableOfContents paragraphs={paragraphs} />
               </div>
@@ -1043,6 +1036,7 @@ const DocumentPage = () => {
               {/* Paragraph Comments - Shows when paragraph selected */}
               {activeParagraphId && (
                 <div
+                  ref={commentPanelRef}
                   className="fixed w-[320px] transition-all duration-300 z-10 hidden xl:block"
                   style={{
                     top: `${commentPanelTop}px`,

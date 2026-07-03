@@ -448,112 +448,110 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters, suggest
         </div>
       )}
 
-      {/* Quick emoji reactions - single "Reactions" button that opens a popover */}
-      {!isDivider && (isHovered || isActive) && (
-        <div
-          className="hidden sm:flex absolute right-1 sm:right-4 flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ top: suggestionCount > 0 ? "70px" : paragraph.commentCount > 0 ? "38px" : "28px" }}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        >
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                className={cn(
-                  "flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-medium transition-all",
-                  reactions?.userReaction
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-background hover:border-primary/50"
-                )}
-              >
-                {reactions?.userReaction || "😀"}
-                <span className="text-[10px] text-muted-foreground">
-                  {Object.values(reactions?.reactions || {}).reduce((a, b) => a + b, 0) || null}
-                </span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent
-              side="bottom"
-              align="end"
-              className="w-auto p-1.5"
+      {/* Right-side action stack: persistent comment/suggestion badges on top, hover-only
+          reaction & suggest-edit controls below. A single flex column with gap keeps every
+          item spaced automatically instead of hand-tuned absolute offsets that overlap. */}
+      {!isDivider && (
+        <div className="absolute right-1 sm:right-4 top-2 sm:top-4 flex flex-col items-end gap-1.5">
+          {/* Comment indicator (persistent), or a hover placeholder when there's nothing else */}
+          {paragraph.commentCount > 0 ? (
+            <div className="flex items-center gap-1 bg-primary text-primary-foreground px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium shadow-md">
+              <MessageSquare className="h-3 w-3" />
+              <span className="hidden sm:inline">{paragraph.commentCount}</span>
+            </div>
+          ) : (isHovered || isActive) && suggestionCount === 0 ? (
+            <div className="flex items-center gap-1 bg-muted-foreground/20 text-foreground px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs">
+              <MessageSquare className="h-3 w-3" />
+            </div>
+          ) : null}
+
+          {/* Suggestion indicator (persistent) */}
+          {suggestionCount > 0 && (
+            <div
+              className="flex items-center gap-1 bg-yellow-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium shadow-md cursor-pointer hover:bg-yellow-600 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSuggestionsCarouselOpen(true);
+              }}
+            >
+              <Lightbulb className="h-3 w-3" />
+              <span className="hidden sm:inline">{suggestionCount}</span>
+            </div>
+          )}
+
+          {/* Quick emoji reactions - opens a popover */}
+          {(isHovered || isActive) && (
+            <div
+              className="hidden sm:block opacity-0 group-hover:opacity-100 transition-opacity"
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
             >
-              <div className="flex gap-0.5">
-                {REACTIONS.map((r) => {
-                  const count = reactions?.reactions?.[r.type] || 0;
-                  const isActiveReaction = reactions?.userReaction === r.type;
-                  return (
-                    <button
-                      key={r.type}
-                      onClick={(e) => handleReaction(e, r.type)}
-                      disabled={reacting}
-                      className={cn(
-                        "flex items-center gap-1 px-2 py-1 rounded-md text-sm transition-all",
-                        isActiveReaction
-                          ? "bg-primary/10 text-primary"
-                          : "hover:bg-muted"
-                      )}
-                      title={r.label}
-                    >
-                      <span>{r.type}</span>
-                      {count > 0 && <span className="text-[10px] text-muted-foreground">{count}</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-      )}
-
-      {/* Comment indicator */}
-      {!isDivider && paragraph.commentCount > 0 && (
-        <div className="absolute right-1 sm:right-4 top-2 sm:top-4 flex items-center gap-1 bg-primary text-primary-foreground px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium shadow-md">
-          <MessageSquare className="h-3 w-3" />
-          <span className="hidden sm:inline">{paragraph.commentCount}</span>
-        </div>
-      )}
-
-      {/* Hover indicator */}
-      {!isDivider && (isHovered || isActive) && paragraph.commentCount === 0 && suggestionCount === 0 && (
-        <div className="absolute right-1 sm:right-4 top-2 sm:top-4 flex items-center gap-1 bg-muted-foreground/20 text-foreground px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs">
-          <MessageSquare className="h-3 w-3" />
-        </div>
-      )}
-
-      {/* Suggestion indicator - below comment indicator */}
-      {!isDivider && suggestionCount > 0 && (
-        <div
-          className="absolute right-1 sm:right-4 top-12 sm:top-14 flex items-center gap-1 bg-yellow-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium shadow-md cursor-pointer hover:bg-yellow-600 transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            setSuggestionsCarouselOpen(true);
-          }}
-        >
-          <Lightbulb className="h-3 w-3" />
-          <span className="hidden sm:inline">{suggestionCount}</span>
-        </div>
-      )}
-
-      {/* Suggest edit button - shown on hover for authenticated users */}
-      {!isDivider && isAuthenticated && isHovered && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setSuggestionEditorOpen(true);
-          }}
-          className={cn(
-            "hidden sm:flex absolute items-center gap-1 bg-background/80 hover:bg-background border border-border shadow-sm px-2 py-1 rounded-md text-xs opacity-0 group-hover:opacity-100 transition-opacity",
-            suggestionCount > 0
-              ? "right-1 sm:right-4 top-20 sm:top-22"
-              : "right-1 sm:right-4 top-12 sm:top-14"
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className={cn(
+                      "flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-medium transition-all",
+                      reactions?.userReaction
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-background hover:border-primary/50"
+                    )}
+                  >
+                    {reactions?.userReaction || "😀"}
+                    <span className="text-[10px] text-muted-foreground">
+                      {Object.values(reactions?.reactions || {}).reduce((a, b) => a + b, 0) || null}
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  side="bottom"
+                  align="end"
+                  className="w-auto p-1.5"
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <div className="flex gap-0.5">
+                    {REACTIONS.map((r) => {
+                      const count = reactions?.reactions?.[r.type] || 0;
+                      const isActiveReaction = reactions?.userReaction === r.type;
+                      return (
+                        <button
+                          key={r.type}
+                          onClick={(e) => handleReaction(e, r.type)}
+                          disabled={reacting}
+                          className={cn(
+                            "flex items-center gap-1 px-2 py-1 rounded-md text-sm transition-all",
+                            isActiveReaction
+                              ? "bg-primary/10 text-primary"
+                              : "hover:bg-muted"
+                          )}
+                          title={r.label}
+                        >
+                          <span>{r.type}</span>
+                          {count > 0 && <span className="text-[10px] text-muted-foreground">{count}</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
           )}
-          title="Suggest an edit"
-        >
-          <Lightbulb className="h-3 w-3" />
-          <span>{t("suggestions.suggestEdit")}</span>
-        </button>
+
+          {/* Suggest edit button - shown on hover for authenticated users */}
+          {isAuthenticated && isHovered && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSuggestionEditorOpen(true);
+              }}
+              className="hidden sm:flex items-center gap-1 bg-background/80 hover:bg-background border border-border shadow-sm px-2 py-1 rounded-md text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap"
+              title="Suggest an edit"
+            >
+              <Lightbulb className="h-3 w-3" />
+              <span>{t("suggestions.suggestEdit")}</span>
+            </button>
+          )}
+        </div>
       )}
 
       {/* Suggestion Editor Modal */}
