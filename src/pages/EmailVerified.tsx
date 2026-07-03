@@ -5,8 +5,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, Mail, Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useNoIndex } from "@/hooks/useNoIndex";
 
 const EmailVerified = () => {
+  useNoIndex();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
