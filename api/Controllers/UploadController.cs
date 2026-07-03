@@ -11,8 +11,8 @@ public class UploadController : ApiControllerBase
 {
     private readonly IS3UploadService? _s3UploadService;
     private readonly ILogger<UploadController> _logger;
-    private static readonly string[] AllowedImageExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg" };
-    // Avatars: any authenticated user, so no SVG (stored-XSS vector) and a tighter size cap.
+    // SVG is excluded everywhere: served with public-read ACL it is a stored-XSS vector (H3).
+    private static readonly string[] AllowedImageExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
     private static readonly string[] AllowedAvatarExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
     private const long MaxFileSize = 10 * 1024 * 1024; // 10MB
     private const long MaxAvatarSize = 2 * 1024 * 1024; // 2MB
@@ -61,8 +61,8 @@ public class UploadController : ApiControllerBase
             return BadRequest(new { error = "Invalid file type. Only image files are allowed." });
         }
 
-        // Validate content type
-        if (!file.ContentType.StartsWith("image/"))
+        // Validate content type (reject SVG explicitly - stored-XSS vector under public-read ACL)
+        if (!file.ContentType.StartsWith("image/") || file.ContentType.Contains("svg"))
         {
             _logger.LogWarning("Upload failed - Invalid content type. UserId: {UserId}, FileName: {FileName}, ContentType: {ContentType}",
                 userId, file.FileName, file.ContentType);

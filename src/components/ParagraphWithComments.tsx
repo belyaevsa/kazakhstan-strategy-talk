@@ -452,7 +452,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters, suggest
       {!isDivider && (isHovered || isActive) && (
         <div
           className="hidden sm:flex absolute right-1 sm:right-4 flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ top: paragraph.commentCount > 0 ? "36px" : suggestionCount > 0 ? "36px" : "28px" }}
+          style={{ top: suggestionCount > 0 ? "70px" : paragraph.commentCount > 0 ? "38px" : "28px" }}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >

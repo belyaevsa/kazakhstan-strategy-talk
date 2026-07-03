@@ -1,6 +1,10 @@
+using System.Net;
 using System.Text;
+using System.Threading.RateLimiting;
 using System.IO.Compression;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.StaticFiles.Infrastructure;
 using Microsoft.AspNetCore.Builder;
@@ -175,13 +179,72 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Forwarded headers (M1): behind a reverse proxy, honor X-Forwarded-For/Proto but ONLY from
+// explicitly-trusted proxies. Without KNOWN_PROXIES/KNOWN_NETWORKS the headers are ignored and
+// RemoteIpAddress stays the direct peer - a secure default vs. the previous blind trust.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardLimit = 1;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+
+    foreach (var ip in (Environment.GetEnvironmentVariable("KNOWN_PROXIES") ?? "")
+                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    {
+        if (IPAddress.TryParse(ip, out var addr))
+            options.KnownProxies.Add(addr);
+        else
+            Log.Warning("Ignoring invalid KNOWN_PROXIES entry: {Entry}", ip);
+    }
+
+    foreach (var cidr in (Environment.GetEnvironmentVariable("KNOWN_NETWORKS") ?? "")
+                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    {
+        var parts = cidr.Split('/', 2);
+        if (parts.Length == 2 && IPAddress.TryParse(parts[0], out var prefix) && int.TryParse(parts[1], out var prefixLength))
+            options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(prefix, prefixLength));
+        else
+            Log.Warning("Ignoring invalid KNOWN_NETWORKS entry (expected addr/prefix): {Entry}", cidr);
+    }
+});
+
+// Rate limiting (H1): throttle auth endpoints per client IP to blunt credential stuffing and
+// brute force. Applied via [EnableRateLimiting("auth")] on AuthController's write actions.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth", context =>
+    {
+        var key = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(key, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
+
+// Resolve the real client IP from trusted proxies before anything logs or rate-limits on it.
+app.UseForwardedHeaders();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+else
+{
+    // HSTS only in non-dev so localhost HTTP dev isn't pinned to HTTPS.
+    app.UseHsts();
+}
+
+// Baseline security response headers (M2).
+app.UseSecurityHeaders();
 
 app.UseResponseCompression();
 
@@ -210,6 +273,9 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Per-IP throttling for endpoints opted-in via [EnableRateLimiting] (H1).
+app.UseRateLimiter();
 
 // Log every /api request input and response result (with failure reason). See LOGGING-STANDARD.md.
 app.UseRequestResponseLogging();

@@ -31,6 +31,12 @@ public class Profile
 
     public DateTime? FrozenUntil { get; set; }
 
+    // Brute-force lockout (H1): consecutive failed logins, reset on success. When the count
+    // crosses the threshold, LockoutUntil is set and further logins are refused until it passes.
+    public int FailedLoginAttempts { get; set; } = 0;
+
+    public DateTime? LockoutUntil { get; set; }
+
     public DateTime? LastCommentAt { get; set; }
 
     public DateTime? LastSeenAt { get; set; }

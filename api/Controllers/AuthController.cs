@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using KazakhstanStrategyApi.Data;
 using KazakhstanStrategyApi.DTOs;
@@ -18,6 +19,10 @@ public class AuthController : ApiControllerBase
     private readonly EmailService _emailService;
     private readonly SettingsService _settingsService;
     private readonly ILogger<AuthController> _logger;
+
+    // Account lockout (H1): after this many consecutive failures, lock the account for the window.
+    private const int MaxFailedLoginAttempts = 5;
+    private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
 
     public AuthController(
         AppDbContext context,
@@ -199,24 +204,22 @@ public class AuthController : ApiControllerBase
 
     private string GetClientIpAddress()
     {
+        // RemoteIpAddress is already the real client when the request arrived through a trusted
+        // proxy (UseForwardedHeaders replaced it). Untrusted X-Forwarded-For is intentionally
+        // NOT read here, so it can no longer be spoofed to defeat IP rate limits (M1).
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
 
-        // Convert IPv6 loopback to IPv4
+        // Normalize IPv6 loopback to IPv4 for readable logs/limits.
         if (ipAddress == "::1")
         {
             ipAddress = "127.0.0.1";
-        }
-
-        // Check for forwarded IP (for reverse proxy scenarios)
-        if (HttpContext.Request.Headers.ContainsKey("X-Forwarded-For"))
-        {
-            ipAddress = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim();
         }
 
         return ipAddress ?? "unknown";
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("auth")]
     public async Task<ActionResult<AuthResponse>> Login(LoginRequest request)
     {
         var clientIp = GetClientIpAddress();
@@ -225,8 +228,33 @@ public class AuthController : ApiControllerBase
 
         var user = await _context.Profiles.FirstOrDefaultAsync(u => u.Email == request.Email);
 
+        // Account lockout check (H1): a locked account is refused regardless of the password
+        // supplied, so the brute-force window can't be bypassed by continuing to guess.
+        if (user != null && user.LockoutUntil.HasValue && user.LockoutUntil > DateTime.UtcNow)
+        {
+            var remaining = user.LockoutUntil.Value - DateTime.UtcNow;
+            _logger.LogWarning("Login blocked - Account locked out. Email: {Email}, UserId: {UserId}, LockoutUntil: {LockoutUntil}, IP: {IpAddress}",
+                user.Email, user.Id, user.LockoutUntil, clientIp);
+            return UnauthorizedReason("account_locked",
+                $"Too many failed sign-in attempts. Please try again in {Math.Ceiling(remaining.TotalMinutes)} minutes.");
+        }
+
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
+            // Track consecutive failures per account and lock once the threshold is crossed.
+            if (user != null)
+            {
+                user.FailedLoginAttempts++;
+                if (user.FailedLoginAttempts >= MaxFailedLoginAttempts)
+                {
+                    user.LockoutUntil = DateTime.UtcNow.Add(LockoutDuration);
+                    user.FailedLoginAttempts = 0;
+                    _logger.LogWarning("Account locked after repeated failures. Email: {Email}, UserId: {UserId}, LockoutUntil: {LockoutUntil}, IP: {IpAddress}",
+                        user.Email, user.Id, user.LockoutUntil, clientIp);
+                }
+                await _context.SaveChangesAsync();
+            }
+
             _logger.LogWarning("Login failed - Invalid credentials. Email: {Email}, IP: {IpAddress}",
                 request.Email, clientIp);
             return UnauthorizedReason("invalid_credentials", "Invalid email or password");
@@ -257,6 +285,14 @@ public class AuthController : ApiControllerBase
                 user.Email, user.Id, user.FrozenUntil, clientIp);
 
             return UnauthorizedReason("account_frozen", message);
+        }
+
+        // Successful auth clears any accumulated failed-attempt / lockout state (H1).
+        if (user.FailedLoginAttempts != 0 || user.LockoutUntil != null)
+        {
+            user.FailedLoginAttempts = 0;
+            user.LockoutUntil = null;
+            await _context.SaveChangesAsync();
         }
 
         var token = await _tokenService.GenerateTokenAsync(user);
@@ -390,6 +426,7 @@ public class AuthController : ApiControllerBase
     }
 
     [HttpPost("resend-verification")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> ResendVerificationEmail([FromBody] ResendVerificationRequest request)
     {
         var clientIp = GetClientIpAddress();
@@ -449,6 +486,7 @@ public class AuthController : ApiControllerBase
     }
 
     [HttpPost("forgot-password")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
         var clientIp = GetClientIpAddress();
@@ -484,6 +522,7 @@ public class AuthController : ApiControllerBase
     }
 
     [HttpPost("reset-password")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
         var clientIp = GetClientIpAddress();
