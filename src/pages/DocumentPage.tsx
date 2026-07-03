@@ -534,68 +534,51 @@ const DocumentPage = () => {
     return map;
   }, [pageSuggestions]);
 
-  // Calculate comment panel position to avoid TOC overlap
+  // Calculate comment panel position to track the active paragraph
   useEffect(() => {
     if (!activeParagraphId) return;
 
     const calculatePosition = () => {
-      // Find the TOC element in the sidebar
-      const tocElement = document.querySelector('.bg-card.border.shadow-sm.rounded-lg');
+      const paragraphEl = document.getElementById(`paragraph-${activeParagraphId}`);
+      const headerHeight = 64; // sticky header height
+      const viewportHeight = window.innerHeight;
+      const panelEstimateHeight = 500;
 
-      // Get current scroll position
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-
-      // Calculate right position based on actual container width
+      // Calculate right position based on container width
       const containerElement = document.querySelector('.container');
       if (containerElement) {
         const containerRect = containerElement.getBoundingClientRect();
-        const containerRight = containerRect.right;
-        const viewportWidth = window.innerWidth;
-        const rightOffset = viewportWidth - containerRight;
-        setCommentPanelRight(`max(1rem, ${rightOffset + 8}px)`); // 16px = 1rem default spacing
+        const rightOffset = window.innerWidth - containerRect.right;
+        setCommentPanelRight(`${rightOffset + 16}px`);
       }
 
+      if (!paragraphEl) {
+        setCommentPanelTop(headerHeight + 16);
+        return;
+      }
+
+      const paraRect = paragraphEl.getBoundingClientRect();
+      // Align panel top with paragraph top, clamped to viewport
+      let panelTop = paraRect.top;
+
+      // Don't go above the header
+      panelTop = Math.max(panelTop, headerHeight + 16);
+      // Don't go below the viewport (keep panel mostly visible)
+      panelTop = Math.min(panelTop, viewportHeight - panelEstimateHeight);
+
+      // Avoid overlapping the TOC in the right rail
+      const tocElement = document.querySelector('.bg-card.border.shadow-sm.rounded-lg');
       if (tocElement) {
         const tocRect = tocElement.getBoundingClientRect();
-        const tocBottom = tocRect.bottom;
-        const tocTop = tocRect.top;
-
-        // When at the top of the page, use a higher position (50px)
-        // As you scroll down, transition to 100px
-        const preferredTop = scrollTop < 100 ? 50 : 100;
-
-        // Get viewport height
-        const viewportHeight = window.innerHeight;
-
-        // Only consider the VISIBLE portion of TOC (in viewport)
-        const visibleTocTop = Math.max(0, tocTop); // If TOC is scrolled above viewport, start from 0
-        const visibleTocBottom = Math.min(viewportHeight, tocBottom); // If TOC extends below viewport, cap at viewport height
-
-        // Estimate panel height
-        const estimatedPanelHeight = 700;
-        const preferredBottom = preferredTop + estimatedPanelHeight;
-
-        // Check if preferred position would overlap with VISIBLE TOC
-        // Overlap occurs if: panel bottom > TOC top AND panel top < TOC bottom
-        let newTop: number;
-
-        if (preferredBottom > visibleTocTop && preferredTop < visibleTocBottom) {
-          // Panel overlaps with visible TOC - push panel below visible TOC
-          newTop = visibleTocBottom + 20; // 20px gap below visible TOC
-        } else {
-          // No overlap with visible TOC - use preferred position
-          newTop = preferredTop;
+        const panelBottom = panelTop + panelEstimateHeight;
+        if (panelBottom > tocRect.top && panelTop < tocRect.bottom) {
+          panelTop = tocRect.bottom + 16;
         }
-
-        setCommentPanelTop(newTop);
-      } else {
-        // If no TOC found, use position based on scroll
-        const preferredTop = scrollTop < 100 ? 50 : 100;
-        setCommentPanelTop(preferredTop);
       }
+
+      setCommentPanelTop(panelTop);
     };
 
-    // Calculate on mount and when scrolling
     calculatePosition();
     window.addEventListener('scroll', calculatePosition, { passive: true });
     window.addEventListener('resize', calculatePosition, { passive: true });
