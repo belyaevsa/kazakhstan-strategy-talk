@@ -31,6 +31,7 @@ import { CSS } from "@dnd-kit/utilities";
 import RichTextEditor from "@/components/RichTextEditor";
 import { t } from "@/lib/i18n";
 import { GripVertical } from "lucide-react";
+import { getChapterIcon } from "@/lib/chapterIcons";
 import type { Chapter, Page } from "@/lib/api/types";
 
 interface ChapterDialogProps {
@@ -196,12 +197,23 @@ const ChapterDialog = ({ open, onOpenChange, chapter, onSave, onReorderPages, is
                 {t("chapter.browseIcons")}
               </a>
             </div>
-            <Input
-              id="icon"
-              value={icon}
-              onChange={(e) => setIcon(e.target.value)}
-              placeholder={t("chapter.iconPlaceholder")}
-            />
+            <div className="flex items-center gap-3">
+              <Input
+                id="icon"
+                value={icon}
+                onChange={(e) => setIcon(e.target.value)}
+                placeholder={t("chapter.iconPlaceholder")}
+                className="flex-1"
+              />
+              <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-md border bg-muted/30">
+                {icon ? (() => {
+                  const IconComponent = getChapterIcon(icon);
+                  return <IconComponent className="h-5 w-5 text-primary" />;
+                })() : (
+                  <span className="text-xs text-muted-foreground">?</span>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">
