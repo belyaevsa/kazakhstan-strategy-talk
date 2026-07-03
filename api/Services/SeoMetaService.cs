@@ -30,6 +30,101 @@ public class SeoMetaService
         ["kk"] = "Қазақстандағы АТ дамыту стратегиясы туралы интерактивті аналитикалық құжат. Оқыңыз, түсініктеме қалдырыңыз және талқылаңыз.",
     };
 
+    // Distinct, descriptive homepage title so the landing page never collides with the bare
+    // site name used as a suffix on content pages.
+    private static readonly Dictionary<string, string> HomeTitle = new()
+    {
+        ["ru"] = "ИТ стратегия Казахстана — открытый документ для обсуждения",
+        ["en"] = "IT Strategy of Kazakhstan — an open document for discussion",
+        ["kk"] = "Қазақстан АТ стратегиясы — талқылауға арналған ашық құжат",
+    };
+
+    private record StaticRouteMeta(
+        Dictionary<string, string> Title,
+        Dictionary<string, string> Description,
+        bool NoIndex);
+
+    // Known non-content SPA routes. Each gets a unique title/description; the private /
+    // transactional ones are marked noindex so they don't compete in search.
+    private static readonly Dictionary<string, StaticRouteMeta> StaticRoutes = new()
+    {
+        ["chapters"] = new(
+            new() {
+                ["ru"] = "Все главы",
+                ["en"] = "All chapters",
+                ["kk"] = "Барлық тараулар",
+            },
+            new() {
+                ["ru"] = "Полный список глав стратегии развития ИТ в Казахстане.",
+                ["en"] = "The full list of chapters of Kazakhstan's IT development strategy.",
+                ["kk"] = "Қазақстанның АТ дамыту стратегиясы тарауларының толық тізімі.",
+            },
+            NoIndex: false),
+        ["auth"] = new(
+            new() {
+                ["ru"] = "Вход и регистрация",
+                ["en"] = "Sign in & register",
+                ["kk"] = "Кіру және тіркелу",
+            },
+            new() {
+                ["ru"] = "Войдите или создайте аккаунт, чтобы комментировать и предлагать правки.",
+                ["en"] = "Sign in or create an account to comment and suggest edits.",
+                ["kk"] = "Түсініктеме қалдыру және түзету ұсыну үшін кіріңіз немесе тіркеліңіз.",
+            },
+            NoIndex: true),
+        ["profile"] = new(
+            new() {
+                ["ru"] = "Профиль пользователя",
+                ["en"] = "User profile",
+                ["kk"] = "Пайдаланушы профилі",
+            },
+            new() {
+                ["ru"] = "Профиль участника обсуждения.",
+                ["en"] = "Contributor profile.",
+                ["kk"] = "Қатысушы профилі.",
+            },
+            NoIndex: true),
+        ["notifications"] = new(
+            new() {
+                ["ru"] = "Уведомления",
+                ["en"] = "Notifications",
+                ["kk"] = "Хабарламалар",
+            },
+            new() {
+                ["ru"] = "Ваши уведомления.",
+                ["en"] = "Your notifications.",
+                ["kk"] = "Сіздің хабарламаларыңыз.",
+            },
+            NoIndex: true),
+        ["reset-password"] = new(
+            new() {
+                ["ru"] = "Сброс пароля",
+                ["en"] = "Reset password",
+                ["kk"] = "Құпия сөзді қалпына келтіру",
+            },
+            new() {
+                ["ru"] = "Установите новый пароль для вашего аккаунта.",
+                ["en"] = "Set a new password for your account.",
+                ["kk"] = "Аккаунтыңыз үшін жаңа құпия сөз орнатыңыз.",
+            },
+            NoIndex: true),
+        ["verify-email"] = new(
+            new() {
+                ["ru"] = "Подтверждение email",
+                ["en"] = "Email verification",
+                ["kk"] = "Электрондық поштаны растау",
+            },
+            new() {
+                ["ru"] = "Подтверждение адреса электронной почты.",
+                ["en"] = "Email address verification.",
+                ["kk"] = "Электрондық пошта мекенжайын растау.",
+            },
+            NoIndex: true),
+    };
+
+    private static string Pick(Dictionary<string, string> map, string lang)
+        => map.TryGetValue(lang, out var v) ? v : map[DefaultLang];
+
     private readonly AppDbContext _db;
     private readonly IConfiguration _configuration;
     private readonly ICacheService _cache;
@@ -111,6 +206,17 @@ public class SeoMetaService
             PathWithoutLang = rest.Length > 0 ? "/" + string.Join('/', rest) : "",
         };
 
+        // Known non-content SPA route (auth, profile, chapters, ...) - unique title/description,
+        // checked before the chapter/page lookups so e.g. /profile/{id} isn't treated as content.
+        if (rest.Length >= 1 && StaticRoutes.TryGetValue(rest[0], out var routeMeta))
+        {
+            meta.Title = $"{Pick(routeMeta.Title, lang)} | {siteTitle}";
+            meta.Description = Pick(routeMeta.Description, lang);
+            meta.Noindex = routeMeta.NoIndex;
+            meta.Resolved = true;
+            return meta;
+        }
+
         // Content page: /{lang}/{chapterSlug}/{pageSlug}
         if (rest.Length >= 2)
         {
@@ -180,8 +286,16 @@ public class SeoMetaService
         // Homepage: /{lang} or /
         else if (rest.Length == 0)
         {
+            meta.Title = Pick(HomeTitle, lang);
             meta.Resolved = true;
             meta.JsonLd = BuildWebSiteJsonLd(meta, siteTitle);
+        }
+
+        // Unknown/unresolved route (garbage URL, missing chapter/page): don't let it get
+        // indexed sharing the generic site title/description.
+        if (!meta.Resolved)
+        {
+            meta.Noindex = true;
         }
 
         return meta;
@@ -392,6 +506,10 @@ public class SeoMetaService
 
         // Canonical + hreflang links injected before </head>
         var links = new System.Text.StringBuilder();
+        if (meta.Noindex)
+        {
+            links.Append("\n    <meta name=\"robots\" content=\"noindex, nofollow\" />");
+        }
         links.Append($"\n    <link rel=\"canonical\" href=\"{canonical}\" />");
         foreach (var lang in Languages)
         {
@@ -450,5 +568,6 @@ public class SeoMetaService
         public string BodyHtml { get; set; } = "";
         public string JsonLd { get; set; } = "";
         public bool Resolved { get; set; } = false;
+        public bool Noindex { get; set; } = false;
     }
 }
