@@ -23,6 +23,7 @@ import { chapterService } from "@/services/chapterService";
 import { pageService } from "@/services/pageService";
 import { paragraphService } from "@/services/paragraphService";
 import { suggestionService } from "@/services/suggestionService";
+import reactionService from "@/services/reactionService";
 import DocumentLayout from "@/components/DocumentLayout";
 import DocumentStructure from "@/components/DocumentStructure";
 import ParagraphWithComments from "@/components/ParagraphWithComments";
@@ -533,6 +534,20 @@ const DocumentPage = () => {
     });
     return map;
   }, [pageSuggestions]);
+
+  const { data: pageReactions } = useQuery({
+    queryKey: ["reactions", "page", currentPage?.id],
+    queryFn: () => reactionService.getByPage(currentPage!.id),
+    enabled: !!currentPage?.id,
+  });
+
+  const reactionsByParagraph = useMemo(() => {
+    const map: Record<string, (typeof pageReactions)[number]> = {};
+    (pageReactions || []).forEach((r) => {
+      map[r.paragraphId] = r;
+    });
+    return map;
+  }, [pageReactions]);
 
   // Calculate comment panel position to track the active paragraph
   useEffect(() => {
@@ -1363,6 +1378,8 @@ const DocumentPage = () => {
                   chapters={chapters}
                   suggestionCount={suggestionCountByParagraph[paragraph.id] || 0}
                   onSuggestionsChanged={() => queryClient.invalidateQueries({ queryKey: ["suggestions", "page", currentPage?.id] })}
+                  reactions={reactionsByParagraph[paragraph.id]}
+                  onReactionChanged={() => queryClient.invalidateQueries({ queryKey: ["reactions", "page", currentPage?.id] })}
                   isActive={activeParagraphId === paragraph.id}
                   onClick={() => {
                     if (activeParagraphId === paragraph.id) {

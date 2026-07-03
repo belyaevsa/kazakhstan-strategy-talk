@@ -318,3 +318,15 @@ export interface UpdateSuggestionRequest {
 export interface SuggestionVoteRequest {
   voteType: 'Upvote' | 'Downvote';
 }
+
+export type ReactionType = '👍' | '👎' | '💡' | '🔥';
+
+export interface ParagraphReactions {
+  paragraphId: string;
+  reactions: Record<ReactionType, number>;
+  userReaction?: ReactionType;
+}
+
+export interface ReactToParagraphRequest {
+  reactionType: ReactionType;
+}
