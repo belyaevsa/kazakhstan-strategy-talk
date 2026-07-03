@@ -555,39 +555,53 @@ const DocumentPage = () => {
 
     const calculatePosition = () => {
       const paragraphEl = document.getElementById(`paragraph-${activeParagraphId}`);
-      const headerHeight = 64; // sticky header height
+      const headerHeight = 64;
       const viewportHeight = window.innerHeight;
-      const panelEstimateHeight = 500;
+      const panelWidth = 320;
+      const minGap = 16;
 
-      // Calculate right position based on container width
+      // Calculate right edge: align panel to the right of the container
       const containerElement = document.querySelector('.container');
       if (containerElement) {
         const containerRect = containerElement.getBoundingClientRect();
-        const rightOffset = window.innerWidth - containerRect.right;
-        setCommentPanelRight(`${rightOffset + 16}px`);
+        const rightOffset = Math.max(0, window.innerWidth - containerRect.right);
+        setCommentPanelRight(`${rightOffset + minGap}px`);
       }
 
       if (!paragraphEl) {
-        setCommentPanelTop(headerHeight + 16);
+        setCommentPanelTop(headerHeight + minGap);
         return;
       }
 
       const paraRect = paragraphEl.getBoundingClientRect();
-      // Align panel top with paragraph top, clamped to viewport
+
+      // Check if paragraph is visible in the viewport at all
+      if (paraRect.bottom < headerHeight || paraRect.top > viewportHeight) {
+        setCommentPanelTop(headerHeight + minGap);
+        return;
+      }
+
+      // Start with paragraph's top, but don't let the panel go above the paragraph
       let panelTop = paraRect.top;
 
-      // Don't go above the header
-      panelTop = Math.max(panelTop, headerHeight + 16);
-      // Don't go below the viewport (keep panel mostly visible)
-      panelTop = Math.min(panelTop, viewportHeight - panelEstimateHeight);
+      // Clamp: not above header, not below viewport (with some panel height visible)
+      const panelMinHeight = 200; // minimum panel height we want visible
+      panelTop = Math.max(panelTop, headerHeight + minGap);
+      panelTop = Math.min(panelTop, viewportHeight - panelMinHeight);
 
-      // Avoid overlapping the TOC in the right rail
+      // Avoid overlapping the TOC in the right rail (same column as the panel)
       const tocElement = document.querySelector('.bg-card.border.shadow-sm.rounded-lg');
       if (tocElement) {
         const tocRect = tocElement.getBoundingClientRect();
-        const panelBottom = panelTop + panelEstimateHeight;
-        if (panelBottom > tocRect.top && panelTop < tocRect.bottom) {
-          panelTop = tocRect.bottom + 16;
+        // Only adjust if TOC is currently visible in the viewport
+        if (tocRect.bottom > 0 && tocRect.top < viewportHeight) {
+          const panelBottom = panelTop + panelMinHeight;
+          if (panelBottom > tocRect.top && panelTop < tocRect.bottom) {
+            // Push below visible TOC, but re-clamp afterwards
+            panelTop = tocRect.bottom + minGap;
+            panelTop = Math.max(panelTop, headerHeight + minGap);
+            panelTop = Math.min(panelTop, viewportHeight - panelMinHeight);
+          }
         }
       }
 
