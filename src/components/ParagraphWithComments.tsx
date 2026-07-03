@@ -3,6 +3,7 @@ import { MessageSquare, Link2, ExternalLink, Maximize2, FileText, Info, AlertTri
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { parseInlineMarkdown } from "@/lib/markdown";
 import { SuggestionEditor } from "@/components/SuggestionEditor";
 import { SuggestionsCarousel } from "@/components/SuggestionsCarousel";
@@ -445,7 +446,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters, suggest
         </div>
       )}
 
-      {/* Quick emoji reactions - shown on hover/active */}
+      {/* Quick emoji reactions - single "Reactions" button that opens a popover */}
       {!isDivider && (isHovered || isActive) && (
         <div
           className="hidden sm:flex absolute right-1 sm:right-4 flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -453,29 +454,54 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters, suggest
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          <div className="flex gap-1 text-xs">
-            {REACTIONS.map((r) => {
-              const count = reactions?.reactions?.[r.type] || 0;
-              const isActiveReaction = reactions?.userReaction === r.type;
-              return (
-                <button
-                  key={r.type}
-                  onClick={(e) => handleReaction(e, r.type)}
-                  disabled={reacting}
-                  className={cn(
-                    "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border transition-all",
-                    isActiveReaction
-                      ? "border-primary bg-primary/10 text-primary scale-110"
-                      : "border-border bg-background hover:border-primary/50 hover:bg-accent/30"
-                  )}
-                  title={r.label}
-                >
-                  <span>{r.type}</span>
-                  {count > 0 && <span className="text-[10px] font-medium text-muted-foreground">{count}</span>}
-                </button>
-              );
-            })}
-          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className={cn(
+                  "flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-medium transition-all",
+                  reactions?.userReaction
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-background hover:border-primary/50"
+                )}
+              >
+                {reactions?.userReaction || "😀"}
+                <span className="text-[10px] text-muted-foreground">
+                  {Object.values(reactions?.reactions || {}).reduce((a, b) => a + b, 0) || null}
+                </span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              side="bottom"
+              align="end"
+              className="w-auto p-1.5"
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
+              <div className="flex gap-0.5">
+                {REACTIONS.map((r) => {
+                  const count = reactions?.reactions?.[r.type] || 0;
+                  const isActiveReaction = reactions?.userReaction === r.type;
+                  return (
+                    <button
+                      key={r.type}
+                      onClick={(e) => handleReaction(e, r.type)}
+                      disabled={reacting}
+                      className={cn(
+                        "flex items-center gap-1 px-2 py-1 rounded-md text-sm transition-all",
+                        isActiveReaction
+                          ? "bg-primary/10 text-primary"
+                          : "hover:bg-muted"
+                      )}
+                      title={r.label}
+                    >
+                      <span>{r.type}</span>
+                      {count > 0 && <span className="text-[10px] text-muted-foreground">{count}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       )}
 
