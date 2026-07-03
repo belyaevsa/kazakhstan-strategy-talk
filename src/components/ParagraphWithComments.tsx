@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { MessageSquare, Link2, ExternalLink, Maximize2, FileText, Info, AlertTriangle, CheckCircle, AlertCircle, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { parseInlineMarkdown } from "@/lib/markdown";
 import { SuggestionEditor } from "@/components/SuggestionEditor";
@@ -213,6 +213,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters, suggest
             {/* Image Zoom Dialog */}
             <Dialog open={imageZoomOpen} onOpenChange={setImageZoomOpen}>
               <DialogContent className="max-w-[95vw] max-h-[95vh] p-2">
+                <DialogTitle className="sr-only">{paragraph.caption || "Image zoom"}</DialogTitle>
                 <div className="flex items-center justify-center w-full h-full">
                   <img
                     src={paragraph.content}
@@ -363,6 +364,7 @@ const ParagraphWithComments = ({ paragraph, isActive, onClick, chapters, suggest
         {/* Zoom Dialog */}
         <Dialog open={tableZoomOpen} onOpenChange={setTableZoomOpen}>
           <DialogContent className="max-w-6xl max-h-[90vh] overflow-auto">
+            <DialogTitle className="sr-only">Table zoom</DialogTitle>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
                 <thead className="text-xs uppercase bg-muted">
