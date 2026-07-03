@@ -306,16 +306,19 @@ app.MapFallbackToFile("index.html").Add(endpointBuilder =>
             try
             {
                 var seo = context.RequestServices.GetRequiredService<SeoMetaService>();
-                var html = await seo.RenderAsync(
+                var result = await seo.RenderAsync(
                     context.Request.Path.Value ?? "/",
                     context.Request.Scheme,
                     context.Request.Host.Value ?? string.Empty);
 
-                if (html != null)
+                if (result != null)
                 {
+                    // Real 404 for non-existent pages so crawlers don't index soft-404s; the SPA
+                    // shell is still returned so React renders the NotFound page for humans.
+                    context.Response.StatusCode = result.Found ? 200 : 404;
                     context.Response.ContentType = "text/html; charset=utf-8";
                     context.Response.Headers.CacheControl = "no-cache";
-                    await context.Response.WriteAsync(html);
+                    await context.Response.WriteAsync(result.Html);
                     return;
                 }
             }

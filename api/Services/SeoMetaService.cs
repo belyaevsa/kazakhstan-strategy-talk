@@ -120,6 +120,26 @@ public class SeoMetaService
                 ["kk"] = "Электрондық пошта мекенжайын растау.",
             },
             NoIndex: true),
+        ["admin"] = new(
+            new() {
+                ["ru"] = "Панель администратора",
+                ["en"] = "Admin panel",
+                ["kk"] = "Әкімші панелі",
+            },
+            new() {
+                ["ru"] = "Административная панель.",
+                ["en"] = "Administration panel.",
+                ["kk"] = "Әкімшілік панелі.",
+            },
+            NoIndex: true),
+    };
+
+    // Title for genuinely non-existent routes (served with HTTP 404).
+    private static readonly Dictionary<string, string> NotFoundTitle = new()
+    {
+        ["ru"] = "Страница не найдена",
+        ["en"] = "Page not found",
+        ["kk"] = "Бет табылмады",
     };
 
     private static string Pick(Dictionary<string, string> map, string lang)
@@ -148,7 +168,10 @@ public class SeoMetaService
     private static readonly TimeSpan ResolvedTtl = TimeSpan.FromHours(72);
     private static readonly TimeSpan UnresolvedTtl = TimeSpan.FromMinutes(1);
 
-    public async Task<string?> RenderAsync(string path, string scheme, string host)
+    /// <summary>Rendered SPA shell plus whether the path maps to a real page (drives 200 vs 404).</summary>
+    public record SeoRenderResult(string Html, bool Found);
+
+    public async Task<SeoRenderResult?> RenderAsync(string path, string scheme, string host)
     {
         var normalized = "/" + path.Trim('/');
         if (normalized == "/") normalized = "/";
@@ -158,17 +181,17 @@ public class SeoMetaService
         if (lastSegment.Contains('.')) return null;
 
         var cacheKey = $"{CacheKeys.SeoHtmlPrefix}:{normalized}";
-        var cached = _cache.Get<string>(cacheKey);
+        var cached = _cache.Get<SeoRenderResult>(cacheKey);
         if (cached != null) return cached;
 
         var template = LoadTemplate();
         if (template == null) return null;
 
         var meta = await BuildMetaAsync(normalized, scheme, host);
-        var html = Inject(template, meta);
+        var result = new SeoRenderResult(Inject(template, meta), meta.Resolved);
 
-        _cache.Set(cacheKey, html, meta.Resolved ? ResolvedTtl : UnresolvedTtl);
-        return html;
+        _cache.Set(cacheKey, result, meta.Resolved ? ResolvedTtl : UnresolvedTtl);
+        return result;
     }
 
     private string? LoadTemplate()
@@ -213,6 +236,15 @@ public class SeoMetaService
             meta.Title = $"{Pick(routeMeta.Title, lang)} | {siteTitle}";
             meta.Description = Pick(routeMeta.Description, lang);
             meta.Noindex = routeMeta.NoIndex;
+            meta.Resolved = true;
+            return meta;
+        }
+
+        // Legacy prefixed routes (/{lang}/chapter/{id}, /document/{slug}) still render client-side.
+        // Treat them as valid (no 404) but noindex so they don't compete with canonical URLs.
+        if (rest.Length >= 1 && (rest[0] == "chapter" || rest[0] == "document"))
+        {
+            meta.Noindex = true;
             meta.Resolved = true;
             return meta;
         }
@@ -282,6 +314,19 @@ public class SeoMetaService
                 meta.Description = description;
                 meta.Resolved = true;
             }
+            else
+            {
+                // Legacy /{lang}/{pageSlug} still resolves a real page by slug - keep it valid.
+                var page = await _db.Pages.FirstOrDefaultAsync(p => p.Slug == rest[0] && !p.IsDraft);
+                if (page != null)
+                {
+                    var pageTr = await _db.PageTranslations.FirstOrDefaultAsync(t => t.PageId == page.Id && t.Language == lang);
+                    var pageTitle = string.IsNullOrWhiteSpace(pageTr?.Title) ? page.Title : pageTr!.Title;
+                    meta.Title = $"{siteTitle} | {pageTitle}";
+                    meta.Description = FirstNonEmpty(pageTr?.Description, page.Description, meta.Description);
+                    meta.Resolved = true;
+                }
+            }
         }
         // Homepage: /{lang} or /
         else if (rest.Length == 0)
@@ -291,10 +336,13 @@ public class SeoMetaService
             meta.JsonLd = BuildWebSiteJsonLd(meta, siteTitle);
         }
 
-        // Unknown/unresolved route (garbage URL, missing chapter/page): don't let it get
-        // indexed sharing the generic site title/description.
+        // Unknown/unresolved route (garbage URL, missing chapter/page): serve a real 404 (via
+        // Resolved=false) with a "not found" title and noindex, instead of a soft-404 that
+        // duplicates the generic site title.
         if (!meta.Resolved)
         {
+            meta.Title = $"{Pick(NotFoundTitle, lang)} | {siteTitle}";
+            meta.Description = Pick(NotFoundTitle, lang);
             meta.Noindex = true;
         }
 
