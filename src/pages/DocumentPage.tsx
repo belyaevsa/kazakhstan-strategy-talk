@@ -414,6 +414,7 @@ const DocumentPage = () => {
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(null);
   const [commentPanelTop, setCommentPanelTop] = useState(100);
   const [commentPanelRight, setCommentPanelRight] = useState('1rem');
+  const [commentListMaxHeight, setCommentListMaxHeight] = useState<number | undefined>(undefined);
   const commentPanelRef = useRef<HTMLDivElement>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
@@ -586,11 +587,17 @@ const DocumentPage = () => {
         panelTop = Math.max(minTop, paragraphEl.getBoundingClientRect().top);
       }
 
-      // Keep the panel within the viewport bottom when it fits; if it's taller than the
-      // available space, pin it to minTop and let its inner list scroll.
-      const panelHeight = commentPanelRef.current?.offsetHeight ?? 320;
-      const maxTop = viewportHeight - minGap - panelHeight;
-      panelTop = Math.max(minTop, Math.min(panelTop, maxTop));
+      // Only nudge upward enough to guarantee a minimum visible height near the bottom edge -
+      // NOT enough to clear the full panel height (that used to yank a tall panel far above the
+      // paragraph). The panel's list is then capped to the remaining space and scrolls itself.
+      const minVisible = 340;
+      const maxTop = Math.max(minTop, viewportHeight - minGap - minVisible);
+      panelTop = Math.min(panelTop, maxTop);
+
+      // Cap the scrollable comment list so the header + list + input all fit above the
+      // viewport bottom (≈200px reserved for the panel's own header and comment form).
+      const availableHeight = viewportHeight - panelTop - minGap;
+      setCommentListMaxHeight(Math.max(140, availableHeight - 200));
 
       setCommentPanelTop(panelTop);
     };
@@ -1046,6 +1053,7 @@ const DocumentPage = () => {
                   <CommentPanel
                     paragraphId={activeParagraphId}
                     mode="paragraph"
+                    maxListHeight={commentListMaxHeight}
                   />
                 </div>
               )}

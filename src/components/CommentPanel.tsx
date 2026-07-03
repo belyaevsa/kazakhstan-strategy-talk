@@ -14,6 +14,9 @@ interface CommentPanelProps {
   paragraphId?: string;
   pageId?: string;
   mode: "paragraph" | "page";
+  // When set (floating paragraph panel), caps the scrollable comment list to this pixel
+  // height so the panel fits the viewport instead of pushing the whole panel off-position.
+  maxListHeight?: number;
 }
 
 // Immutably insert a comment into the (possibly nested) comment tree.
@@ -26,7 +29,7 @@ function insertComment(tree: Comment[], comment: Comment, parentId?: string): Co
   );
 }
 
-const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
+const CommentPanel = ({ paragraphId, pageId, mode, maxListHeight }: CommentPanelProps) => {
   const [newComment, setNewComment] = useState("");
   const [pageSize, setPageSize] = useState(20);
   const [countdown, setCountdown] = useState(0);
@@ -252,7 +255,10 @@ const CommentPanel = ({ paragraphId, pageId, mode }: CommentPanelProps) => {
         </h3>
       </div>
 
-      <div className="p-4 space-y-4 max-h-[600px] overflow-y-auto">
+      <div
+        className={maxListHeight == null ? "p-4 space-y-4 max-h-[600px] overflow-y-auto" : "p-4 space-y-4 overflow-y-auto"}
+        style={maxListHeight == null ? undefined : { maxHeight: `${maxListHeight}px` }}
+      >
         {isLoading ? (
           <p className="text-sm text-muted-foreground">{t("document.loadingComments")}</p>
         ) : !comments || comments.length === 0 ? (
